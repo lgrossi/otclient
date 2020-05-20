@@ -209,3 +209,15 @@ MiniWindow
       SkillNameLabel
         !text: tr('Life Leech Amount')
       SkillValueLabel
+
+    SmallSkillButton
+      id: skillId13
+      SkillNameLabel
+        !text: tr('Magical Critical Chance')
+      SkillValueLabel
+
+    SmallSkillButton
+      id: skillId14
+      SkillNameLabel
+        !text: tr('Magical Critical Amount')
+      SkillValueLabel
