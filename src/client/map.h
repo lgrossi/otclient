@@ -233,6 +233,8 @@ public:
     void resetAwareRange();
     AwareRange getAwareRange() { return m_awareRange; }
 
+    void updateCamera(Otc::Direction dir);
+
     Light getLight() { return m_light; }
     Position getCentralPosition() { return m_centralPosition; }
     int getFirstAwareFloor();

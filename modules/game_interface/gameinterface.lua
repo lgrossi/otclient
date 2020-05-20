@@ -103,6 +103,11 @@ function bindKeys()
   g_keyboard.bindKeyDown('Ctrl+L', function() tryLogout(false) end, gameRootPanel)
   g_keyboard.bindKeyDown('Ctrl+W', function() g_map.cleanTexts() modules.game_textmessage.clearMessages() end, gameRootPanel)
   g_keyboard.bindKeyDown('Ctrl+.', nextViewMode, gameRootPanel)
+
+  g_keyboard.bindKeyDown('Shift+W', function() g_map.updateCamera(North) end, gameRootPanel)
+  g_keyboard.bindKeyDown('Shift+S', function() g_map.updateCamera(South) end, gameRootPanel)
+  g_keyboard.bindKeyDown('Shift+D', function() g_map.updateCamera(East) end, gameRootPanel)
+  g_keyboard.bindKeyDown('Shift+A', function() g_map.updateCamera(West) end, gameRootPanel)
 end
 
 function bindWalkKey(key, dir)

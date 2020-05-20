@@ -1469,6 +1469,10 @@ void Game::changeMapAwareRange(int xrange, int yrange)
     m_protocolGame->sendChangeMapAwareRange(xrange, yrange);
 }
 
+void Game::updateCamera(Position& pos) {
+    m_protocolGame->sendCameraUpdate(pos);
+}
+
 bool Game::checkBotProtection()
 {
 #ifdef BOT_PROTECTION

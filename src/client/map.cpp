@@ -896,3 +896,26 @@ std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> Map::findPath(const
 
     return ret;
 }
+
+void Map::updateCamera(Otc::Direction direction)
+{
+    Position pos = m_centralPosition;
+    switch(direction) {
+    case Otc::North:
+        pos.y -= m_awareRange.top / 2;
+        break;
+    case Otc::East:
+        pos.x += m_awareRange.left / 2;
+        break;
+    case Otc::South:
+        pos.y += m_awareRange.top / 2;
+        break;
+    case Otc::West:
+        pos.x -= m_awareRange.left / 2;
+        break;
+    default:
+        break;
+    }
+
+    g_game.updateCamera(pos);
+}
