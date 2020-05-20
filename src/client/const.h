@@ -155,6 +155,8 @@ namespace Otc
         LifeLeechAmount,
         ManaLeechChance,
         ManaLeechAmount,
+        MagicCriticalChance,
+        MagicCriticalAmount,
         LastSkill
     };
 
