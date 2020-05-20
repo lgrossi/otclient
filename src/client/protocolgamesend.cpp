@@ -21,6 +21,7 @@
  */
 
 #include "protocolgame.h"
+#include "map.h"
 #include "game.h"
 #include "client.h"
 #include <framework/core/application.h>
@@ -98,6 +99,14 @@ void ProtocolGame::sendLoginPacket(uint challengeTimestamp, uint8 challengeRando
     if(g_game.getFeature(Otc::GameChallengeOnLogin)) {
         msg->addU32(challengeTimestamp);
         msg->addU8(challengeRandom);
+    }
+
+    // ensure you log in a server with same aware range configured
+    AwareRange range = g_map.getAwareRange();
+
+    if(g_game.getFeature(Otc::GameChangeMapAwareRange)) {
+        msg->addU8(range.right * 2);
+        msg->addU8(range.bottom * 2);
     }
 
     std::string extended = callLuaField<std::string>("getLoginExtendedData");

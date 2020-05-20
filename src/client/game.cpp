@@ -1464,7 +1464,8 @@ void Game::ping()
 void Game::changeMapAwareRange(int xrange, int yrange)
 {
     if(!canPerformGameAction())
-        return;
+        return; 
+
     m_protocolGame->sendChangeMapAwareRange(xrange, yrange);
 }
 
@@ -1687,6 +1688,10 @@ void Game::setClientVersion(int version)
         enableFeature(Otc::GameAdditionalSkills);
     }
 
+    if(version >= 1098) {
+        enableFeature(Otc::GameChangeMapAwareRange);
+    }
+
     m_clientVersion = version;
 
     g_lua.callGlobalField("g_game", "onClientVersionChange", version);
@@ -1742,9 +1747,9 @@ int Game::getOs()
         return m_clientCustomOs;
 
     if(g_app.getOs() == "windows")
-        return 10;
+        return 20;
     else if(g_app.getOs() == "mac")
-        return 12;
+        return 22;
     else // linux
-        return 11;
+        return 21;
 }

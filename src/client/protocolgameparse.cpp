@@ -1991,13 +1991,7 @@ void ProtocolGame::parseChangeMapAwareRange(const InputMessagePtr& msg)
     int xrange = msg->getU8();
     int yrange = msg->getU8();
 
-    AwareRange range;
-    range.left = xrange/2 - ((xrange+1) % 2);
-    range.right = xrange/2;
-    range.top = yrange/2 - ((yrange+1) % 2);
-    range.bottom = yrange/2;
-
-    g_map.setAwareRange(range);
+    g_map.setMapAwareRange(xrange, yrange, true);
     g_lua.callGlobalField("g_game", "onMapChangeAwareRange", xrange, yrange);
 }
 
@@ -2096,6 +2090,7 @@ int ProtocolGame::setTileDescription(const InputMessagePtr& msg, Position positi
             g_logger.traceError(stdext::format("too many things, pos=%s, stackpos=%d", stdext::to_string(position), stackPos));
 
         ThingPtr thing = getThing(msg);
+
         g_map.addThing(thing, position, stackPos);
     }
 
