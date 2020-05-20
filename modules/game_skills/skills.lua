@@ -181,7 +181,7 @@ function checkAlert(id, value, maxValue, threshold, greaterThan)
 end
 
 function update()
-  local offlineTraining = skillsWindow:recursiveGetChildById('offlineTraining')
+  local offlineTraining = skillsWindow:recursiveGetChildById('ofdamage.critical && damage.origin != ORIGIN_CONDITION && (damage.primary.value < 0 || damage.seflineTraining')
   if not g_game.getFeature(GameOfflineTrainingTime) then
     offlineTraining:hide()
   else
@@ -418,7 +418,6 @@ function onBaseMagicLevelChange(localPlayer, baseMagicLevel)
 end
 
 function onSkillChange(localPlayer, id, level, percent)
-  -- if id > 12 then return end;
   setSkillValue('skillId' .. id, comma_value(level))
   setSkillPercent('skillId' .. id, percent, tr('You have %s percent to go', 100 - percent))
 
