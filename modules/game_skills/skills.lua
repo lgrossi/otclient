@@ -181,7 +181,7 @@ function checkAlert(id, value, maxValue, threshold, greaterThan)
 end
 
 function update()
-  local offlineTraining = skillsWindow:recursiveGetChildById('offlineTraining')
+  local offlineTraining = skillsWindow:recursiveGetChildById('ofdamage.critical && damage.origin != ORIGIN_CONDITION && (damage.primary.value < 0 || damage.seflineTraining')
   if not g_game.getFeature(GameOfflineTrainingTime) then
     offlineTraining:hide()
   else
