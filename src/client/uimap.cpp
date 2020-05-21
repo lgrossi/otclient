@@ -24,6 +24,7 @@
 #include "game.h"
 #include "map.h"
 #include "mapview.h"
+#include <framework/core/eventdispatcher.h>
 #include <framework/otml/otml.h>
 #include <framework/graphics/graphics.h>
 #include "localplayer.h"
@@ -36,7 +37,7 @@ UIMap::UIMap()
     m_keepAspectRatio = true;
     m_limitVisibleRange = false;
     m_aspectRatio = m_mapView->getVisibleDimension().ratio();
-    m_maxZoomIn = 3;
+    m_maxZoomIn = 6;
     m_maxZoomOut = 23;
     m_mapRect.resize(1,1);
     g_map.addMapView(m_mapView);
@@ -195,10 +196,16 @@ void UIMap::updateVisibleDimension()
     if(dimensionWidth % 2 == 0)
         dimensionWidth += 1;
 
-    m_mapView->setVisibleDimension(Size(dimensionWidth, dimensionHeight));
-
     if(m_keepAspectRatio)
         updateMapSize();
+
+    if (!m_zoomLock.try_lock()) return;
+
+    uint8_t zoomDelay = 50; 
+    g_dispatcher.scheduleEvent([this, dimensionWidth, dimensionHeight] {
+        m_zoomLock.unlock();
+        m_mapView->setVisibleDimension(Size(dimensionWidth, dimensionHeight));
+    }, zoomDelay);
 }
 
 void UIMap::updateMapSize()

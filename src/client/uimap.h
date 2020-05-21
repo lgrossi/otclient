@@ -107,6 +107,7 @@ private:
     bool m_limitVisibleRange;
     int m_maxZoomIn;
     int m_maxZoomOut;
+    std::mutex m_zoomLock;
 };
 
 #endif
