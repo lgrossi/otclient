@@ -70,11 +70,6 @@ function UIGameMap:onMousePress()
   end
 end
 
-function moveMap(dir)
-  scheduleEvent(function() moveMap(dir) end, mapScrollDelay)
-  if not mPos then return end
-end
-
 function UIGameMap:onMouseRelease(mousePosition, mouseButton)
   if not self.allowNextRelease then
     return true
