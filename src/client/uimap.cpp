@@ -221,4 +221,11 @@ void UIMap::updateMapSize()
         updateVisibleDimension();
 }
 
+bool UIMap::onMouseMove(const Point& mousePos, const Point& mouseMoved)
+{
+    g_map.setMousePos(mousePos);
+    return UIWidget::onMouseMove(mousePos, mouseMoved);
+}
+
+
 /* vim: set ts=4 sw=4 et: */

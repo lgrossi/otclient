@@ -70,43 +70,9 @@ function UIGameMap:onMousePress()
   end
 end
 
-local mPos;
-local firstMoveMap = true
-local mapScrollDelay = 250
-function UIGameMap:onMouseMove(mousePos, mouseMove)
-  mPos = mousePos
-end
-
 function moveMap(dir)
   scheduleEvent(function() moveMap(dir) end, mapScrollDelay)
   if not mPos then return end
-
-  local factor = 0.05
-  local width, height = g_window.getWidth(), g_window.getHeight()
-  local limits = { 
-    [North] = height * factor, 
-    [South] = height * (1 - factor),
-    [East] = width * (1 - factor), 
-    [West] = width * factor
-  }
-
-  if mPos.y <= limits[North] then
-    g_map.updateCamera(North, 0.1)
-  end
-  if mPos.y >= limits[South] then
-    g_map.updateCamera(South, 0.1)
-  end
-  if mPos.x >= limits[East] then
-    g_map.updateCamera(East, 0.1)
-  end
-  if mPos.x <= limits[West] then
-    g_map.updateCamera(West, 0.1)
-  end
-end
-
-if firstMoveMap then
-  moveMap()
-  firstMoveMap = false
 end
 
 function UIGameMap:onMouseRelease(mousePosition, mouseButton)

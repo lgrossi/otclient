@@ -233,7 +233,10 @@ public:
     void resetAwareRange();
     AwareRange getAwareRange() { return m_awareRange; }
 
-    void updateCamera(Otc::Direction dir, float factor);
+    Point getMousePos();
+    void setMousePos(const Point& mPos);
+    void updateCamera();
+    std::mutex m_cameraLock;
 
     Light getLight() { return m_light; }
     Position getCentralPosition() { return m_centralPosition; }
@@ -270,6 +273,8 @@ private:
     stdext::packed_storage<uint8> m_attribs;
     AwareRange m_awareRange;
     static TilePtr m_nulltile;
+
+    Point m_mousePos;
 };
 
 extern Map g_map;

@@ -32,6 +32,7 @@
 
 #include <framework/core/eventdispatcher.h>
 #include <framework/core/application.h>
+#include <framework/platform/platformwindow.h>
 
 Map g_map;
 TilePtr Map::m_nulltile;
@@ -897,26 +898,54 @@ std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> Map::findPath(const
     return ret;
 }
 
-void Map::updateCamera(Otc::Direction direction, float factor)
+Point Map::getMousePos()
 {
-    factor = factor ? factor : 0.5;
+    return m_mousePos;
+}
+
+void Map::setMousePos(const Point& mPos)
+{
+    m_mousePos = mPos;
+
+    updateCamera();
+}
+
+void Map::updateCamera()
+{   
+    float factor = 0.5;
+    float scrollRatio = 0.05;
+    uint16_t width = g_window.getWidth();
+    uint16_t height = g_window.getHeight();
+
     Position pos = m_centralPosition;
-    switch(direction) {
-    case Otc::North:
+    if (m_mousePos.y <= height * scrollRatio) {
         pos.y -= m_awareRange.top * factor;
-        break;
-    case Otc::East:
-        pos.x += m_awareRange.left * factor;
-        break;
-    case Otc::South:
-        pos.y += m_awareRange.top * factor;
-        break;
-    case Otc::West:
-        pos.x -= m_awareRange.left * factor;
-        break;
-    default:
-        break;
     }
+
+    if (m_mousePos.y >= height * (1 - scrollRatio)) {
+        pos.y += m_awareRange.top * factor;
+    }
+
+    if (m_mousePos.x <= width * scrollRatio) {
+        pos.x -= m_awareRange.left * factor;
+    }
+
+    if (m_mousePos.x >= width * (1 - scrollRatio)) {
+        pos.x += m_awareRange.left * factor;
+    }
+
+    if (!m_cameraLock.try_lock()) return;
+
+    if (m_centralPosition == pos) {
+        m_cameraLock.unlock();
+        return;
+    }
+
+    uint8_t mapScrollDelay = 250; 
+    g_dispatcher.scheduleEvent([this] {
+        m_cameraLock.unlock();
+        updateCamera();
+    }, mapScrollDelay);
 
     g_game.updateCamera(pos);
 }
