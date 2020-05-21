@@ -70,47 +70,43 @@ function UIGameMap:onMousePress()
   end
 end
 
+local mPos;
+local firstMoveMap = true
+local mapScrollDelay = 250
+function UIGameMap:onMouseMove(mousePos, mouseMove)
+  mPos = mousePos
+end
 
--- g_keyboard.bindKeyDown('Shift+W', function() g_map.updateCamera(North) end, gameRootPanel)
--- g_keyboard.bindKeyDown('Shift+S', function() g_map.updateCamera(South) end, gameRootPanel)
--- g_keyboard.bindKeyDown('Shift+D', function() g_map.updateCamera(East) end, gameRootPanel)
--- g_keyboard.bindKeyDown('Shift+A', function() g_map.updateCamera(West) end, gameRootPanel)
-local mapScrollDelay = 0.250
-local lastMapScroll = 0
-function UIGameMap:onMouseMove(mousePos, mouseMove, x)
-  if os.clock() < lastMapScroll then return end
-  print(os.clock(), lastMapScroll)
+function moveMap(dir)
+  scheduleEvent(function() moveMap(dir) end, mapScrollDelay)
+  if not mPos then return end
 
   local factor = 0.05
   local width, height = g_window.getWidth(), g_window.getHeight()
-  local limit = { 
-    north = height * factor, 
-    south = height * (1 - factor),
-    east = width * (1 - factor), 
-    west = width * factor
+  local limits = { 
+    [North] = height * factor, 
+    [South] = height * (1 - factor),
+    [East] = width * (1 - factor), 
+    [West] = width * factor
   }
 
-  if (mousePos.y <= limit.north) then
-    print("N", mousePos.x, mousePos.y)
-    print("mouse m", mouseMove.x, mouseMove.y)
+  if mPos.y <= limits[North] then
+    g_map.updateCamera(North, 0.1)
   end
-
-  if (mousePos.y >= limit.south) then
-    print("S", mousePos.x, mousePos.y)
-    print("mouse m", mouseMove.x, mouseMove.y)
+  if mPos.y >= limits[South] then
+    g_map.updateCamera(South, 0.1)
   end
-
-  if (mousePos.x >= limit.east) then
-    print("E", mousePos.x, mousePos.y)
-    print("mouse m", mouseMove.x, mouseMove.y)
+  if mPos.x >= limits[East] then
+    g_map.updateCamera(East, 0.1)
   end
-
-  if (mousePos.x <= limit.west) then
-    print("W", mousePos.x, mousePos.y)
-    print("mouse m", mouseMove.x, mouseMove.y)
+  if mPos.x <= limits[West] then
+    g_map.updateCamera(West, 0.1)
   end
+end
 
-  lastMapScroll = os.clock() + mapScrollDelay
+if firstMoveMap then
+  moveMap()
+  firstMoveMap = false
 end
 
 function UIGameMap:onMouseRelease(mousePosition, mouseButton)
