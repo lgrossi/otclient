@@ -92,6 +92,8 @@ public:
 protected:
     virtual void onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode);
     virtual void onGeometryChange(const Rect& oldRect, const Rect& newRect);
+    virtual bool onMouseMove(const Point& mousePos, const Point& mouseMoved);
+    
 
 private:
     void updateVisibleDimension();
@@ -105,6 +107,7 @@ private:
     bool m_limitVisibleRange;
     int m_maxZoomIn;
     int m_maxZoomOut;
+    std::mutex m_zoomLock;
 };
 
 #endif

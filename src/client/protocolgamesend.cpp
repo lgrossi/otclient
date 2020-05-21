@@ -957,6 +957,14 @@ void ProtocolGame::sendChangeMapAwareRange(int xrange, int yrange)
     send(msg);
 }
 
+void ProtocolGame::sendCameraUpdate(Position& pos)
+{
+    OutputMessagePtr msg(new OutputMessage);
+    msg->addU8(Proto::ClientMoveCamera);
+    addPosition(msg, pos);
+    send(msg);
+}
+
 void ProtocolGame::addPosition(const OutputMessagePtr& msg, const Position& position)
 {
     msg->addU16(position.x);

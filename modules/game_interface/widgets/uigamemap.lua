@@ -3,7 +3,7 @@ UIGameMap = extends(UIMap, "UIGameMap")
 function UIGameMap.create()
   local gameMap = UIGameMap.internalCreate()
   gameMap:setKeepAspectRatio(false)
-  gameMap:setVisibleDimension({width = 45, height = 27})
+  gameMap:setVisibleDimension({width = 41, height = 23})
   gameMap:setDrawLights(true)
   return gameMap
 end
@@ -68,6 +68,11 @@ function UIGameMap:onMousePress()
   if not self:isDragging() then
     self.allowNextRelease = true
   end
+end
+
+function moveMap(dir)
+  scheduleEvent(function() moveMap(dir) end, mapScrollDelay)
+  if not mPos then return end
 end
 
 function UIGameMap:onMouseRelease(mousePosition, mouseButton)

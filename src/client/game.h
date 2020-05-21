@@ -302,6 +302,7 @@ public:
 
     // otclient only
     void changeMapAwareRange(int xrange, int yrange);
+    void updateCamera(Position& pos);
 
     // dynamic support for game features
     void enableFeature(Otc::GameFeature feature) { m_features.set(feature, true); }

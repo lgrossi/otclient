@@ -122,6 +122,7 @@ public:
 
     // otclient only
     void sendChangeMapAwareRange(int xrange, int yrange);
+    void sendCameraUpdate(Position& pos);
 
 protected:
     void onConnect();
@@ -242,6 +243,7 @@ private:
     void parseExtendedOpcode(const InputMessagePtr& msg);
     void parseChangeMapAwareRange(const InputMessagePtr& msg);
     void parseCreaturesMark(const InputMessagePtr& msg);
+    void parseUpdatedCamera(const InputMessagePtr& msg);
 
 public:
     void setMapDescription(const InputMessagePtr& msg, int x, int y, int z, int width, int height);

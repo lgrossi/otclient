@@ -395,6 +395,9 @@ void ProtocolGame::parseMessage(const InputMessagePtr& msg)
             case Proto::GameServerChangeMapAwareRange:
                 parseChangeMapAwareRange(msg);
                 break;
+            case Proto::GameServerFullCameraView:
+                parseUpdatedCamera(msg);
+                break;
             default:
                 stdext::throw_exception(stdext::format("unhandled opcode %d", (int)opcode));
                 break;
@@ -741,18 +744,12 @@ void ProtocolGame::parseMapDescription(const InputMessagePtr& msg)
 {
     Position pos = getPosition(msg);
 
-    if(!m_mapKnown)
-        m_localPlayer->setPosition(pos);
+    m_localPlayer->setPosition(pos);
 
     g_map.setCentralPosition(pos);
 
     AwareRange range = g_map.getAwareRange();
     setMapDescription(msg, pos.x - range.left, pos.y - range.top, pos.z, range.horizontal(), range.vertical());
-
-    if(!m_mapKnown) {
-        g_dispatcher.addEvent([] { g_lua.callGlobalField("g_game", "onMapKnown"); });
-        m_mapKnown = true;
-    }
 
     g_dispatcher.addEvent([] { g_lua.callGlobalField("g_game", "onMapDescription"); });
 }
@@ -2034,6 +2031,17 @@ void ProtocolGame::parseCreatureType(const InputMessagePtr& msg)
     else
         g_logger.traceError("could not get creature");
 }
+
+void ProtocolGame::parseUpdatedCamera(const InputMessagePtr& msg)
+{
+    Position pos = getPosition(msg);
+
+    g_map.setCentralPosition(pos);
+
+    AwareRange range = g_map.getAwareRange();
+    setMapDescription(msg, pos.x - range.left, pos.y - range.top, pos.z, range.horizontal(), range.vertical());
+}
+
 
 void ProtocolGame::setMapDescription(const InputMessagePtr& msg, int x, int y, int z, int width, int height)
 {
