@@ -233,10 +233,9 @@ public:
     void resetAwareRange();
     AwareRange getAwareRange() { return m_awareRange; }
 
+    void updateCamera();
     Point getMousePos();
     void setMousePos(const Point& mPos);
-    void updateCamera();
-    std::mutex m_cameraLock;
 
     Light getLight() { return m_light; }
     Position getCentralPosition() { return m_centralPosition; }
@@ -275,6 +274,7 @@ private:
     static TilePtr m_nulltile;
 
     Point m_mousePos;
+    std::mutex m_cameraLock;
 };
 
 extern Map g_map;

@@ -541,30 +541,15 @@ void Map::setCentralPosition(const Position& centralPosition)
 
     removeUnawareThings();
 
-    // this fixes local player position when the local player is removed from the map,
-    // the local player is removed from the map when there are too many creatures on his tile,
-    // so there is no enough stackpos to the server send him
-    g_dispatcher.addEvent([this] {
-        LocalPlayerPtr localPlayer = g_game.getLocalPlayer();
-        if(!localPlayer || localPlayer->getPosition() == m_centralPosition)
-            return;
-        TilePtr tile = localPlayer->getTile();
-        if(tile && tile->hasThing(localPlayer))
-            return;
-
-        Position oldPos = localPlayer->getPosition();
-        Position pos = m_centralPosition;
-        if(oldPos != pos) {
-            if(!localPlayer->isRemoved())
-                localPlayer->onDisappear();
-            localPlayer->setPosition(pos);
-            localPlayer->onAppear();
-            g_logger.debug("forced player position update");
+    LocalPlayerPtr localPlayer = g_game.getLocalPlayer();
+    if(!localPlayer) return;
+    for(const MapViewPtr& mapView : m_mapViews){
+        if(localPlayer->getPosition() == m_centralPosition){
+            mapView->followCreature(localPlayer);
+        } else {
+            mapView->setCameraPosition(m_centralPosition);
         }
-    });
-
-    for(const MapViewPtr& mapView : m_mapViews)
-        mapView->onMapCenterChange(centralPosition);
+    }
 }
 
 std::vector<CreaturePtr> Map::getSightSpectators(const Position& centerPos, bool multiFloor)
@@ -707,7 +692,7 @@ void Map::resetAwareRange()
     range.top = 12;
     range.right = range.left + 1;
     range.bottom = range.top + 1;
-    setAwareRange(range);
+    setMapAwareRange(44, 26, false);
 }
 
 int Map::getFirstAwareFloor()
@@ -906,13 +891,12 @@ Point Map::getMousePos()
 void Map::setMousePos(const Point& mPos)
 {
     m_mousePos = mPos;
-
     updateCamera();
 }
 
 void Map::updateCamera()
 {   
-    float factor = 0.5;
+    float factor = 0.25;
     float scrollRatio = 0.05;
     uint16_t width = g_window.getWidth();
     uint16_t height = g_window.getHeight();

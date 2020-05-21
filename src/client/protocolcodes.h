@@ -72,10 +72,10 @@ namespace Proto {
 
         // original tibia ONLY
         GameServerFullMap                   = 100,
-        GameServerMapTopRow                 = 101,
-        GameServerMapRightRow               = 102,
-        GameServerMapBottomRow              = 103,
-        GameServerMapLeftRow                = 104,
+        GameServerMapTopRow                 = 101, // 0x65
+        GameServerMapRightRow               = 102, // 0x66
+        GameServerMapBottomRow              = 103, // 0x67
+        GameServerMapLeftRow                = 104, // 0x68
         GameServerUpdateTile                = 105,
         GameServerCreateOnMap               = 106,
         GameServerChangeOnMap               = 107,
@@ -140,8 +140,8 @@ namespace Proto {
         GameServerWalkWait                  = 182,
         GameServerUnjustifiedStats          = 183,
         GameServerPvpSituations             = 184,
-        GameServerFloorChangeUp             = 190,
-        GameServerFloorChangeDown           = 191,
+        GameServerFloorChangeUp             = 190, // 0xBE
+        GameServerFloorChangeDown           = 191, // 0xBF
         GameServerChooseOutfit              = 200,
         GameServerVipAdd                    = 210,
         GameServerVipState                  = 211,
@@ -191,16 +191,16 @@ namespace Proto {
         ClientMoveCamera                    = 64, // 0x40
 
         // original tibia ONLY
-        ClientAutoWalk                      = 100,
-        ClientWalkNorth                     = 101,
-        ClientWalkEast                      = 102,
-        ClientWalkSouth                     = 103,
-        ClientWalkWest                      = 104,
-        ClientStop                          = 105,
-        ClientWalkNorthEast                 = 106,
-        ClientWalkSouthEast                 = 107,
-        ClientWalkSouthWest                 = 108,
-        ClientWalkNorthWest                 = 109,
+        ClientAutoWalk                      = 100, // 0x64
+        ClientWalkNorth                     = 101, // 0x65
+        ClientWalkEast                      = 102, // 0x66
+        ClientWalkSouth                     = 103, // 0x67
+        ClientWalkWest                      = 104, // 0x68
+        ClientStop                          = 105, // 0x69
+        ClientWalkNorthEast                 = 106, // 0x6A
+        ClientWalkSouthEast                 = 107, // 0x6B
+        ClientWalkSouthWest                 = 108, // 0x6C
+        ClientWalkNorthWest                 = 109, // 0x6D
         ClientTurnNorth                     = 111,
         ClientTurnEast                      = 112,
         ClientTurnSouth                     = 113,

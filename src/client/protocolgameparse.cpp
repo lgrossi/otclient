@@ -57,6 +57,7 @@ void ProtocolGame::parseMessage(const InputMessagePtr& msg)
             else
                 msg->setReadPos(readPos); // restore read pos
 
+            std::cout << opcode << std::endl;
             switch(opcode) {
             case Proto::GameServerLoginOrPendingState:
                 if(g_game.getFeature(Otc::GameLoginPending))
@@ -744,18 +745,12 @@ void ProtocolGame::parseMapDescription(const InputMessagePtr& msg)
 {
     Position pos = getPosition(msg);
 
-    if(!m_mapKnown)
-        m_localPlayer->setPosition(pos);
+    m_localPlayer->setPosition(pos);
 
     g_map.setCentralPosition(pos);
 
     AwareRange range = g_map.getAwareRange();
     setMapDescription(msg, pos.x - range.left, pos.y - range.top, pos.z, range.horizontal(), range.vertical());
-
-    if(!m_mapKnown) {
-        g_dispatcher.addEvent([] { g_lua.callGlobalField("g_game", "onMapKnown"); });
-        m_mapKnown = true;
-    }
 
     g_dispatcher.addEvent([] { g_lua.callGlobalField("g_game", "onMapDescription"); });
 }
@@ -2041,9 +2036,6 @@ void ProtocolGame::parseCreatureType(const InputMessagePtr& msg)
 void ProtocolGame::parseUpdatedCamera(const InputMessagePtr& msg)
 {
     Position pos = getPosition(msg);
-
-    if(!m_mapKnown)
-        m_localPlayer->setPosition(pos);
 
     g_map.setCentralPosition(pos);
 

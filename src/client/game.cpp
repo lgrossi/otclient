@@ -718,35 +718,39 @@ void Game::forceWalk(Otc::Direction direction)
     if(!canPerformGameAction())
         return;
 
-    switch(direction) {
-    case Otc::North:
-        m_protocolGame->sendWalkNorth();
-        break;
-    case Otc::East:
-        m_protocolGame->sendWalkEast();
-        break;
-    case Otc::South:
-        m_protocolGame->sendWalkSouth();
-        break;
-    case Otc::West:
-        m_protocolGame->sendWalkWest();
-        break;
-    case Otc::NorthEast:
-        m_protocolGame->sendWalkNorthEast();
-        break;
-    case Otc::SouthEast:
-        m_protocolGame->sendWalkSouthEast();
-        break;
-    case Otc::SouthWest:
-        m_protocolGame->sendWalkSouthWest();
-        break;
-    case Otc::NorthWest:
-        m_protocolGame->sendWalkNorthWest();
-        break;
-    default:
-        break;
+    if (m_localPlayer && g_map.getCentralPosition() != m_localPlayer->getPosition()) {
+        g_map.resetAwareRange();
+        processWalkCancel(direction);
+    } else {
+        switch(direction) {
+        case Otc::North:
+            m_protocolGame->sendWalkNorth();
+            break;
+        case Otc::East:
+            m_protocolGame->sendWalkEast();
+            break;
+        case Otc::South:
+            m_protocolGame->sendWalkSouth();
+            break;
+        case Otc::West:
+            m_protocolGame->sendWalkWest();
+            break;
+        case Otc::NorthEast:
+            m_protocolGame->sendWalkNorthEast();
+            break;
+        case Otc::SouthEast:
+            m_protocolGame->sendWalkSouthEast();
+            break;
+        case Otc::SouthWest:
+            m_protocolGame->sendWalkSouthWest();
+            break;
+        case Otc::NorthWest:
+            m_protocolGame->sendWalkNorthWest();
+            break;
+        default:
+            break;
+        }
     }
-
     g_lua.callGlobalField("g_game", "onForceWalk", direction);
 }
 
@@ -1694,6 +1698,7 @@ void Game::setClientVersion(int version)
 
     if(version >= 1098) {
         enableFeature(Otc::GameChangeMapAwareRange);
+        enableFeature(Otc::GameMapMovePosition);
     }
 
     m_clientVersion = version;
