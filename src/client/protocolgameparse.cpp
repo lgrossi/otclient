@@ -57,7 +57,6 @@ void ProtocolGame::parseMessage(const InputMessagePtr& msg)
             else
                 msg->setReadPos(readPos); // restore read pos
 
-            std::cout << opcode << std::endl;
             switch(opcode) {
             case Proto::GameServerLoginOrPendingState:
                 if(g_game.getFeature(Otc::GameLoginPending))
