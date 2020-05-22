@@ -39,7 +39,7 @@ UIMap::UIMap()
     m_aspectRatio = m_mapView->getVisibleDimension().ratio();
     m_maxZoomIn = 6;
     m_maxZoomOut = 23;
-    m_mapRect.resize(1,1);
+    m_mapRect.resize(1, 1);
     g_map.addMapView(m_mapView);
 }
 
@@ -52,12 +52,14 @@ void UIMap::drawSelf(Fw::DrawPane drawPane)
 {
     UIWidget::drawSelf(drawPane);
 
-    if(drawPane & Fw::ForegroundPane) {
+    if (drawPane & Fw::ForegroundPane)
+    {
         // draw map border
         g_painter->setColor(Color::black);
         g_painter->drawBoundingRect(m_mapRect.expanded(1));
 
-        if(drawPane != Fw::BothPanes) {
+        if (drawPane != Fw::BothPanes)
+        {
             glDisable(GL_BLEND);
             g_painter->setColor(Color::alpha);
             g_painter->drawFilledRect(m_mapRect);
@@ -65,7 +67,8 @@ void UIMap::drawSelf(Fw::DrawPane drawPane)
         }
     }
 
-    if(drawPane & Fw::BackgroundPane) {
+    if (drawPane & Fw::BackgroundPane)
+    {
         g_painter->setColor(Color::white);
         m_mapView->draw(m_mapRect);
     }
@@ -78,6 +81,7 @@ void UIMap::movePixels(int x, int y)
 
 bool UIMap::setZoom(int zoom)
 {
+    return false;
     m_zoom = stdext::clamp<int>(zoom, m_maxZoomIn, m_maxZoomOut);
     updateVisibleDimension();
     return false;
@@ -85,11 +89,12 @@ bool UIMap::setZoom(int zoom)
 
 bool UIMap::zoomIn()
 {
+    return false;
     int delta = 2;
-    if(m_zoom - delta < m_maxZoomIn)
+    if (m_zoom - delta < m_maxZoomIn)
         delta--;
 
-    if(m_zoom - delta < m_maxZoomIn)
+    if (m_zoom - delta < m_maxZoomIn)
         return false;
 
     m_zoom -= delta;
@@ -99,11 +104,12 @@ bool UIMap::zoomIn()
 
 bool UIMap::zoomOut()
 {
+    return false;
     int delta = 2;
-    if(m_zoom + delta > m_maxZoomOut)
+    if (m_zoom + delta > m_maxZoomOut)
         delta--;
 
-    if(m_zoom + delta > m_maxZoomOut)
+    if (m_zoom + delta > m_maxZoomOut)
         return false;
 
     m_zoom += delta;
@@ -111,72 +117,74 @@ bool UIMap::zoomOut()
     return true;
 }
 
-void UIMap::setVisibleDimension(const Size& visibleDimension)
+void UIMap::setVisibleDimension(const Size &visibleDimension)
 {
     m_mapView->setVisibleDimension(visibleDimension);
     m_aspectRatio = visibleDimension.ratio();
 
-    if(m_keepAspectRatio)
+    if (m_keepAspectRatio)
         updateMapSize();
 }
 
 void UIMap::setKeepAspectRatio(bool enable)
 {
     m_keepAspectRatio = enable;
-    if(enable)
+    if (enable)
         m_aspectRatio = getVisibleDimension().ratio();
     updateMapSize();
 }
 
-Position UIMap::getPosition(const Point& mousePos)
+Position UIMap::getPosition(const Point &mousePos)
 {
-    if(!m_mapRect.contains(mousePos))
+    if (!m_mapRect.contains(mousePos))
         return Position();
 
     Point relativeMousePos = mousePos - m_mapRect.topLeft();
     return m_mapView->getPosition(relativeMousePos, m_mapRect.size());
 }
 
-TilePtr UIMap::getTile(const Point& mousePos)
+TilePtr UIMap::getTile(const Point &mousePos)
 {
     Position tilePos = getPosition(mousePos);
-    if(!tilePos.isValid())
+    if (!tilePos.isValid())
         return nullptr;
 
     // we must check every floor, from top to bottom to check for a clickable tile
     TilePtr tile;
     tilePos.coveredUp(tilePos.z - m_mapView->getCachedFirstVisibleFloor());
-    for(int i = m_mapView->getCachedFirstVisibleFloor(); i <= m_mapView->getCachedLastVisibleFloor(); i++) {
+    for (int i = m_mapView->getCachedFirstVisibleFloor(); i <= m_mapView->getCachedLastVisibleFloor(); i++)
+    {
         tile = g_map.getTile(tilePos);
-        if(tile && tile->isClickable())
+        if (tile && tile->isClickable())
             break;
         tilePos.coveredDown();
     }
 
-    if(!tile || !tile->isClickable())
+    if (!tile || !tile->isClickable())
         return nullptr;
 
     return tile;
 }
 
-void UIMap::onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode)
+void UIMap::onStyleApply(const std::string &styleName, const OTMLNodePtr &styleNode)
 {
     UIWidget::onStyleApply(styleName, styleNode);
-    for(const OTMLNodePtr& node : styleNode->children()) {
-        if(node->tag() == "multifloor")
+    for (const OTMLNodePtr &node : styleNode->children())
+    {
+        if (node->tag() == "multifloor")
             setMultifloor(node->value<bool>());
-        else if(node->tag() == "auto-view-mode")
+        else if (node->tag() == "auto-view-mode")
             setAutoViewMode(node->value<bool>());
-        else if(node->tag() == "draw-texts")
+        else if (node->tag() == "draw-texts")
             setDrawTexts(node->value<bool>());
-        else if(node->tag() == "draw-lights")
+        else if (node->tag() == "draw-lights")
             setDrawLights(node->value<bool>());
-        else if(node->tag() == "animated")
+        else if (node->tag() == "animated")
             setAnimated(node->value<bool>());
     }
 }
 
-void UIMap::onGeometryChange(const Rect& oldRect, const Rect& newRect)
+void UIMap::onGeometryChange(const Rect &oldRect, const Rect &newRect)
 {
     UIWidget::onGeometryChange(oldRect, newRect);
     updateMapSize();
@@ -187,36 +195,41 @@ void UIMap::updateVisibleDimension()
     int dimensionHeight = m_zoom;
 
     float ratio = m_aspectRatio;
-    if(!m_limitVisibleRange && !m_mapRect.isEmpty() && !m_keepAspectRatio)
+    if (!m_limitVisibleRange && !m_mapRect.isEmpty() && !m_keepAspectRatio)
         ratio = m_mapRect.size().ratio();
 
-    if(dimensionHeight % 2 == 0)
+    if (dimensionHeight % 2 == 0)
         dimensionHeight += 1;
     int dimensionWidth = m_zoom * ratio;
-    if(dimensionWidth % 2 == 0)
+    if (dimensionWidth % 2 == 0)
         dimensionWidth += 1;
 
-    if(m_keepAspectRatio)
+    if (m_keepAspectRatio)
         updateMapSize();
 
-    if (!m_zoomLock.try_lock()) return;
+    if (!m_zoomLock.try_lock())
+        return;
 
-    uint8_t zoomDelay = 50; 
+    uint8_t zoomDelay = 50;
     g_dispatcher.scheduleEvent([this, dimensionWidth, dimensionHeight] {
         m_zoomLock.unlock();
         m_mapView->setVisibleDimension(Size(dimensionWidth, dimensionHeight));
-    }, zoomDelay);
+    },
+                               zoomDelay);
 }
 
 void UIMap::updateMapSize()
 {
     Rect clippingRect = getPaddingRect();
     Size mapSize;
-    if(m_keepAspectRatio) {
+    if (m_keepAspectRatio)
+    {
         Rect mapRect = clippingRect.expanded(-1);
-        mapSize = Size(m_aspectRatio*m_zoom, m_zoom);
+        mapSize = Size(m_aspectRatio * m_zoom, m_zoom);
         mapSize.scale(mapRect.size(), Fw::KeepAspectRatio);
-    } else {
+    }
+    else
+    {
         mapSize = clippingRect.expanded(-1).size();
     }
 
@@ -224,15 +237,14 @@ void UIMap::updateMapSize()
     m_mapRect.moveCenter(clippingRect.center());
     m_mapView->optimizeForSize(mapSize);
 
-    if(!m_keepAspectRatio)
+    if (!m_keepAspectRatio)
         updateVisibleDimension();
 }
 
-bool UIMap::onMouseMove(const Point& mousePos, const Point& mouseMoved)
+bool UIMap::onMouseMove(const Point &mousePos, const Point &mouseMoved)
 {
     g_map.setMousePos(mousePos);
     return UIWidget::onMouseMove(mousePos, mouseMoved);
 }
-
 
 /* vim: set ts=4 sw=4 et: */
