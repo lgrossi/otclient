@@ -896,14 +896,13 @@ void Map::setMousePos(const Point& mPos)
 
 void Map::updateCamera()
 {   
-    uint8_t topGap = 35;
     float factor = 0.25;
     float scrollRatio = 0.02;
     uint16_t width = g_window.getWidth();
     uint16_t height = g_window.getHeight();
 
     Position pos = m_centralPosition;
-    if (m_mousePos.y <= topGap + height * scrollRatio && m_mousePos.y >= topGap) {
+    if (m_mousePos.y <= height * scrollRatio) {
         pos.y -= m_awareRange.top * factor;
     }
 
