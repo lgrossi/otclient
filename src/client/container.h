@@ -32,7 +32,7 @@
 class Container : public LuaObject
 {
 protected:
-    Container(int id, int capacity, const std::string& name, const ItemPtr& containerItem, bool hasParent, bool isUnlocked, bool hasPages, int containerSize, int firstIndex);
+    Container(int id, int capacity, const std::string &name, const ItemPtr &containerItem, bool hasParent, bool isUnlocked, bool hasPages, int containerSize, int firstIndex);
 
 public:
     ItemPtr getItem(int slot);
@@ -52,12 +52,12 @@ public:
     ItemPtr findItemById(uint itemId, int subType);
 
 protected:
-    void onOpen(const ContainerPtr& previousContainer);
+    void onOpen(const ContainerPtr &previousContainer);
     void onClose();
-    void onAddItem(const ItemPtr& item, int slot);
-    void onAddItems(const std::vector<ItemPtr>& items);
-    void onUpdateItem(int slot, const ItemPtr& item);
-    void onRemoveItem(int slot, const ItemPtr& lastItem);
+    void onAddItem(const ItemPtr &item, int slot);
+    void onAddItems(const std::vector<ItemPtr> &items);
+    void onUpdateItem(int slot, const ItemPtr &item);
+    void onRemoveItem(int slot, const ItemPtr &lastItem);
 
     friend class Game;
 

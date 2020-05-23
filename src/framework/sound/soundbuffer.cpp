@@ -36,17 +36,19 @@ SoundBuffer::~SoundBuffer()
     assert(alGetError() == AL_NO_ERROR);
 }
 
-bool SoundBuffer::fillBuffer(const SoundFilePtr& soundFile)
+bool SoundBuffer::fillBuffer(const SoundFilePtr &soundFile)
 {
     ALenum format = soundFile->getSampleFormat();
-    if(format == AL_UNDETERMINED) {
+    if (format == AL_UNDETERMINED)
+    {
         g_logger.error(stdext::format("unable to determine sample format for '%s'", soundFile->getName()));
         return false;
     }
 
     DataBuffer<char> samples(soundFile->getSize());
     int read = soundFile->read(&samples[0], soundFile->getSize());
-    if(read == 0) {
+    if (read == 0)
+    {
         g_logger.error(stdext::format("unable to fill audio buffer data for '%s'", soundFile->getName()));
         return false;
     }
@@ -54,11 +56,12 @@ bool SoundBuffer::fillBuffer(const SoundFilePtr& soundFile)
     return fillBuffer(format, samples, samples.size(), soundFile->getRate());
 }
 
-bool SoundBuffer::fillBuffer(ALenum sampleFormat, const DataBuffer<char>& data, int size, int rate)
+bool SoundBuffer::fillBuffer(ALenum sampleFormat, const DataBuffer<char> &data, int size, int rate)
 {
     alBufferData(m_bufferId, sampleFormat, &data[0], size, rate);
     ALenum err = alGetError();
-    if(err != AL_NO_ERROR) {
+    if (err != AL_NO_ERROR)
+    {
         g_logger.error(stdext::format("unable to fill audio buffer data: %s", alGetString(err)));
         return false;
     }

@@ -31,7 +31,7 @@ int push_luavalue(bool b)
     return 1;
 }
 
-bool luavalue_cast(int index, bool& b)
+bool luavalue_cast(int index, bool &b)
 {
     b = g_lua.toBoolean(index);
     return true;
@@ -44,10 +44,10 @@ int push_luavalue(int i)
     return 1;
 }
 
-bool luavalue_cast(int index, int& i)
+bool luavalue_cast(int index, int &i)
 {
     i = g_lua.toInteger(index);
-    if(i == 0 && !g_lua.isNumber(index) && !g_lua.isNil())
+    if (i == 0 && !g_lua.isNumber(index) && !g_lua.isNil())
         return false;
     return true;
 }
@@ -59,42 +59,42 @@ int push_luavalue(double d)
     return 1;
 }
 
-bool luavalue_cast(int index, double& d)
+bool luavalue_cast(int index, double &d)
 {
     d = g_lua.toNumber(index);
-    if(d == 0 && !g_lua.isNumber(index) && !g_lua.isNil())
+    if (d == 0 && !g_lua.isNumber(index) && !g_lua.isNil())
         return false;
     return true;
 }
 
 // string
-int push_luavalue(const char* cstr)
+int push_luavalue(const char *cstr)
 {
     g_lua.pushCString(cstr);
     return 1;
 }
 
-int push_luavalue(const std::string& str)
+int push_luavalue(const std::string &str)
 {
     g_lua.pushString(str);
     return 1;
 }
 
-bool luavalue_cast(int index, std::string& str)
+bool luavalue_cast(int index, std::string &str)
 {
     str = g_lua.toString(index);
     return true;
 }
 
 // lua cpp function
-int push_luavalue(const LuaCppFunction& func)
+int push_luavalue(const LuaCppFunction &func)
 {
     g_lua.pushCppFunction(func);
     return 1;
 }
 
 // color
-int push_luavalue(const Color& color)
+int push_luavalue(const Color &color)
 {
     g_lua.createTable(0, 4);
     g_lua.pushInteger(color.r());
@@ -108,9 +108,10 @@ int push_luavalue(const Color& color)
     return 1;
 }
 
-bool luavalue_cast(int index, Color& color)
+bool luavalue_cast(int index, Color &color)
 {
-    if(g_lua.isTable(index)) {
+    if (g_lua.isTable(index))
+    {
         g_lua.getField("r", index);
         color.setRed((int)g_lua.popInteger());
         g_lua.getField("g", index);
@@ -120,9 +121,13 @@ bool luavalue_cast(int index, Color& color)
         g_lua.getField("a", index);
         color.setAlpha((int)g_lua.popInteger());
         return true;
-    } else if(g_lua.isString()) {
+    }
+    else if (g_lua.isString())
+    {
         return stdext::cast(g_lua.toString(index), color);
-    } else if(g_lua.isNil()) {
+    }
+    else if (g_lua.isNil())
+    {
         color = Color::white;
         return true;
     }
@@ -130,7 +135,7 @@ bool luavalue_cast(int index, Color& color)
 }
 
 // rect
-int push_luavalue(const Rect& rect)
+int push_luavalue(const Rect &rect)
 {
     g_lua.createTable(0, 4);
     g_lua.pushInteger(rect.x());
@@ -144,9 +149,10 @@ int push_luavalue(const Rect& rect)
     return 1;
 }
 
-bool luavalue_cast(int index, Rect& rect)
+bool luavalue_cast(int index, Rect &rect)
 {
-    if(g_lua.isTable(index)) {
+    if (g_lua.isTable(index))
+    {
         g_lua.getField("x", index);
         rect.setX(g_lua.popInteger());
         g_lua.getField("y", index);
@@ -156,9 +162,13 @@ bool luavalue_cast(int index, Rect& rect)
         g_lua.getField("height", index);
         rect.setHeight(g_lua.popInteger());
         return true;
-    } else if(g_lua.isString()) {
+    }
+    else if (g_lua.isString())
+    {
         return stdext::cast(g_lua.toString(index), rect);
-    } else if(g_lua.isNil()) {
+    }
+    else if (g_lua.isNil())
+    {
         rect = Rect();
         return true;
     }
@@ -166,7 +176,7 @@ bool luavalue_cast(int index, Rect& rect)
 }
 
 // point
-int push_luavalue(const Point& point)
+int push_luavalue(const Point &point)
 {
     g_lua.createTable(0, 2);
     g_lua.pushInteger(point.x);
@@ -176,17 +186,22 @@ int push_luavalue(const Point& point)
     return 1;
 }
 
-bool luavalue_cast(int index, Point& point)
+bool luavalue_cast(int index, Point &point)
 {
-    if(g_lua.isTable(index)) {
+    if (g_lua.isTable(index))
+    {
         g_lua.getField("x", index);
         point.x = g_lua.popInteger();
         g_lua.getField("y", index);
         point.y = g_lua.popInteger();
         return true;
-    } else if(g_lua.isString()) {
+    }
+    else if (g_lua.isString())
+    {
         return stdext::cast(g_lua.toString(index), point);
-    } else if(g_lua.isNil()) {
+    }
+    else if (g_lua.isNil())
+    {
         point = Point();
         return true;
     }
@@ -194,7 +209,7 @@ bool luavalue_cast(int index, Point& point)
 }
 
 // size
-int push_luavalue(const Size& size)
+int push_luavalue(const Size &size)
 {
     g_lua.createTable(0, 2);
     g_lua.pushInteger(size.width());
@@ -204,17 +219,22 @@ int push_luavalue(const Size& size)
     return 1;
 }
 
-bool luavalue_cast(int index, Size& size)
+bool luavalue_cast(int index, Size &size)
 {
-    if(g_lua.isTable(index)) {
+    if (g_lua.isTable(index))
+    {
         g_lua.getField("width", index);
         size.setWidth(g_lua.popInteger());
         g_lua.getField("height", index);
         size.setHeight(g_lua.popInteger());
         return true;
-    } else if(g_lua.isString()) {
+    }
+    else if (g_lua.isString())
+    {
         return stdext::cast(g_lua.toString(index), size);
-    } else if(g_lua.isNil()) {
+    }
+    else if (g_lua.isNil())
+    {
         size = Size();
         return true;
     }
@@ -222,95 +242,118 @@ bool luavalue_cast(int index, Size& size)
 }
 
 // otml nodes
-void push_otml_subnode_luavalue(const OTMLNodePtr& node)
+void push_otml_subnode_luavalue(const OTMLNodePtr &node)
 {
-    if(node->hasValue()) {
+    if (node->hasValue())
+    {
         union {
             bool b;
             double d;
             long l;
         };
         std::string value = node->rawValue();
-        if(stdext::cast(value, b))
+        if (stdext::cast(value, b))
             g_lua.pushBoolean(b);
-        else if(stdext::cast(value, l))
+        else if (stdext::cast(value, l))
             g_lua.pushInteger(l);
-        else if(stdext::cast(value, d))
+        else if (stdext::cast(value, d))
             g_lua.pushNumber(d);
         else
             g_lua.pushString(value);
-    } else if(node->hasChildren()) {
+    }
+    else if (node->hasChildren())
+    {
         g_lua.newTable();
         bool pushedChild = false;
         int currentIndex = 1;
-        for(const OTMLNodePtr& cnode : node->children()) {
+        for (const OTMLNodePtr &cnode : node->children())
+        {
             push_otml_subnode_luavalue(cnode);
-            if(!g_lua.isNil()) {
-                if(cnode->isUnique()) {
+            if (!g_lua.isNil())
+            {
+                if (cnode->isUnique())
+                {
                     g_lua.pushString(cnode->tag());
                     g_lua.insert(-2);
                     g_lua.rawSet();
-                } else
+                }
+                else
                     g_lua.rawSeti(currentIndex++);
                 pushedChild = true;
-            } else
+            }
+            else
                 g_lua.pop();
         }
-        if(!pushedChild) {
+        if (!pushedChild)
+        {
             g_lua.pop();
             g_lua.pushNil();
         }
-    } else
+    }
+    else
         g_lua.pushNil();
 }
 
-int push_luavalue(const OTMLNodePtr& node)
+int push_luavalue(const OTMLNodePtr &node)
 {
-    if(node) {
+    if (node)
+    {
         g_lua.newTable();
         int currentIndex = 1;
-        for(const OTMLNodePtr& cnode : node->children()) {
+        for (const OTMLNodePtr &cnode : node->children())
+        {
             push_otml_subnode_luavalue(cnode);
-            if(cnode->isUnique() && !cnode->tag().empty()) {
+            if (cnode->isUnique() && !cnode->tag().empty())
+            {
                 g_lua.setField(cnode->tag());
-            } else
+            }
+            else
                 g_lua.rawSeti(currentIndex++);
         }
-    } else
+    }
+    else
         g_lua.pushNil();
     return 1;
 }
 
-bool luavalue_cast(int index, OTMLNodePtr& node)
+bool luavalue_cast(int index, OTMLNodePtr &node)
 {
     node = OTMLNode::create();
     node->setUnique(true);
-    if(g_lua.isTable(index)) {
+    if (g_lua.isTable(index))
+    {
         g_lua.pushNil();
-        while(g_lua.next(index < 0 ? index-1 : index)) {
+        while (g_lua.next(index < 0 ? index - 1 : index))
+        {
             std::string cnodeName;
-            if(g_lua.isString(-2)) {
+            if (g_lua.isString(-2))
+            {
                 g_lua.pushValue(-2);
                 cnodeName = g_lua.toString();
                 g_lua.pop();
-            } else
+            }
+            else
                 assert(g_lua.isNumber());
-            if(g_lua.isTable()) {
+            if (g_lua.isTable())
+            {
                 OTMLNodePtr cnode;
-                if(luavalue_cast(-1, cnode)) {
-                    if(cnodeName.empty())
+                if (luavalue_cast(-1, cnode))
+                {
+                    if (cnodeName.empty())
                         cnode->setUnique(false);
                     else
                         cnode->setTag(cnodeName);
                     node->addChild(cnode);
                 }
-            } else {
+            }
+            else
+            {
                 std::string value;
-                if(g_lua.isBoolean())
+                if (g_lua.isBoolean())
                     value = stdext::unsafe_cast<std::string>(g_lua.toBoolean());
                 else
                     value = g_lua.toString();
-                if(cnodeName.empty())
+                if (cnodeName.empty())
                     node->writeIn(value);
                 else
                     node->writeAt(cnodeName, value);
@@ -323,11 +366,15 @@ bool luavalue_cast(int index, OTMLNodePtr& node)
 }
 
 // object ptr
-bool luavalue_cast(int index, LuaObjectPtr& obj) {
-    if(g_lua.isUserdata(index)) {
+bool luavalue_cast(int index, LuaObjectPtr &obj)
+{
+    if (g_lua.isUserdata(index))
+    {
         obj = g_lua.toObject(index);
         return true;
-    } else if(g_lua.isNil(index)) {
+    }
+    else if (g_lua.isNil(index))
+    {
         obj = nullptr;
         return true;
     }

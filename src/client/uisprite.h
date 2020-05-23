@@ -44,7 +44,7 @@ public:
     bool hasSprite() { return m_sprite != nullptr; }
 
 protected:
-    void onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode);
+    void onStyleApply(const std::string &styleName, const OTMLNodePtr &styleNode);
 
     TexturePtr m_sprite;
     uint16 m_spriteId;

@@ -33,11 +33,11 @@ public:
 
     void drawSelf(Fw::DrawPane drawPane);
 
-    void addEffect(const std::string& name);
+    void addEffect(const std::string &name);
 
-    void onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode);
+    void onStyleApply(const std::string &styleName, const OTMLNodePtr &styleNode);
 
-    void setReferencePos(const PointF& point) { m_referencePos = point; }
+    void setReferencePos(const PointF &point) { m_referencePos = point; }
     PointF getReferencePos() { return m_referencePos; }
 
 private:

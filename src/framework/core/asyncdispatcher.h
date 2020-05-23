@@ -26,7 +26,8 @@
 #include "declarations.h"
 #include <framework/stdext/thread.h>
 
-class AsyncDispatcher {
+class AsyncDispatcher
+{
 public:
     void init();
     void terminate();
@@ -34,8 +35,9 @@ public:
     void spawn_thread();
     void stop();
 
-    template<class F>
-    boost::shared_future<typename std::result_of<F()>::type> schedule(const F& task) {
+    template <class F>
+    boost::shared_future<typename std::result_of<F()>::type> schedule(const F &task)
+    {
         std::lock_guard<std::mutex> lock(m_mutex);
         auto prom = std::make_shared<boost::promise<typename std::result_of<F()>::type>>();
         m_tasks.push_back([=]() { prom->set_value(task()); });

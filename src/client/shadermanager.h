@@ -30,7 +30,8 @@
 class ShaderManager
 {
 public:
-    enum {
+    enum
+    {
         ITEM_ID_UNIFORM = 10,
         MAP_CENTER_COORD = 10,
         MAP_GLOBAL_COORD = 11,
@@ -40,29 +41,27 @@ public:
     void init();
     void terminate();
 
-    PainterShaderProgramPtr createShader(const std::string& name);
-    PainterShaderProgramPtr createFragmentShader(const std::string& name, std::string file);
-    PainterShaderProgramPtr createFragmentShaderFromCode(const std::string& name, const std::string& code);
+    PainterShaderProgramPtr createShader(const std::string &name);
+    PainterShaderProgramPtr createFragmentShader(const std::string &name, std::string file);
+    PainterShaderProgramPtr createFragmentShaderFromCode(const std::string &name, const std::string &code);
 
-    PainterShaderProgramPtr createItemShader(const std::string& name, const std::string& file);
-    PainterShaderProgramPtr createMapShader(const std::string& name, const std::string& file);
+    PainterShaderProgramPtr createItemShader(const std::string &name, const std::string &file);
+    PainterShaderProgramPtr createMapShader(const std::string &name, const std::string &file);
 
-    const PainterShaderProgramPtr& getDefaultItemShader() { return m_defaultItemShader; }
-    const PainterShaderProgramPtr& getDefaultMapShader() { return m_defaultMapShader; }
+    const PainterShaderProgramPtr &getDefaultItemShader() { return m_defaultItemShader; }
+    const PainterShaderProgramPtr &getDefaultMapShader() { return m_defaultMapShader; }
 
-    PainterShaderProgramPtr getShader(const std::string& name);
+    PainterShaderProgramPtr getShader(const std::string &name);
 
 private:
-    void setupItemShader(const PainterShaderProgramPtr& shader);
-    void setupMapShader(const PainterShaderProgramPtr& shader);
+    void setupItemShader(const PainterShaderProgramPtr &shader);
+    void setupMapShader(const PainterShaderProgramPtr &shader);
 
     PainterShaderProgramPtr m_defaultItemShader;
     PainterShaderProgramPtr m_defaultMapShader;
     std::unordered_map<std::string, PainterShaderProgramPtr> m_shaders;
 };
 
-
 extern ShaderManager g_shaders;
 
 #endif
-

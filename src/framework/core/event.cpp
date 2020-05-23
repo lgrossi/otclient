@@ -22,10 +22,9 @@
 
 #include "event.h"
 
-Event::Event(const std::function<void()>& callback) :
-    m_callback(callback),
-    m_canceled(false),
-    m_executed(false)
+Event::Event(const std::function<void()> &callback) : m_callback(callback),
+                                                      m_canceled(false),
+                                                      m_executed(false)
 {
 }
 
@@ -37,7 +36,8 @@ Event::~Event()
 
 void Event::execute()
 {
-    if(!m_canceled && !m_executed && m_callback) {
+    if (!m_canceled && !m_executed && m_callback)
+    {
         m_callback();
         m_executed = true;
     }

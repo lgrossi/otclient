@@ -32,11 +32,13 @@ Server::Server(int port)
 
 ServerPtr Server::create(int port)
 {
-    try {
+    try
+    {
         Server *server = new Server(port);
         return ServerPtr(server);
     }
-    catch(const std::exception& e) {
+    catch (const std::exception &e)
+    {
         g_logger.error(stdext::format("Failed to initialize server: %s", e.what()));
         return ServerPtr();
     }
@@ -54,8 +56,9 @@ void Server::acceptNext()
     ConnectionPtr connection = ConnectionPtr(new Connection);
     connection->m_connecting = true;
     auto self = static_self_cast<Server>();
-    m_acceptor.async_accept(connection->m_socket, [=](const boost::system::error_code& error) {
-        if(!error) {
+    m_acceptor.async_accept(connection->m_socket, [=](const boost::system::error_code &error) {
+        if (!error)
+        {
             connection->m_connected = true;
             connection->m_connecting = false;
         }

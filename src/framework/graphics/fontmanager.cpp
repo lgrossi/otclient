@@ -47,7 +47,8 @@ void FontManager::clearFonts()
 
 bool FontManager::importFont(std::string file)
 {
-    try {
+    try
+    {
         file = g_resources.guessFilePath(file, "otfont");
 
         OTMLDocumentPtr doc = OTMLDocument::parse(file);
@@ -56,8 +57,10 @@ bool FontManager::importFont(std::string file)
         std::string name = fontNode->valueAt("name");
 
         // remove any font with the same name
-        for(auto it = m_fonts.begin(); it != m_fonts.end(); ++it) {
-            if((*it)->getName() == name) {
+        for (auto it = m_fonts.begin(); it != m_fonts.end(); ++it)
+        {
+            if ((*it)->getName() == name)
+            {
                 m_fonts.erase(it);
                 break;
             }
@@ -68,30 +71,34 @@ bool FontManager::importFont(std::string file)
         m_fonts.push_back(font);
 
         // set as default if needed
-        if(!m_defaultFont || fontNode->valueAt<bool>("default", false))
+        if (!m_defaultFont || fontNode->valueAt<bool>("default", false))
             m_defaultFont = font;
 
         return true;
-    } catch(stdext::exception& e) {
+    }
+    catch (stdext::exception &e)
+    {
         g_logger.error(stdext::format("Unable to load font from file '%s': %s", file, e.what()));
         return false;
     }
 }
 
-bool FontManager::fontExists(const std::string& fontName)
+bool FontManager::fontExists(const std::string &fontName)
 {
-    for(const BitmapFontPtr& font : m_fonts) {
-        if(font->getName() == fontName)
+    for (const BitmapFontPtr &font : m_fonts)
+    {
+        if (font->getName() == fontName)
             return true;
     }
     return false;
 }
 
-BitmapFontPtr FontManager::getFont(const std::string& fontName)
+BitmapFontPtr FontManager::getFont(const std::string &fontName)
 {
     // find font by name
-    for(const BitmapFontPtr& font : m_fonts) {
-        if(font->getName() == fontName)
+    for (const BitmapFontPtr &font : m_fonts)
+    {
+        if (font->getName() == fontName)
             return font;
     }
 

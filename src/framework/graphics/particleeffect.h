@@ -33,7 +33,7 @@ class ParticleEffectType : public LuaObject
 public:
     ParticleEffectType();
 
-    void load(const OTMLNodePtr& node);
+    void load(const OTMLNodePtr &node);
 
     std::string getName() { return m_name; }
     std::string getDescription() { return m_description; }
@@ -50,7 +50,7 @@ class ParticleEffect : public LuaObject
 public:
     ParticleEffect() {}
 
-    void load(const ParticleEffectTypePtr& effectType);
+    void load(const ParticleEffectTypePtr &effectType);
     bool hasFinished() { return m_systems.empty(); }
     void render();
     void update();

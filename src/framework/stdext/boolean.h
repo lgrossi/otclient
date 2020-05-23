@@ -23,18 +23,25 @@
 #ifndef BOOLEAN_H
 #define BOOLEAN_H
 
-namespace stdext {
+namespace stdext
+{
 
-template<bool def>
-struct boolean {
-    boolean() : v(def) { }
-    operator bool &() { return v; }
-    operator bool const &() const { return v; }
-    bool& operator=(const bool& o) { v = o; return v; }
-private:
-    bool v;
-};
+    template <bool def>
+    struct boolean
+    {
+        boolean() : v(def) {}
+        operator bool &() { return v; }
+        operator bool const &() const { return v; }
+        bool &operator=(const bool &o)
+        {
+            v = o;
+            return v;
+        }
 
-}
+    private:
+        bool v;
+    };
+
+} // namespace stdext
 
 #endif

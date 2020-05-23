@@ -34,18 +34,18 @@ class AnimatedText : public Thing
 public:
     AnimatedText();
 
-    void drawText(const Point& dest, const Rect& visibleRect);
+    void drawText(const Point &dest, const Rect &visibleRect);
 
     void setColor(int color);
-    void setText(const std::string& text);
-    void setOffset(const Point& offset) { m_offset = offset; }
+    void setText(const std::string &text);
+    void setOffset(const Point &offset) { m_offset = offset; }
 
     Color getColor() { return m_color; }
-    const CachedText& getCachedText() const { return m_cachedText; }
+    const CachedText &getCachedText() const { return m_cachedText; }
     Point getOffset() { return m_offset; }
     Timer getTimer() { return m_animationTimer; }
 
-    bool merge(const AnimatedTextPtr& other);
+    bool merge(const AnimatedTextPtr &other);
 
     AnimatedTextPtr asAnimatedText() { return static_self_cast<AnimatedText>(); }
     bool isAnimatedText() { return true; }

@@ -28,7 +28,8 @@
 #include <framework/graphics/painter.h>
 #include "thingtype.h"
 
-struct LightSource {
+struct LightSource
+{
     Color color;
     Point center;
     int radius;
@@ -40,16 +41,16 @@ public:
     LightView();
 
     void reset();
-    void setGlobalLight(const Light& light);
-    void addLightSource(const Point& center, float scaleFactor, const Light& light);
-    void resize(const Size& size);
-    void draw(const Rect& dest, const Rect& src);
+    void setGlobalLight(const Light &light);
+    void addLightSource(const Point &center, float scaleFactor, const Light &light);
+    void resize(const Size &size);
+    void draw(const Rect &dest, const Rect &src);
 
     void setBlendEquation(Painter::BlendEquation blendEquation) { m_blendEquation = blendEquation; }
 
 private:
-    void drawGlobalLight(const Light& light);
-    void drawLightSource(const Point& center, const Color& color, int radius);
+    void drawGlobalLight(const Light &light);
+    void drawLightSource(const Point &center, const Color &color, int radius);
     TexturePtr generateLightBubble(float centerFactor);
 
     Painter::BlendEquation m_blendEquation;

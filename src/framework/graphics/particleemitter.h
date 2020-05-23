@@ -34,9 +34,9 @@ class ParticleEmitter : public stdext::shared_object
 public:
     ParticleEmitter();
 
-    void load(const OTMLNodePtr& node);
+    void load(const OTMLNodePtr &node);
 
-    void update(float elapsedTime, const ParticleSystemPtr& system);
+    void update(float elapsedTime, const ParticleSystemPtr &system);
 
     bool hasFinished() { return m_finished; }
 

@@ -25,7 +25,8 @@
 
 #include <sstream>
 
-struct apng_data {
+struct apng_data
+{
     unsigned char *pdata;
     unsigned int width;
     unsigned int height;
@@ -39,8 +40,8 @@ struct apng_data {
 };
 
 // returns -1 on error, 0 on success
-int load_apng(std::stringstream& file, struct apng_data *apng);
-void save_png(std::stringstream& file, unsigned int width, unsigned int height, int channels, unsigned char *pixels);
+int load_apng(std::stringstream &file, struct apng_data *apng);
+void save_png(std::stringstream &file, unsigned int width, unsigned int height, int channels, unsigned char *pixels);
 void free_apng(struct apng_data *apng);
 
 #endif

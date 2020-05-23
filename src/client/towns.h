@@ -29,12 +29,12 @@
 class Town : public LuaObject
 {
 public:
-    Town() { }
-    Town(uint32 tid, const std::string& name, const Position& pos=Position());
+    Town() {}
+    Town(uint32 tid, const std::string &name, const Position &pos = Position());
 
     void setId(uint32 tid) { m_id = tid; }
-    void setName(const std::string& name) { m_name = name; }
-    void setPos(const Position& pos) { m_pos = pos; }
+    void setName(const std::string &name) { m_name = name; }
+    void setPos(const Position &pos) { m_pos = pos; }
 
     uint32 getId() { return m_id; }
     std::string getName() { return m_name; }
@@ -51,14 +51,18 @@ class TownManager
 public:
     TownManager();
 
-    void addTown(const TownPtr& town);
+    void addTown(const TownPtr &town);
     void removeTown(uint32 townId);
-    const TownPtr& getTown(uint32 townId);
-    const TownPtr& getTownByName(std::string name);
+    const TownPtr &getTown(uint32 townId);
+    const TownPtr &getTownByName(std::string name);
 
     void sort();
     TownList getTowns() { return m_towns; }
-    void clear() { m_towns.clear(); m_nullTown = nullptr; }
+    void clear()
+    {
+        m_towns.clear();
+        m_nullTown = nullptr;
+    }
 
 private:
     TownList m_towns;

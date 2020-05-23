@@ -36,10 +36,11 @@
 class PainterOGL1 : public PainterOGL
 {
 public:
-    enum MatrixMode {
+    enum MatrixMode
+    {
         MatrixProjection = 0x1701, //GL_PROJECTION
-        MatrixTexture = 0x1702, //GL_TEXTURE
-        MatrixTransform = 0x1700 // GL_MODELVIEW
+        MatrixTexture = 0x1702,    //GL_TEXTURE
+        MatrixTransform = 0x1700   // GL_MODELVIEW
     };
 
     PainterOGL1();
@@ -49,21 +50,21 @@ public:
 
     void refreshState();
 
-    void drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode = Triangles);
-    void drawFillCoords(CoordsBuffer& coordsBuffer);
-    void drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture);
-    void drawTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
-    void drawUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
-    void drawRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
-    void drawFilledRect(const Rect& dest);
-    void drawFilledTriangle(const Point& a, const Point& b, const Point& c);
-    void drawBoundingRect(const Rect& dest, int innerLineWidth);
+    void drawCoords(CoordsBuffer &coordsBuffer, DrawMode drawMode = Triangles);
+    void drawFillCoords(CoordsBuffer &coordsBuffer);
+    void drawTextureCoords(CoordsBuffer &coordsBuffer, const TexturePtr &texture);
+    void drawTexturedRect(const Rect &dest, const TexturePtr &texture, const Rect &src);
+    void drawUpsideDownTexturedRect(const Rect &dest, const TexturePtr &texture, const Rect &src);
+    void drawRepeatedTexturedRect(const Rect &dest, const TexturePtr &texture, const Rect &src);
+    void drawFilledRect(const Rect &dest);
+    void drawFilledTriangle(const Point &a, const Point &b, const Point &c);
+    void drawBoundingRect(const Rect &dest, int innerLineWidth);
 
     void setMatrixMode(MatrixMode matrixMode);
-    void setTransformMatrix(const Matrix3& transformMatrix);
-    void setProjectionMatrix(const Matrix3& projectionMatrix);
-    void setTextureMatrix(const Matrix3& textureMatrix);
-    void setColor(const Color& color);
+    void setTransformMatrix(const Matrix3 &transformMatrix);
+    void setProjectionMatrix(const Matrix3 &projectionMatrix);
+    void setTextureMatrix(const Matrix3 &textureMatrix);
+    void setColor(const Color &color);
     void setOpacity(float opacity);
 
     bool hasShaders() { return false; }

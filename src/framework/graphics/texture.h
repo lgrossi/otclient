@@ -29,13 +29,13 @@ class Texture : public stdext::shared_object
 {
 public:
     Texture();
-    Texture(const Size& size);
-    Texture(const ImagePtr& image, bool buildMipmaps = false, bool compress = false);
+    Texture(const Size &size);
+    Texture(const ImagePtr &image, bool buildMipmaps = false, bool compress = false);
     virtual ~Texture();
 
-    void uploadPixels(const ImagePtr& image, bool buildMipmaps = false, bool compress = false);
+    void uploadPixels(const ImagePtr &image, bool buildMipmaps = false, bool compress = false);
     void bind();
-    void copyFromScreen(const Rect& screenRect);
+    void copyFromScreen(const Rect &screenRect);
     virtual bool buildHardwareMipmaps();
 
     virtual void setSmooth(bool smooth);
@@ -47,9 +47,9 @@ public:
     ticks_t getTime() { return m_time; }
     int getWidth() { return m_size.width(); }
     int getHeight() { return m_size.height(); }
-    const Size& getSize() { return m_size; }
-    const Size& getGlSize() { return m_glSize; }
-    const Matrix3& getTransformMatrix() { return m_transformMatrix; }
+    const Size &getSize() { return m_size; }
+    const Size &getGlSize() { return m_glSize; }
+    const Matrix3 &getTransformMatrix() { return m_transformMatrix; }
     bool isEmpty() { return m_id == 0; }
     bool hasRepeat() { return m_repeat; }
     bool hasMipmaps() { return m_hasMipmaps; }
@@ -57,11 +57,11 @@ public:
 
 protected:
     void createTexture();
-    bool setupSize(const Size& size, bool forcePowerOfTwo = false);
+    bool setupSize(const Size &size, bool forcePowerOfTwo = false);
     void setupWrap();
     void setupFilters();
     void setupTranformMatrix();
-    void setupPixels(int level, const Size& size, uchar *pixels, int channels = 4, bool compress = false);
+    void setupPixels(int level, const Size &size, uchar *pixels, int channels = 4, bool compress = false);
 
     uint m_id;
     ticks_t m_time;

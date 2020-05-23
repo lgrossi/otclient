@@ -46,11 +46,11 @@ public:
     void setShiftNavigation(bool enable) { m_shiftNavigation = enable; }
     void setMultiline(bool enable) { m_multiline = enable; }
     void setMaxLength(uint maxLength) { m_maxLength = maxLength; }
-    void setTextVirtualOffset(const Point& offset);
+    void setTextVirtualOffset(const Point &offset);
     void setEditable(bool editable) { m_editable = editable; }
     void setSelectable(bool selectable) { m_selectable = selectable; }
-    void setSelectionColor(const Color& color) { m_selectionColor = color; }
-    void setSelectionBackgroundColor(const Color& color) { m_selectionBackgroundColor = color; }
+    void setSelectionColor(const Color &color) { m_selectionColor = color; }
+    void setSelectionBackgroundColor(const Color &color) { m_selectionBackgroundColor = color; }
     void setAutoScroll(bool autoScroll) { m_autoScroll = autoScroll; }
 
     void moveCursorHorizontally(bool right);
@@ -61,7 +61,7 @@ public:
     void blinkCursor();
 
     void del(bool right = false);
-    void paste(const std::string& text);
+    void paste(const std::string &text);
     std::string copy();
     std::string cut();
     void selectAll() { setSelection(0, m_text.length()); }
@@ -94,16 +94,16 @@ protected:
     void updateText();
 
     virtual void onHoverChange(bool hovered);
-    virtual void onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode);
-    virtual void onGeometryChange(const Rect& oldRect, const Rect& newRect);
+    virtual void onStyleApply(const std::string &styleName, const OTMLNodePtr &styleNode);
+    virtual void onGeometryChange(const Rect &oldRect, const Rect &newRect);
     virtual void onFocusChange(bool focused, Fw::FocusReason reason);
-    virtual bool onKeyText(const std::string& keyText);
+    virtual bool onKeyText(const std::string &keyText);
     virtual bool onKeyPress(uchar keyCode, int keyboardModifiers, int autoRepeatTicks);
-    virtual bool onMousePress(const Point& mousePos, Fw::MouseButton button);
-    virtual bool onMouseRelease(const Point& mousePos, Fw::MouseButton button);
-    virtual bool onMouseMove(const Point& mousePos, const Point& mouseMoved);
-    virtual bool onDoubleClick(const Point& mousePos);
-    virtual void onTextAreaUpdate(const Point& vitualOffset, const Size& visibleSize, const Size& totalSize);
+    virtual bool onMousePress(const Point &mousePos, Fw::MouseButton button);
+    virtual bool onMouseRelease(const Point &mousePos, Fw::MouseButton button);
+    virtual bool onMouseMove(const Point &mousePos, const Point &mouseMoved);
+    virtual bool onDoubleClick(const Point &mousePos);
+    virtual void onTextAreaUpdate(const Point &vitualOffset, const Size &visibleSize, const Size &totalSize);
 
 private:
     void disableUpdates() { m_updatesEnabled = false; }

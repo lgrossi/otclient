@@ -30,7 +30,8 @@
 class PainterShaderProgram : public ShaderProgram
 {
 protected:
-    enum {
+    enum
+    {
         VERTEX_ATTR = 0,
         TEXCOORD_ATTR = 1,
         PROJECTION_MATRIX_UNIFORM = 0,
@@ -55,15 +56,15 @@ public:
 
     bool link();
 
-    void setTransformMatrix(const Matrix3& transformMatrix);
-    void setProjectionMatrix(const Matrix3& projectionMatrix);
-    void setTextureMatrix(const Matrix3& textureMatrix);
-    void setColor(const Color& color);
+    void setTransformMatrix(const Matrix3 &transformMatrix);
+    void setProjectionMatrix(const Matrix3 &projectionMatrix);
+    void setTextureMatrix(const Matrix3 &textureMatrix);
+    void setColor(const Color &color);
     void setOpacity(float opacity);
-    void setResolution(const Size& resolution);
+    void setResolution(const Size &resolution);
     void updateTime();
 
-    void addMultiTexture(const std::string& file);
+    void addMultiTexture(const std::string &file);
     void bindMultiTextures();
 
 private:

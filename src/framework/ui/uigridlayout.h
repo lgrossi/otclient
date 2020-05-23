@@ -31,19 +31,55 @@ class UIGridLayout : public UILayout
 public:
     UIGridLayout(UIWidgetPtr parentWidget);
 
-    void applyStyle(const OTMLNodePtr& styleNode);
-    void removeWidget(const UIWidgetPtr& widget);
-    void addWidget(const UIWidgetPtr& widget);
+    void applyStyle(const OTMLNodePtr &styleNode);
+    void removeWidget(const UIWidgetPtr &widget);
+    void addWidget(const UIWidgetPtr &widget);
 
-    void setCellSize(const Size& size) { m_cellSize = size; update(); }
-    void setCellWidth(int width) { m_cellSize.setWidth(width); update(); }
-    void setCellHeight(int height) { m_cellSize.setHeight(height); update(); }
-    void setCellSpacing(int spacing) { m_cellSpacing = spacing; update(); }
-    void setNumColumns(int columns) { m_numColumns = columns; update(); }
-    void setNumLines(int lines) { m_numLines = lines; update(); }
-    void setAutoSpacing(bool enable) { m_autoSpacing = enable; update(); }
-    void setFitChildren(bool enable) { m_fitChildren = enable; update(); }
-    void setFlow(bool enable) { m_flow = enable; update(); }
+    void setCellSize(const Size &size)
+    {
+        m_cellSize = size;
+        update();
+    }
+    void setCellWidth(int width)
+    {
+        m_cellSize.setWidth(width);
+        update();
+    }
+    void setCellHeight(int height)
+    {
+        m_cellSize.setHeight(height);
+        update();
+    }
+    void setCellSpacing(int spacing)
+    {
+        m_cellSpacing = spacing;
+        update();
+    }
+    void setNumColumns(int columns)
+    {
+        m_numColumns = columns;
+        update();
+    }
+    void setNumLines(int lines)
+    {
+        m_numLines = lines;
+        update();
+    }
+    void setAutoSpacing(bool enable)
+    {
+        m_autoSpacing = enable;
+        update();
+    }
+    void setFitChildren(bool enable)
+    {
+        m_fitChildren = enable;
+        update();
+    }
+    void setFlow(bool enable)
+    {
+        m_flow = enable;
+        update();
+    }
 
     Size getCellSize() { return m_cellSize; }
     int getCellSpacing() { return m_cellSpacing; }

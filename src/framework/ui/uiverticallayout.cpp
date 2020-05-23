@@ -24,12 +24,13 @@
 #include "uiwidget.h"
 #include <framework/core/eventdispatcher.h>
 
-void UIVerticalLayout::applyStyle(const OTMLNodePtr& styleNode)
+void UIVerticalLayout::applyStyle(const OTMLNodePtr &styleNode)
 {
     UIBoxLayout::applyStyle(styleNode);
 
-    for(const OTMLNodePtr& node : styleNode->children()) {
-        if(node->tag() == "align-bottom")
+    for (const OTMLNodePtr &node : styleNode->children())
+    {
+        if (node->tag() == "align-bottom")
             setAlignBottom(node->value<bool>());
     }
 }
@@ -39,47 +40,56 @@ bool UIVerticalLayout::internalUpdate()
     bool changed = false;
 
     UIWidgetPtr parentWidget = getParentWidget();
-    if(!parentWidget)
+    if (!parentWidget)
         return false;
 
     UIWidgetList widgets = parentWidget->getChildren();
 
-    if(m_alignBottom)
+    if (m_alignBottom)
         std::reverse(widgets.begin(), widgets.end());
 
     Rect paddingRect = parentWidget->getPaddingRect();
-    Point pos = (m_alignBottom) ? paddingRect .bottomLeft() : paddingRect.topLeft();
+    Point pos = (m_alignBottom) ? paddingRect.bottomLeft() : paddingRect.topLeft();
     int preferredHeight = 0;
     int gap;
 
-    for(const UIWidgetPtr& widget : widgets) {
-        if(!widget->isExplicitlyVisible())
+    for (const UIWidgetPtr &widget : widgets)
+    {
+        if (!widget->isExplicitlyVisible())
             continue;
 
         Size size = widget->getSize();
 
-        gap = (m_alignBottom) ? -(widget->getMarginBottom()+widget->getHeight()) : widget->getMarginTop();
+        gap = (m_alignBottom) ? -(widget->getMarginBottom() + widget->getHeight()) : widget->getMarginTop();
         pos.y += gap;
         preferredHeight += gap;
 
-        if(widget->isFixedSize()) {
+        if (widget->isFixedSize())
+        {
             // center it
-            if(widget->getTextAlign() & Fw::AlignLeft) {
+            if (widget->getTextAlign() & Fw::AlignLeft)
+            {
                 pos.x = paddingRect.left() + widget->getMarginLeft();
-            } else if(widget->getTextAlign() & Fw::AlignLeft) {
+            }
+            else if (widget->getTextAlign() & Fw::AlignLeft)
+            {
                 pos.x = paddingRect.bottom() - widget->getHeight() - widget->getMarginBottom();
                 pos.x = std::max<int>(pos.x, paddingRect.left());
-            } else {
-                pos.x = paddingRect.left() + (paddingRect.width() - (widget->getMarginLeft() + widget->getWidth() + widget->getMarginRight()))/2;
+            }
+            else
+            {
+                pos.x = paddingRect.left() + (paddingRect.width() - (widget->getMarginLeft() + widget->getWidth() + widget->getMarginRight())) / 2;
                 pos.x = std::max<int>(pos.x, paddingRect.left());
             }
-        } else {
+        }
+        else
+        {
             // expand width
             size.setWidth(paddingRect.width() - (widget->getMarginLeft() + widget->getMarginRight()));
-            pos.x = paddingRect.left() + (paddingRect.width() - size.width())/2;
+            pos.x = paddingRect.left() + (paddingRect.width() - size.width()) / 2;
         }
 
-        if(widget->setRect(Rect(pos - parentWidget->getVirtualOffset(), size)))
+        if (widget->setRect(Rect(pos - parentWidget->getVirtualOffset(), size)))
             changed = true;
 
         gap = (m_alignBottom) ? -widget->getMarginTop() : (widget->getHeight() + widget->getMarginBottom());
@@ -91,7 +101,8 @@ bool UIVerticalLayout::internalUpdate()
     preferredHeight -= m_spacing;
     preferredHeight += parentWidget->getPaddingTop() + parentWidget->getPaddingBottom();
 
-    if(m_fitChildren && preferredHeight != parentWidget->getHeight()) {
+    if (m_fitChildren && preferredHeight != parentWidget->getHeight())
+    {
         // must set the preferred width later
         g_dispatcher.addEvent([=] {
             parentWidget->setHeight(preferredHeight);

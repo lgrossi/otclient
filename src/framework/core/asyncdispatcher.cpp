@@ -47,18 +47,20 @@ void AsyncDispatcher::stop()
     m_running = false;
     m_condition.notify_all();
     m_mutex.unlock();
-    for(std::thread& thread : m_threads)
+    for (std::thread &thread : m_threads)
         thread.join();
     m_threads.clear();
 };
 
-void AsyncDispatcher::exec_loop() {
+void AsyncDispatcher::exec_loop()
+{
     std::unique_lock<std::mutex> lock(m_mutex);
-    while(true) {
-        while(m_tasks.empty() && m_running)
+    while (true)
+    {
+        while (m_tasks.empty() && m_running)
             m_condition.wait(lock);
 
-        if(!m_running)
+        if (!m_running)
             return;
 
         std::function<void()> task = m_tasks.front();

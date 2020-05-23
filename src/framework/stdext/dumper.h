@@ -25,17 +25,31 @@
 
 #include <iostream>
 
-namespace stdext {
+namespace stdext
+{
 
-static struct {
-    struct dumper_dummy {
-        ~dumper_dummy() { std::cout << std::endl; }
-        template<class T> dumper_dummy& operator<<(const T& v) { std::cout << v << " "; return *this; }
-    };
-    template<class T> dumper_dummy operator<<(const T& v) const { dumper_dummy d; d << v; return d; }
-} dump;
+    static struct
+    {
+        struct dumper_dummy
+        {
+            ~dumper_dummy() { std::cout << std::endl; }
+            template <class T>
+            dumper_dummy &operator<<(const T &v)
+            {
+                std::cout << v << " ";
+                return *this;
+            }
+        };
+        template <class T>
+        dumper_dummy operator<<(const T &v) const
+        {
+            dumper_dummy d;
+            d << v;
+            return d;
+        }
+    } dump;
 
-}
+} // namespace stdext
 
 using stdext::dump;
 

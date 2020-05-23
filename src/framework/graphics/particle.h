@@ -29,7 +29,7 @@
 class Particle : public stdext::shared_object
 {
 public:
-    Particle(const Point& pos, const Size& startSize, const Size& finalSize, const PointF& velocity, const PointF& acceleration, float duration, float ignorePhysicsAfter, const std::vector<Color>& colors, const std::vector<float>& colorsStops, Painter::CompositionMode compositionMode = Painter::CompositionMode_Normal, TexturePtr texture = nullptr);
+    Particle(const Point &pos, const Size &startSize, const Size &finalSize, const PointF &velocity, const PointF &acceleration, float duration, float ignorePhysicsAfter, const std::vector<Color> &colors, const std::vector<float> &colorsStops, Painter::CompositionMode compositionMode = Painter::CompositionMode_Normal, TexturePtr texture = nullptr);
 
     void render();
     void update(float elapsedTime);
@@ -39,8 +39,8 @@ public:
     PointF getPosition() { return m_position; }
     PointF getVelocity() { return m_velocity; }
 
-    void setPosition(const PointF& position) { m_position = position; }
-    void setVelocity(const PointF& velocity) { m_velocity = velocity; }
+    void setPosition(const PointF &position) { m_position = position; }
+    void setVelocity(const PointF &velocity) { m_velocity = velocity; }
 
 private:
     void updateColor();

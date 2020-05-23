@@ -26,7 +26,8 @@
 #include "declarations.h"
 #include <framework/util/databuffer.h>
 
-enum {
+enum
+{
     BINARYTREE_ESCAPE_CHAR = 0xFD,
     BINARYTREE_NODE_START = 0xFE,
     BINARYTREE_NODE_END = 0xFF
@@ -35,13 +36,17 @@ enum {
 class BinaryTree : public stdext::shared_object
 {
 public:
-    BinaryTree(const FileStreamPtr& fin);
+    BinaryTree(const FileStreamPtr &fin);
     ~BinaryTree();
 
     void seek(uint pos);
     void skip(uint len);
     uint tell() { return m_pos; }
-    uint size() { unserialize(); return m_buffer.size(); }
+    uint size()
+    {
+        unserialize();
+        return m_buffer.size();
+    }
 
     uint8 getU8();
     uint16 getU16();
@@ -51,7 +56,11 @@ public:
     Point getPoint();
 
     BinaryTreeVec getChildren();
-    bool canRead() { unserialize(); return m_pos < m_buffer.size(); }
+    bool canRead()
+    {
+        unserialize();
+        return m_pos < m_buffer.size();
+    }
 
 private:
     void unserialize();
@@ -66,14 +75,14 @@ private:
 class OutputBinaryTree : public stdext::shared_object
 {
 public:
-    OutputBinaryTree(const FileStreamPtr& finish);
+    OutputBinaryTree(const FileStreamPtr &finish);
 
     void addU8(uint8 v);
     void addU16(uint16 v);
     void addU32(uint32 v);
-    void addString(const std::string& v);
+    void addString(const std::string &v);
     void addPos(uint16 x, uint16 y, uint8 z);
-    void addPoint(const Point& point);
+    void addPoint(const Point &point);
 
     void startNode(uint8 node);
     void endNode();
@@ -82,8 +91,7 @@ private:
     FileStreamPtr m_fin;
 
 protected:
-    void write(const uint8* data, size_t size);
+    void write(const uint8 *data, size_t size);
 };
 
 #endif
-

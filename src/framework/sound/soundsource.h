@@ -30,10 +30,15 @@
 class SoundSource : public LuaObject
 {
 protected:
-    SoundSource(uint sourceId) : m_sourceId(sourceId) { }
+    SoundSource(uint sourceId) : m_sourceId(sourceId) {}
 
 public:
-    enum FadeState { NoFading, FadingOn, FadingOff };
+    enum FadeState
+    {
+        NoFading,
+        FadingOn,
+        FadingOff
+    };
 
     SoundSource();
     virtual ~SoundSource();
@@ -44,14 +49,14 @@ public:
     virtual bool isBuffering();
     virtual bool isPlaying() { return isBuffering(); }
 
-    void setName(const std::string& name) { m_name = name; }
+    void setName(const std::string &name) { m_name = name; }
     virtual void setLooping(bool looping);
     virtual void setRelative(bool relative);
     virtual void setReferenceDistance(float distance);
     virtual void setGain(float gain);
     virtual void setPitch(float pitch);
-    virtual void setPosition(const Point& pos);
-    virtual void setVelocity(const Point& velocity);
+    virtual void setPosition(const Point &pos);
+    virtual void setVelocity(const Point &velocity);
     virtual void setFading(FadeState state, float fadetime);
 
     std::string getName() { return m_name; }
@@ -59,7 +64,7 @@ public:
     float getGain() { return m_gain; }
 
 protected:
-    void setBuffer(const SoundBufferPtr& buffer);
+    void setBuffer(const SoundBufferPtr &buffer);
     void setChannel(uchar channel) { m_channel = channel; }
 
     virtual void update();

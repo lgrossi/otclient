@@ -30,10 +30,11 @@
 
 class Connection : public LuaObject
 {
-    typedef std::function<void(const boost::system::error_code&)> ErrorCallback;
-    typedef std::function<void(uint8*, uint16)> RecvCallback;
+    typedef std::function<void(const boost::system::error_code &)> ErrorCallback;
+    typedef std::function<void(uint8 *, uint16)> RecvCallback;
 
-    enum {
+    enum
+    {
         READ_TIMEOUT = 30,
         WRITE_TIMEOUT = 30,
         SEND_BUFFER_SIZE = 65536,
@@ -47,15 +48,15 @@ public:
     static void poll();
     static void terminate();
 
-    void connect(const std::string& host, uint16 port, const std::function<void()>& connectCallback);
+    void connect(const std::string &host, uint16 port, const std::function<void()> &connectCallback);
     void close();
 
-    void write(uint8* buffer, size_t size);
-    void read(uint16 bytes, const RecvCallback& callback);
-    void read_until(const std::string& what, const RecvCallback& callback);
-    void read_some(const RecvCallback& callback);
+    void write(uint8 *buffer, size_t size);
+    void read(uint16 bytes, const RecvCallback &callback);
+    void read_until(const std::string &what, const RecvCallback &callback);
+    void read_some(const RecvCallback &callback);
 
-    void setErrorCallback(const ErrorCallback& errorCallback) { m_errorCallback = errorCallback; }
+    void setErrorCallback(const ErrorCallback &errorCallback) { m_errorCallback = errorCallback; }
 
     int getIp();
     boost::system::error_code getError() { return m_error; }
@@ -68,13 +69,13 @@ public:
 protected:
     void internal_connect(asio::ip::basic_resolver<asio::ip::tcp>::iterator endpointIterator);
     void internal_write();
-    void onResolve(const boost::system::error_code& error, asio::ip::tcp::resolver::iterator endpointIterator);
-    void onConnect(const boost::system::error_code& error);
-    void onCanWrite(const boost::system::error_code& error);
-    void onWrite(const boost::system::error_code& error, size_t writeSize, std::shared_ptr<asio::streambuf> outputStream);
-    void onRecv(const boost::system::error_code& error, size_t recvSize);
-    void onTimeout(const boost::system::error_code& error);
-    void handleError(const boost::system::error_code& error);
+    void onResolve(const boost::system::error_code &error, asio::ip::tcp::resolver::iterator endpointIterator);
+    void onConnect(const boost::system::error_code &error);
+    void onCanWrite(const boost::system::error_code &error);
+    void onWrite(const boost::system::error_code &error, size_t writeSize, std::shared_ptr<asio::streambuf> outputStream);
+    void onRecv(const boost::system::error_code &error, size_t recvSize);
+    void onTimeout(const boost::system::error_code &error);
+    void handleError(const boost::system::error_code &error);
 
     std::function<void()> m_connectCallback;
     ErrorCallback m_errorCallback;

@@ -36,26 +36,26 @@ public:
     void terminate();
 
     void render(Fw::DrawPane drawPane);
-    void resize(const Size& size);
-    void inputEvent(const InputEvent& event);
+    void resize(const Size &size);
+    void inputEvent(const InputEvent &event);
 
-    void updatePressedWidget(const UIWidgetPtr& newPressedWidget, const Point& clickedPos = Point(), bool fireClicks = true);
-    bool updateDraggingWidget(const UIWidgetPtr& draggingWidget, const Point& clickedPos = Point());
+    void updatePressedWidget(const UIWidgetPtr &newPressedWidget, const Point &clickedPos = Point(), bool fireClicks = true);
+    bool updateDraggingWidget(const UIWidgetPtr &draggingWidget, const Point &clickedPos = Point());
     void updateHoveredWidget(bool now = false);
 
     void clearStyles();
     bool importStyle(std::string file);
-    void importStyleFromOTML(const OTMLNodePtr& styleNode);
-    OTMLNodePtr getStyle(const std::string& styleName);
-    std::string getStyleClass(const std::string& styleName);
+    void importStyleFromOTML(const OTMLNodePtr &styleNode);
+    OTMLNodePtr getStyle(const std::string &styleName);
+    std::string getStyleClass(const std::string &styleName);
 
-    UIWidgetPtr loadUI(std::string file, const UIWidgetPtr& parent);
-    UIWidgetPtr displayUI(const std::string& file) { return loadUI(file, m_rootWidget); }
-    UIWidgetPtr createWidget(const std::string& styleName, const UIWidgetPtr& parent);
-    UIWidgetPtr createWidgetFromOTML(const OTMLNodePtr& widgetNode, const UIWidgetPtr& parent);
+    UIWidgetPtr loadUI(std::string file, const UIWidgetPtr &parent);
+    UIWidgetPtr displayUI(const std::string &file) { return loadUI(file, m_rootWidget); }
+    UIWidgetPtr createWidget(const std::string &styleName, const UIWidgetPtr &parent);
+    UIWidgetPtr createWidgetFromOTML(const OTMLNodePtr &widgetNode, const UIWidgetPtr &parent);
 
-    void setMouseReceiver(const UIWidgetPtr& widget) { m_mouseReceiver = widget; }
-    void setKeyboardReceiver(const UIWidgetPtr& widget) { m_keyboardReceiver = widget; }
+    void setMouseReceiver(const UIWidgetPtr &widget) { m_mouseReceiver = widget; }
+    void setKeyboardReceiver(const UIWidgetPtr &widget) { m_keyboardReceiver = widget; }
     void setDebugBoxesDrawing(bool enabled) { m_drawDebugBoxes = enabled; }
     void resetMouseReceiver() { m_mouseReceiver = m_rootWidget; }
     void resetKeyboardReceiver() { m_keyboardReceiver = m_rootWidget; }
@@ -71,9 +71,9 @@ public:
     bool isDrawingDebugBoxes() { return m_drawDebugBoxes; }
 
 protected:
-    void onWidgetAppear(const UIWidgetPtr& widget);
-    void onWidgetDisappear(const UIWidgetPtr& widget);
-    void onWidgetDestroy(const UIWidgetPtr& widget);
+    void onWidgetAppear(const UIWidgetPtr &widget);
+    void onWidgetDisappear(const UIWidgetPtr &widget);
+    void onWidgetDestroy(const UIWidgetPtr &widget);
 
     friend class UIWidget;
 
@@ -89,7 +89,6 @@ private:
     std::unordered_map<std::string, OTMLNodePtr> m_styles;
     UIWidgetList m_destroyedWidgets;
     ScheduledEventPtr m_checkEvent;
-
 };
 
 extern UIManager g_ui;

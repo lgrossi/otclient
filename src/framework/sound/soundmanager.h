@@ -29,17 +29,19 @@
 //@bindsingleton g_sounds
 class SoundManager
 {
-    enum {
+    enum
+    {
         MAX_CACHE_SIZE = 100000,
         POLL_DELAY = 100
     };
+
 public:
     void init();
     void terminate();
     void poll();
 
     void setAudioEnabled(bool enable);
-    bool isAudioEnabled() { return m_device && m_context && m_audioEnabled ; }
+    bool isAudioEnabled() { return m_device && m_context && m_audioEnabled; }
     void enableAudio() { setAudioEnabled(true); }
     void disableAudio() { setAudioEnabled(true); }
     void stopAll();
@@ -52,7 +54,7 @@ public:
     void ensureContext();
 
 private:
-    SoundSourcePtr createSoundSource(const std::string& filename);
+    SoundSourcePtr createSoundSource(const std::string &filename);
 
     ALCdevice *m_device;
     ALCcontext *m_context;

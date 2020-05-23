@@ -34,7 +34,8 @@
 class AdaptativeFrameCounter
 {
 public:
-    enum {
+    enum
+    {
         // 4ms because most platforms has kernel timer of 250Hz
         MINIMUM_MICROS_SLEEP = 4000
     };

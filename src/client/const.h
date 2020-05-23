@@ -25,13 +25,14 @@
 
 namespace Otc
 {
-    enum {
+    enum
+    {
         TILE_PIXELS = 32,
         MAX_ELEVATION = 24,
 
         SEA_FLOOR = 7,
         MAX_Z = 15,
-        UNDERGROUND_FLOOR = SEA_FLOOR+1,
+        UNDERGROUND_FLOOR = SEA_FLOOR + 1,
         AWARE_UNDEGROUND_FLOOR_RANGE = 2,
 
         INVISIBLE_TICKS_PER_FRAME = 500,
@@ -44,7 +45,8 @@ namespace Otc
         MAX_AUTOWALK_DIST = 127
     };
 
-    enum DrawFlags {
+    enum DrawFlags
+    {
         DrawGround = 1,
         DrawGroundBorders = 2,
         DrawOnBottom = 4,
@@ -68,7 +70,8 @@ namespace Otc
                          DrawLights | DrawManaBar
     };
 
-    enum DatOpts {
+    enum DatOpts
+    {
         DatGround = 0,
         DatGroundClip,
         DatOnBottom,
@@ -106,7 +109,8 @@ namespace Otc
         DatLastOpt = 255
     };
 
-    enum InventorySlot {
+    enum InventorySlot
+    {
         InventorySlotHead = 1,
         InventorySlotNecklace,
         InventorySlotBackpack,
@@ -125,7 +129,8 @@ namespace Otc
         LastInventorySlot
     };
 
-    enum Statistic {
+    enum Statistic
+    {
         Health = 0,
         MaxHealth,
         FreeCapacity,
@@ -141,7 +146,8 @@ namespace Otc
         LastStatistic
     };
 
-    enum Skill {
+    enum Skill
+    {
         Fist = 0,
         Club,
         Sword,
@@ -160,7 +166,8 @@ namespace Otc
         LastSkill
     };
 
-    enum Direction {
+    enum Direction
+    {
         North = 0,
         East,
         South,
@@ -172,7 +179,8 @@ namespace Otc
         InvalidDirection
     };
 
-    enum FluidsColor {
+    enum FluidsColor
+    {
         FluidTransparent = 0,
         FluidBlue,
         FluidRed,
@@ -183,7 +191,8 @@ namespace Otc
         FluidPurple
     };
 
-    enum FluidsType {
+    enum FluidsType
+    {
         FluidNone = 0,
         FluidWater,
         FluidMana,
@@ -204,25 +213,29 @@ namespace Otc
         FluidMead
     };
 
-    enum FightModes {
+    enum FightModes
+    {
         FightOffensive = 1,
         FightBalanced = 2,
         FightDefensive = 3
     };
 
-    enum ChaseModes {
+    enum ChaseModes
+    {
         DontChase = 0,
         ChaseOpponent = 1
     };
 
-    enum PVPModes {
+    enum PVPModes
+    {
         WhiteDove = 0,
         WhiteHand = 1,
         YellowHand = 2,
         RedFist = 3
     };
 
-    enum PlayerSkulls {
+    enum PlayerSkulls
+    {
         SkullNone = 0,
         SkullYellow,
         SkullGreen,
@@ -232,22 +245,24 @@ namespace Otc
         SkullOrange
     };
 
-    enum PlayerShields {
+    enum PlayerShields
+    {
         ShieldNone = 0,
-        ShieldWhiteYellow, // 1 party leader
-        ShieldWhiteBlue, // 2 party member
-        ShieldBlue, // 3 party member sexp off
-        ShieldYellow, // 4 party leader sexp off
-        ShieldBlueSharedExp, // 5 party member sexp on
-        ShieldYellowSharedExp, // 6 // party leader sexp on
-        ShieldBlueNoSharedExpBlink, // 7 party member sexp inactive guilty
+        ShieldWhiteYellow,            // 1 party leader
+        ShieldWhiteBlue,              // 2 party member
+        ShieldBlue,                   // 3 party member sexp off
+        ShieldYellow,                 // 4 party leader sexp off
+        ShieldBlueSharedExp,          // 5 party member sexp on
+        ShieldYellowSharedExp,        // 6 // party leader sexp on
+        ShieldBlueNoSharedExpBlink,   // 7 party member sexp inactive guilty
         ShieldYellowNoSharedExpBlink, // 8 // party leader sexp inactive guilty
-        ShieldBlueNoSharedExp, // 9 party member sexp inactive innocent
-        ShieldYellowNoSharedExp, // 10 party leader sexp inactive innocent
-        ShieldGray // 11 member of another party
+        ShieldBlueNoSharedExp,        // 9 party member sexp inactive innocent
+        ShieldYellowNoSharedExp,      // 10 party leader sexp inactive innocent
+        ShieldGray                    // 11 member of another party
     };
 
-    enum PlayerEmblems {
+    enum PlayerEmblems
+    {
         EmblemNone = 0,
         EmblemGreen,
         EmblemRed,
@@ -256,7 +271,8 @@ namespace Otc
         EmblemOther
     };
 
-    enum CreatureIcons {
+    enum CreatureIcons
+    {
         NpcIconNone = 0,
         NpcIconChat,
         NpcIconTrade,
@@ -264,7 +280,8 @@ namespace Otc
         NpcIconTradeQuest
     };
 
-    enum PlayerStates {
+    enum PlayerStates
+    {
         IconNone = 0,
         IconPoison = 1,
         IconBurn = 2,
@@ -285,66 +302,68 @@ namespace Otc
         IconHungry = 65536
     };
 
-    enum MessageMode {
-        MessageNone                    = 0,
-        MessageSay                     = 1,
-        MessageWhisper                 = 2,
-        MessageYell                    = 3,
-        MessagePrivateFrom             = 4,
-        MessagePrivateTo               = 5,
-        MessageChannelManagement       = 6,
-        MessageChannel                 = 7,
-        MessageChannelHighlight        = 8,
-        MessageSpell                   = 9,
-        MessageNpcFrom                 = 10,
-        MessageNpcTo                   = 11,
-        MessageGamemasterBroadcast     = 12,
-        MessageGamemasterChannel       = 13,
-        MessageGamemasterPrivateFrom   = 14,
-        MessageGamemasterPrivateTo     = 15,
-        MessageLogin                   = 16,
-        MessageWarning                 = 17,
-        MessageGame                    = 18,
-        MessageFailure                 = 19,
-        MessageLook                    = 20,
-        MessageDamageDealed            = 21,
-        MessageDamageReceived          = 22,
-        MessageHeal                    = 23,
-        MessageExp                     = 24,
-        MessageDamageOthers            = 25,
-        MessageHealOthers              = 26,
-        MessageExpOthers               = 27,
-        MessageStatus                  = 28,
-        MessageLoot                    = 29,
-        MessageTradeNpc                = 30,
-        MessageGuild                   = 31,
-        MessagePartyManagement         = 32,
-        MessageParty                   = 33,
-        MessageBarkLow                 = 34,
-        MessageBarkLoud                = 35,
-        MessageReport                  = 36,
-        MessageHotkeyUse               = 37,
-        MessageTutorialHint            = 38,
-        MessageThankyou                = 39,
-        MessageMarket                  = 40,
-        MessageMana                    = 41,
-        MessageBeyondLast              = 42,
+    enum MessageMode
+    {
+        MessageNone = 0,
+        MessageSay = 1,
+        MessageWhisper = 2,
+        MessageYell = 3,
+        MessagePrivateFrom = 4,
+        MessagePrivateTo = 5,
+        MessageChannelManagement = 6,
+        MessageChannel = 7,
+        MessageChannelHighlight = 8,
+        MessageSpell = 9,
+        MessageNpcFrom = 10,
+        MessageNpcTo = 11,
+        MessageGamemasterBroadcast = 12,
+        MessageGamemasterChannel = 13,
+        MessageGamemasterPrivateFrom = 14,
+        MessageGamemasterPrivateTo = 15,
+        MessageLogin = 16,
+        MessageWarning = 17,
+        MessageGame = 18,
+        MessageFailure = 19,
+        MessageLook = 20,
+        MessageDamageDealed = 21,
+        MessageDamageReceived = 22,
+        MessageHeal = 23,
+        MessageExp = 24,
+        MessageDamageOthers = 25,
+        MessageHealOthers = 26,
+        MessageExpOthers = 27,
+        MessageStatus = 28,
+        MessageLoot = 29,
+        MessageTradeNpc = 30,
+        MessageGuild = 31,
+        MessagePartyManagement = 32,
+        MessageParty = 33,
+        MessageBarkLow = 34,
+        MessageBarkLoud = 35,
+        MessageReport = 36,
+        MessageHotkeyUse = 37,
+        MessageTutorialHint = 38,
+        MessageThankyou = 39,
+        MessageMarket = 40,
+        MessageMana = 41,
+        MessageBeyondLast = 42,
 
         // deprecated
-        MessageMonsterYell             = 43,
-        MessageMonsterSay              = 44,
-        MessageRed                     = 45,
-        MessageBlue                    = 46,
-        MessageRVRChannel              = 47,
-        MessageRVRAnswer               = 48,
-        MessageRVRContinue             = 49,
-        MessageGameHighlight           = 50,
-        MessageNpcFromStartBlock       = 51,
-        LastMessage                    = 52,
-        MessageInvalid                 = 255
+        MessageMonsterYell = 43,
+        MessageMonsterSay = 44,
+        MessageRed = 45,
+        MessageBlue = 46,
+        MessageRVRChannel = 47,
+        MessageRVRAnswer = 48,
+        MessageRVRContinue = 49,
+        MessageGameHighlight = 50,
+        MessageNpcFromStartBlock = 51,
+        LastMessage = 52,
+        MessageInvalid = 255
     };
 
-    enum GameFeature {
+    enum GameFeature
+    {
         GameProtocolChecksum = 1,
         GameAccountNames = 2,
         GameChallengeOnLogin = 3,
@@ -423,7 +442,8 @@ namespace Otc
         LastGameFeature = 101
     };
 
-    enum PathFindResult {
+    enum PathFindResult
+    {
         PathFindResultOk = 0,
         PathFindResultSamePosition,
         PathFindResultImpossible,
@@ -431,14 +451,16 @@ namespace Otc
         PathFindResultNoWay
     };
 
-    enum PathFindFlags {
+    enum PathFindFlags
+    {
         PathFindAllowNotSeenTiles = 1,
         PathFindAllowCreatures = 2,
         PathFindAllowNonPathable = 4,
         PathFindAllowNonWalkable = 8
     };
 
-    enum AutomapFlags {
+    enum AutomapFlags
+    {
         MapMarkTick = 0,
         MapMarkQuestion,
         MapMarkExclamation,
@@ -461,20 +483,23 @@ namespace Otc
         MapMarkGreenSouth
     };
 
-    enum VipState {
+    enum VipState
+    {
         VipStateOffline = 0,
         VipStateOnline = 1,
         VipStatePending = 2
     };
 
-    enum SpeedFormula {
+    enum SpeedFormula
+    {
         SpeedFormulaA = 0,
         SpeedFormulaB,
         SpeedFormulaC,
         LastSpeedFormula
     };
 
-    enum Blessings {
+    enum Blessings
+    {
         BlessingNone = 0,
         BlessingAdventurer = 1,
         BlessingSpiritualShielding = 1 << 1,
@@ -484,17 +509,20 @@ namespace Otc
         BlessingSparkOfPhoenix = 1 << 5
     };
 
-    enum DeathType {
+    enum DeathType
+    {
         DeathRegular = 0,
         DeathBlessed = 1
     };
 
-    enum StoreProductTypes {
+    enum StoreProductTypes
+    {
         ProductTypeOther = 0,
         ProductTypeNameChange = 1
     };
 
-    enum StoreErrorTypes {
+    enum StoreErrorTypes
+    {
         StoreNoError = -1,
         StorePurchaseError = 0,
         StoreNetworkError = 1,
@@ -503,12 +531,13 @@ namespace Otc
         StoreInformation = 4
     };
 
-    enum StoreStates {
+    enum StoreStates
+    {
         StateNone = 0,
         StateNew = 1,
         StateSale = 2,
         StateTimed = 3
     };
-}
+} // namespace Otc
 
 #endif

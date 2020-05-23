@@ -32,40 +32,40 @@
 class BitmapFont : public stdext::shared_object
 {
 public:
-    BitmapFont(const std::string& name) : m_name(name) { }
+    BitmapFont(const std::string &name) : m_name(name) {}
 
     /// Load font from otml node
-    void load(const OTMLNodePtr& fontNode);
+    void load(const OTMLNodePtr &fontNode);
 
     /// Simple text render starting at startPos
-    void drawText(const std::string& text, const Point& startPos);
+    void drawText(const std::string &text, const Point &startPos);
 
     /// Advanced text render delimited by a screen region and alignment
-    void drawText(const std::string& text, const Rect& screenCoords, Fw::AlignmentFlag align = Fw::AlignTopLeft);
+    void drawText(const std::string &text, const Rect &screenCoords, Fw::AlignmentFlag align = Fw::AlignTopLeft);
 
-    void calculateDrawTextCoords(CoordsBuffer& coordsBuffer, const std::string& text, const Rect& screenCoords, Fw::AlignmentFlag align = Fw::AlignTopLeft);
+    void calculateDrawTextCoords(CoordsBuffer &coordsBuffer, const std::string &text, const Rect &screenCoords, Fw::AlignmentFlag align = Fw::AlignTopLeft);
 
     /// Calculate glyphs positions to use on render, also calculates textBoxSize if wanted
-    const std::vector<Point>& calculateGlyphsPositions(const std::string& text,
+    const std::vector<Point> &calculateGlyphsPositions(const std::string &text,
                                                        Fw::AlignmentFlag align = Fw::AlignTopLeft,
-                                                       Size* textBoxSize = nullptr);
+                                                       Size *textBoxSize = nullptr);
 
     /// Simulate render and calculate text size
-    Size calculateTextRectSize(const std::string& text);
+    Size calculateTextRectSize(const std::string &text);
 
-    std::string wrapText(const std::string& text, int maxWidth);
+    std::string wrapText(const std::string &text, int maxWidth);
 
     std::string getName() { return m_name; }
     int getGlyphHeight() { return m_glyphHeight; }
-    const Rect* getGlyphsTextureCoords() { return m_glyphsTextureCoords; }
-    const Size* getGlyphsSize() { return m_glyphsSize; }
-    const TexturePtr& getTexture() { return m_texture; }
+    const Rect *getGlyphsTextureCoords() { return m_glyphsTextureCoords; }
+    const Size *getGlyphsSize() { return m_glyphsSize; }
+    const TexturePtr &getTexture() { return m_texture; }
     int getYOffset() { return m_yOffset; }
     Size getGlyphSpacing() { return m_glyphSpacing; }
 
 private:
     /// Calculates each font character by inspecting font bitmap
-    void calculateGlyphsWidthsAutomatically(const ImagePtr& image, const Size& glyphSize);
+    void calculateGlyphsWidthsAutomatically(const ImagePtr &image, const Size &glyphSize);
 
     std::string m_name;
     int m_glyphHeight;
@@ -77,6 +77,4 @@ private:
     Size m_glyphsSize[256];
 };
 
-
 #endif
-

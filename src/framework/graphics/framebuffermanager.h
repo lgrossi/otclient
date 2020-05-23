@@ -20,7 +20,6 @@
  * THE SOFTWARE.
  */
 
-
 #ifndef FRAMEBUFFERMANAGER_H
 #define FRAMEBUFFERMANAGER_H
 
@@ -34,7 +33,7 @@ public:
     void clear();
 
     FrameBufferPtr createFrameBuffer();
-    const FrameBufferPtr& getTemporaryFrameBuffer() { return m_temporaryFramebuffer; }
+    const FrameBufferPtr &getTemporaryFrameBuffer() { return m_temporaryFramebuffer; }
 
 protected:
     FrameBufferPtr m_temporaryFramebuffer;

@@ -26,8 +26,7 @@
 #include <typeinfo>
 #include <framework/core/application.h>
 
-LuaObject::LuaObject() :
-    m_fieldsTableRef(-1)
+LuaObject::LuaObject() : m_fieldsTableRef(-1)
 {
 }
 
@@ -39,10 +38,11 @@ LuaObject::~LuaObject()
     releaseLuaFieldsTable();
 }
 
-bool LuaObject::hasLuaField(const std::string& field)
+bool LuaObject::hasLuaField(const std::string &field)
 {
     bool ret = false;
-    if(m_fieldsTableRef != -1) {
+    if (m_fieldsTableRef != -1)
+    {
         g_lua.getRef(m_fieldsTableRef);
         g_lua.getField(field); // push the field value
         ret = !g_lua.isNil();
@@ -53,49 +53,56 @@ bool LuaObject::hasLuaField(const std::string& field)
 
 void LuaObject::releaseLuaFieldsTable()
 {
-    if(m_fieldsTableRef != -1) {
+    if (m_fieldsTableRef != -1)
+    {
         g_lua.unref(m_fieldsTableRef);
         m_fieldsTableRef = -1;
     }
 }
 
-void LuaObject::luaSetField(const std::string& key)
+void LuaObject::luaSetField(const std::string &key)
 {
     // create fields table on the fly
-    if(m_fieldsTableRef == -1) {
-        g_lua.newTable(); // create fields table
+    if (m_fieldsTableRef == -1)
+    {
+        g_lua.newTable();               // create fields table
         m_fieldsTableRef = g_lua.ref(); // save a reference for it
     }
 
     g_lua.getRef(m_fieldsTableRef); // push the table
-    g_lua.insert(-2); // move the value to the top
-    g_lua.setField(key); // set the field
-    g_lua.pop(); // pop the fields table
+    g_lua.insert(-2);               // move the value to the top
+    g_lua.setField(key);            // set the field
+    g_lua.pop();                    // pop the fields table
 }
 
-void LuaObject::luaGetField(const std::string& key)
+void LuaObject::luaGetField(const std::string &key)
 {
-    if(m_fieldsTableRef != -1) {
+    if (m_fieldsTableRef != -1)
+    {
         g_lua.getRef(m_fieldsTableRef); // push the obj's fields table
-        g_lua.getField(key); // push the field value
-        g_lua.remove(-2); // remove the table
-    } else {
+        g_lua.getField(key);            // push the field value
+        g_lua.remove(-2);               // remove the table
+    }
+    else
+    {
         g_lua.pushNil();
     }
 }
 
 void LuaObject::luaGetMetatable()
 {
-    static std::unordered_map<const std::type_info*, int> metatableMap;
-    const std::type_info& tinfo = typeid(*this);
+    static std::unordered_map<const std::type_info *, int> metatableMap;
+    const std::type_info &tinfo = typeid(*this);
     auto it = metatableMap.find(&tinfo);
 
     int metatableRef;
-    if(it == metatableMap.end()) {
+    if (it == metatableMap.end())
+    {
         g_lua.getGlobal(getClassName() + "_mt");
         metatableRef = g_lua.ref();
         metatableMap[&tinfo] = metatableRef;
-    } else
+    }
+    else
         metatableRef = it->second;
 
     g_lua.getRef(metatableRef);
@@ -103,7 +110,7 @@ void LuaObject::luaGetMetatable()
 
 void LuaObject::luaGetFieldsTable()
 {
-    if(m_fieldsTableRef != -1)
+    if (m_fieldsTableRef != -1)
         g_lua.getRef(m_fieldsTableRef);
     else
         g_lua.pushNil();

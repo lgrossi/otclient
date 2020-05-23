@@ -30,7 +30,7 @@ class CombinedSoundSource : public SoundSource
 public:
     CombinedSoundSource();
 
-    void addSource(const SoundSourcePtr& source);
+    void addSource(const SoundSourcePtr &source);
     std::vector<SoundSourcePtr> getSources() { return m_sources; }
 
     void play();
@@ -44,8 +44,8 @@ public:
     void setReferenceDistance(float distance);
     void setGain(float gain);
     void setPitch(float pitch);
-    void setPosition(const Point& pos);
-    void setVelocity(const Point& velocity);
+    void setPosition(const Point &pos);
+    void setVelocity(const Point &velocity);
     void setFading(FadeState state, float fadetime);
 
 protected:
