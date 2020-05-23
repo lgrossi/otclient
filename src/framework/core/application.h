@@ -33,7 +33,7 @@ public:
     Application();
     virtual ~Application() {}
 
-    virtual void init(std::vector<std::string>& args);
+    virtual void init(std::vector<std::string> &args);
     virtual void deinit();
     virtual void terminate();
     virtual void run() = 0;
@@ -41,16 +41,16 @@ public:
     virtual void exit();
     virtual void close();
 
-    void setName(const std::string& name) { m_appName = name; }
-    void setCompactName(const std::string& compactName) { m_appCompactName = compactName; }
-    void setVersion(const std::string& version) { m_appVersion = version; }
+    void setName(const std::string &name) { m_appName = name; }
+    void setCompactName(const std::string &compactName) { m_appCompactName = compactName; }
+    void setVersion(const std::string &version) { m_appVersion = version; }
 
     bool isRunning() { return m_running; }
     bool isStopping() { return m_stopping; }
     bool isTerminated() { return m_terminated; }
-    const std::string& getName() { return m_appName; }
-    const std::string& getCompactName() { return m_appCompactName; }
-    const std::string& getVersion() { return m_appVersion; }
+    const std::string &getName() { return m_appName; }
+    const std::string &getCompactName() { return m_appCompactName; }
+    const std::string &getVersion() { return m_appVersion; }
 
     std::string getCharset() { return m_charset; }
     std::string getBuildCompiler() { return BUILD_COMPILER; }

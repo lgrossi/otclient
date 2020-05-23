@@ -25,13 +25,16 @@
 
 #include "declarations.h"
 
-struct InputEvent {
-    InputEvent() {
+struct InputEvent
+{
+    InputEvent()
+    {
         reset();
         keyboardModifiers = 0;
     }
 
-    void reset(Fw::InputEventType eventType = Fw::NoInputEvent) {
+    void reset(Fw::InputEventType eventType = Fw::NoInputEvent)
+    {
         type = eventType;
         wheelDirection = Fw::MouseNoWheel;
         mouseButton = Fw::MouseNoButton;

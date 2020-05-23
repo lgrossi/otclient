@@ -5,6 +5,7 @@ gameMapPanel = nil
 gameRightPanel = nil
 gameLeftPanel = nil
 gameBottomPanel = nil
+gameTopPanel = nil
 showTopMenuButton = nil
 logoutButton = nil
 mouseGrabberWidget = nil
@@ -52,6 +53,7 @@ function init()
   gameRightPanel = gameRootPanel:getChildById('gameRightPanel')
   gameLeftPanel = gameRootPanel:getChildById('gameLeftPanel')
   gameBottomPanel = gameRootPanel:getChildById('gameBottomPanel')
+  gameTopPanel = gameRootPanel:getChildById('gameTopPanel')
   connect(gameLeftPanel, { onVisibilityChange = onLeftPanelVisibilityChange })
 
   logoutButton = modules.client_topmenu.addLeftButton('logoutButton', tr('Exit'),
@@ -97,12 +99,9 @@ function bindKeys()
   bindTurnKey('Ctrl+Numpad4', West)
 
   g_keyboard.bindKeyPress('Escape', function() g_game.cancelAttackAndFollow() end, gameRootPanel)
-  g_keyboard.bindKeyPress('Ctrl+=', function() gameMapPanel:zoomIn() end, gameRootPanel)
-  g_keyboard.bindKeyPress('Ctrl+-', function() gameMapPanel:zoomOut() end, gameRootPanel)
   g_keyboard.bindKeyDown('Ctrl+Q', function() tryLogout(false) end, gameRootPanel)
   g_keyboard.bindKeyDown('Ctrl+L', function() tryLogout(false) end, gameRootPanel)
   g_keyboard.bindKeyDown('Ctrl+W', function() g_map.cleanTexts() modules.game_textmessage.clearMessages() end, gameRootPanel)
-  g_keyboard.bindKeyDown('Ctrl+.', nextViewMode, gameRootPanel)
 end
 
 function bindWalkKey(key, dir)
@@ -818,6 +817,10 @@ function getBottomPanel()
   return gameBottomPanel
 end
 
+function getTopPanel()
+  return gameTopPanel
+end
+
 function getShowTopMenuButton()
   return showTopMenuButton
 end
@@ -838,7 +841,7 @@ end
 function setupViewMode(mode)
   if mode == 0 then
     local limit = limitedZoom and not g_game.isGM()
-    gameMapPanel:setKeepAspectRatio(false)
+    gameMapPanel:setKeepAspectRatio(true)
     gameMapPanel:setLimitVisibleRange(false)
     gameMapPanel:setMaxZoomOut(23)
     gameMapPanel:setZoom(23)
@@ -850,11 +853,14 @@ function setupViewMode(mode)
       :getHeight() - gameLeftPanel:getPaddingTop())
     gameRightPanel:setMarginTop(modules.client_topmenu.getTopMenu()
       :getHeight() - gameRightPanel:getPaddingTop())
+    gameTopPanel:setMarginTop(modules.client_topmenu.getTopMenu()
+      :getHeight() - gameTopPanel:getPaddingTop())
     gameLeftPanel:setOn(true)
     gameLeftPanel:setVisible(true)
     gameRightPanel:setOn(true)
     gameMapPanel:setOn(true)
     gameBottomPanel:setImageColor('#ffffff88')
+    gameTopPanel:setImageColor('alpha')
     modules.client_topmenu.getTopMenu():setImageColor('#ffffff66')
     g_map.setMapAwareRange(44, 26)
   end

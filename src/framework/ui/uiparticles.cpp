@@ -25,13 +25,15 @@
 
 UIParticles::UIParticles()
 {
-    m_referencePos = PointF(-1,-1);
+    m_referencePos = PointF(-1, -1);
 }
 
 void UIParticles::drawSelf(Fw::DrawPane drawPane)
 {
-    if(drawPane & Fw::ForegroundPane) {
-        if(drawPane != Fw::BothPanes) {
+    if (drawPane & Fw::ForegroundPane)
+    {
+        if (drawPane != Fw::BothPanes)
+        {
             glDisable(GL_BLEND);
             g_painter->setColor(Color::alpha);
             g_painter->drawFilledRect(m_rect);
@@ -39,38 +41,40 @@ void UIParticles::drawSelf(Fw::DrawPane drawPane)
         }
     }
 
-    if(drawPane & Fw::BackgroundPane) {
+    if (drawPane & Fw::BackgroundPane)
+    {
         UIWidget::drawSelf(Fw::ForegroundPane);
         g_painter->saveAndResetState();
         g_painter->setColor(Color::white);
         g_painter->setClipRect(getPaddingRect());
 
-        if(m_referencePos.x < 0 && m_referencePos.y < 0)
+        if (m_referencePos.x < 0 && m_referencePos.y < 0)
             g_painter->translate(m_rect.center());
         else
             g_painter->translate(m_rect.x() + m_referencePos.x * m_rect.width(), m_rect.y() + m_referencePos.y * m_rect.height());
 
-        for(auto &effect: m_effects)
+        for (auto &effect : m_effects)
             effect->render();
         g_painter->restoreSavedState();
     }
 }
 
-void UIParticles::onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode)
+void UIParticles::onStyleApply(const std::string &styleName, const OTMLNodePtr &styleNode)
 {
     UIWidget::onStyleApply(styleName, styleNode);
 
-    for(const OTMLNodePtr& node : styleNode->children()) {
-        if(node->tag() == "effect")
+    for (const OTMLNodePtr &node : styleNode->children())
+    {
+        if (node->tag() == "effect")
             addEffect(node->value());
-        else if(node->tag() == "reference-pos")
+        else if (node->tag() == "reference-pos")
             setReferencePos(node->value<PointF>());
     }
 }
 
-void UIParticles::addEffect(const std::string& name)
+void UIParticles::addEffect(const std::string &name)
 {
     ParticleEffectPtr effect = g_particles.createEffect(name);
-    if(effect)
+    if (effect)
         m_effects.push_back(effect);
 }

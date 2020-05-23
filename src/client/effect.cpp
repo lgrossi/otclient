@@ -25,20 +25,25 @@
 #include "game.h"
 #include <framework/core/eventdispatcher.h>
 
-void Effect::drawEffect(const Point& dest, float scaleFactor, bool animate, int offsetX, int offsetY, LightView *lightView)
+void Effect::drawEffect(const Point &dest, float scaleFactor, bool animate, int offsetX, int offsetY, LightView *lightView)
 {
-    if(m_id == 0)
+    if (m_id == 0)
         return;
 
     int animationPhase = 0;
-    if(animate) {
-        if(g_game.getFeature(Otc::GameEnhancedAnimations)) {
+    if (animate)
+    {
+        if (g_game.getFeature(Otc::GameEnhancedAnimations))
+        {
             // This requires a separate getPhaseAt method as using getPhase would make all magic effects use the same phase regardless of their appearance time
             animationPhase = rawGetThingType()->getAnimator()->getPhaseAt(m_animationTimer.ticksElapsed());
-        } else {
+        }
+        else
+        {
             // hack to fix some animation phases duration, currently there is no better solution
             int ticks = EFFECT_TICKS_PER_FRAME;
-            if (m_id == 33) {
+            if (m_id == 33)
+            {
                 ticks <<= 2;
             }
 
@@ -47,11 +52,11 @@ void Effect::drawEffect(const Point& dest, float scaleFactor, bool animate, int 
     }
 
     int xPattern = offsetX % getNumPatternX();
-    if(xPattern < 0)
+    if (xPattern < 0)
         xPattern += getNumPatternX();
 
     int yPattern = offsetY % getNumPatternY();
-    if(yPattern < 0)
+    if (yPattern < 0)
         yPattern += getNumPatternY();
 
     rawGetThingType()->draw(dest, scaleFactor, 0, xPattern, yPattern, 0, animationPhase, lightView);
@@ -62,13 +67,17 @@ void Effect::onAppear()
     m_animationTimer.restart();
 
     int duration = 0;
-    if(g_game.getFeature(Otc::GameEnhancedAnimations)) {
+    if (g_game.getFeature(Otc::GameEnhancedAnimations))
+    {
         duration = getThingType()->getAnimator()->getTotalDuration();
-    } else {
+    }
+    else
+    {
         duration = EFFECT_TICKS_PER_FRAME;
 
         // hack to fix some animation phases duration, currently there is no better solution
-        if(m_id == 33) {
+        if (m_id == 33)
+        {
             duration <<= 2;
         }
 
@@ -82,12 +91,12 @@ void Effect::onAppear()
 
 void Effect::setId(uint32 id)
 {
-    if(!g_things.isValidDatId(id, ThingCategoryEffect))
+    if (!g_things.isValidDatId(id, ThingCategoryEffect))
         id = 0;
     m_id = id;
 }
 
-const ThingTypePtr& Effect::getThingType()
+const ThingTypePtr &Effect::getThingType()
 {
     return g_things.getThingType(m_id, ThingCategoryEffect);
 }

@@ -38,7 +38,7 @@ CoordsBuffer::~CoordsBuffer()
     delete m_hardwareTextureCoordArray;
 }
 
-void CoordsBuffer::addBoudingRect(const Rect& dest, int innerLineWidth)
+void CoordsBuffer::addBoudingRect(const Rect &dest, int innerLineWidth)
 {
     int left = dest.left();
     int right = dest.right();
@@ -48,29 +48,33 @@ void CoordsBuffer::addBoudingRect(const Rect& dest, int innerLineWidth)
     int height = dest.height();
     int w = innerLineWidth;
 
-    addRect(Rect(left, top, width - w, w)); // top
-    addRect(Rect(right - w + 1, top, w, height - w)); // right
+    addRect(Rect(left, top, width - w, w));                // top
+    addRect(Rect(right - w + 1, top, w, height - w));      // right
     addRect(Rect(left + w, bottom - w + 1, width - w, w)); // bottom
-    addRect(Rect(left, top + w, w, height - w)); // left
+    addRect(Rect(left, top + w, w, height - w));           // left
 }
 
-void CoordsBuffer::addRepeatedRects(const Rect& dest, const Rect& src)
+void CoordsBuffer::addRepeatedRects(const Rect &dest, const Rect &src)
 {
-    if(dest.isEmpty() || src.isEmpty())
+    if (dest.isEmpty() || src.isEmpty())
         return;
 
     Rect virtualDest(0, 0, dest.size());
-    for(int y = 0; y <= virtualDest.height(); y += src.height()) {
-        for(int x = 0; x <= virtualDest.width(); x += src.width()) {
+    for (int y = 0; y <= virtualDest.height(); y += src.height())
+    {
+        for (int x = 0; x <= virtualDest.width(); x += src.width())
+        {
             Rect partialDest(x, y, src.size());
             Rect partialSrc(src);
 
             // partialCoords to screenCoords bottomRight
-            if(partialDest.bottom() > virtualDest.bottom()) {
+            if (partialDest.bottom() > virtualDest.bottom())
+            {
                 partialSrc.setBottom(partialSrc.bottom() + (virtualDest.bottom() - partialDest.bottom()));
                 partialDest.setBottom(virtualDest.bottom());
             }
-            if(partialDest.right() > virtualDest.right()) {
+            if (partialDest.right() > virtualDest.right())
+            {
                 partialSrc.setRight(partialSrc.right() + (virtualDest.right() - partialDest.right()));
                 partialDest.setRight(virtualDest.right());
             }
@@ -85,7 +89,7 @@ void CoordsBuffer::addRepeatedRects(const Rect& dest, const Rect& src)
 
 void CoordsBuffer::enableHardwareCaching(HardwareBuffer::UsagePattern usagePattern)
 {
-    if(!g_graphics.canUseHardwareBuffers())
+    if (!g_graphics.canUseHardwareBuffers())
         return;
 
     m_hardwareCacheMode = usagePattern;
@@ -95,27 +99,29 @@ void CoordsBuffer::enableHardwareCaching(HardwareBuffer::UsagePattern usagePatte
 
 void CoordsBuffer::updateCaches()
 {
-    if(!m_hardwareCaching || m_hardwareCached)
+    if (!m_hardwareCaching || m_hardwareCached)
         return;
 
     int vertexCount = m_vertexArray.vertexCount();
 
     // there is only performance improvement when caching a lot of vertices
-    if(vertexCount < CACHE_MIN_VERTICES_COUNT)
+    if (vertexCount < CACHE_MIN_VERTICES_COUNT)
         return;
 
-    if(vertexCount > 0) {
-        if(!m_hardwareVertexArray && m_vertexArray.vertexCount() > 0)
+    if (vertexCount > 0)
+    {
+        if (!m_hardwareVertexArray && m_vertexArray.vertexCount() > 0)
             m_hardwareVertexArray = new HardwareBuffer(HardwareBuffer::VertexBuffer);
         m_hardwareVertexArray->bind();
-        m_hardwareVertexArray->write((void*)m_vertexArray.vertices(), m_vertexArray.size() * sizeof(float), m_hardwareCacheMode);
+        m_hardwareVertexArray->write((void *)m_vertexArray.vertices(), m_vertexArray.size() * sizeof(float), m_hardwareCacheMode);
     }
 
-    if(m_textureCoordArray.vertexCount() > 0) {
-        if(!m_hardwareTextureCoordArray && m_textureCoordArray.vertexCount() > 0)
+    if (m_textureCoordArray.vertexCount() > 0)
+    {
+        if (!m_hardwareTextureCoordArray && m_textureCoordArray.vertexCount() > 0)
             m_hardwareTextureCoordArray = new HardwareBuffer(HardwareBuffer::VertexBuffer);
         m_hardwareTextureCoordArray->bind();
-        m_hardwareTextureCoordArray->write((void*)m_textureCoordArray.vertices(), m_textureCoordArray.size() * sizeof(float), m_hardwareCacheMode);
+        m_hardwareTextureCoordArray->write((void *)m_textureCoordArray.vertices(), m_textureCoordArray.size() * sizeof(float), m_hardwareCacheMode);
     }
 
     m_hardwareCached = true;

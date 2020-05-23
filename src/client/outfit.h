@@ -28,7 +28,8 @@
 
 class Outfit
 {
-    enum {
+    enum
+    {
         HSI_SI_VALUES = 7,
         HSI_H_STEPS = 19
     };
@@ -40,10 +41,26 @@ public:
 
     void setId(int id) { m_id = id; }
     void setAuxId(int id) { m_auxId = id; }
-    void setHead(int head) { m_head = head; m_headColor = getColor(head); }
-    void setBody(int body) { m_body = body; m_bodyColor = getColor(body); }
-    void setLegs(int legs) { m_legs = legs; m_legsColor = getColor(legs); }
-    void setFeet(int feet) { m_feet = feet; m_feetColor = getColor(feet); }
+    void setHead(int head)
+    {
+        m_head = head;
+        m_headColor = getColor(head);
+    }
+    void setBody(int body)
+    {
+        m_body = body;
+        m_bodyColor = getColor(body);
+    }
+    void setLegs(int legs)
+    {
+        m_legs = legs;
+        m_legsColor = getColor(legs);
+    }
+    void setFeet(int feet)
+    {
+        m_feet = feet;
+        m_feetColor = getColor(feet);
+    }
     void setAddons(int addons) { m_addons = addons; }
     void setMount(int mount) { m_mount = mount; }
     void setCategory(ThingCategory category) { m_category = category; }

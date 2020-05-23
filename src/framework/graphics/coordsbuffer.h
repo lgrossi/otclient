@@ -28,45 +28,53 @@
 
 class CoordsBuffer
 {
-    enum {
+    enum
+    {
         CACHE_MIN_VERTICES_COUNT = 48
     };
+
 public:
     CoordsBuffer();
     ~CoordsBuffer();
 
-    void clear() {
+    void clear()
+    {
         m_textureCoordArray.clear();
         m_vertexArray.clear();
         m_hardwareCached = false;
     }
 
-    void addTriangle(const Point& a, const Point& b, const Point& c) {
+    void addTriangle(const Point &a, const Point &b, const Point &c)
+    {
         m_vertexArray.addTriangle(a, b, c);
         m_hardwareCached = false;
     }
-    void addRect(const Rect& dest) {
+    void addRect(const Rect &dest)
+    {
         m_vertexArray.addRect(dest);
         m_hardwareCached = false;
     }
-    void addRect(const Rect& dest, const Rect& src) {
+    void addRect(const Rect &dest, const Rect &src)
+    {
         m_vertexArray.addRect(dest);
         m_textureCoordArray.addRect(src);
         m_hardwareCached = false;
     }
-    void addQuad(const Rect& dest, const Rect& src) {
+    void addQuad(const Rect &dest, const Rect &src)
+    {
         m_vertexArray.addQuad(dest);
         m_textureCoordArray.addQuad(src);
         m_hardwareCached = false;
     }
-    void addUpsideDownQuad(const Rect& dest, const Rect& src) {
+    void addUpsideDownQuad(const Rect &dest, const Rect &src)
+    {
         m_vertexArray.addUpsideDownQuad(dest);
         m_textureCoordArray.addQuad(src);
         m_hardwareCached = false;
     }
 
-    void addBoudingRect(const Rect& dest, int innerLineWidth);
-    void addRepeatedRects(const Rect& dest, const Rect& src);
+    void addBoudingRect(const Rect &dest, int innerLineWidth);
+    void addRepeatedRects(const Rect &dest, const Rect &src);
 
     void enableHardwareCaching(HardwareBuffer::UsagePattern usagePattern = HardwareBuffer::DynamicDraw);
     void updateCaches();

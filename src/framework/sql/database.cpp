@@ -26,29 +26,30 @@ boost::recursive_mutex DBQuery::databaseLock;
 
 DBResultPtr Database::verifyResult(DBResultPtr result)
 {
-    if(result->next())
+    if (result->next())
         return result;
 
     result->free();
     return nullptr;
 }
 
-void DBInsert::setQuery(const std::string& query)
+void DBInsert::setQuery(const std::string &query)
 {
     m_query = query;
     m_buf = "";
     m_rows = 0;
 }
 
-bool DBInsert::addRow(const std::string& row)
+bool DBInsert::addRow(const std::string &row)
 {
     ++m_rows;
-    if(m_buf.empty()) {
+    if (m_buf.empty())
+    {
         m_buf = "(" + row + ")";
     }
-    else if(m_buf.length() > 8192)
+    else if (m_buf.length() > 8192)
     {
-        if(!execute())
+        if (!execute())
             return false;
 
         m_buf = "(" + row + ")";
@@ -59,7 +60,7 @@ bool DBInsert::addRow(const std::string& row)
     return true;
 }
 
-bool DBInsert::addRow(std::stringstream& row)
+bool DBInsert::addRow(std::stringstream &row)
 {
     bool ret = addRow(row.str());
     row.str("");
@@ -68,7 +69,7 @@ bool DBInsert::addRow(std::stringstream& row)
 
 bool DBInsert::execute()
 {
-    if(m_buf.empty() || !m_rows)
+    if (m_buf.empty() || !m_rows)
         return true;
 
     m_rows = 0;

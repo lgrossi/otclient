@@ -32,7 +32,8 @@ class Graphics
 public:
     Graphics();
 
-    enum PainterEngine {
+    enum PainterEngine
+    {
         Painter_Any = 0,
         Painter_OpenGL1,
         Painter_OpenGL2,
@@ -44,21 +45,21 @@ public:
     // @dontbind
     void terminate();
 
-    bool parseOption(const std::string& option);
+    bool parseOption(const std::string &option);
 
     bool isPainterEngineAvailable(PainterEngine painterEngine);
     bool selectPainterEngine(PainterEngine painterEngine);
     PainterEngine getPainterEngine() { return m_selectedPainterEngine; }
 
-    void resize(const Size& size);
+    void resize(const Size &size);
 
     int getMaxTextureSize() { return m_maxTextureSize; }
-    const Size& getViewportSize() { return m_viewportSize; }
+    const Size &getViewportSize() { return m_viewportSize; }
 
-    std::string getVendor() { return (const char*)glGetString(GL_VENDOR); }
-    std::string getRenderer() { return (const char*)glGetString(GL_RENDERER); }
-    std::string getVersion() { return (const char*)glGetString(GL_VERSION); }
-    std::string getExtensions() { return (const char*)glGetString(GL_EXTENSIONS); }
+    std::string getVendor() { return (const char *)glGetString(GL_VENDOR); }
+    std::string getRenderer() { return (const char *)glGetString(GL_RENDERER); }
+    std::string getVersion() { return (const char *)glGetString(GL_VERSION); }
+    std::string getExtensions() { return (const char *)glGetString(GL_EXTENSIONS); }
 
     void setShouldUseShaders(bool enable) { m_shouldUseShaders = enable; }
 

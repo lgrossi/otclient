@@ -63,23 +63,24 @@ void PainterOGL2::unbind()
     PainterShaderProgram::release();
 }
 
-void PainterOGL2::drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode)
+void PainterOGL2::drawCoords(CoordsBuffer &coordsBuffer, DrawMode drawMode)
 {
     int vertexCount = coordsBuffer.getVertexCount();
-    if(vertexCount == 0)
+    if (vertexCount == 0)
         return;
 
     bool textured = coordsBuffer.getTextureCoordCount() > 0 && m_texture;
 
     // skip drawing of empty textures
-    if(textured && m_texture->isEmpty())
+    if (textured && m_texture->isEmpty())
         return;
 
     // update shader with the current painter state
     m_drawProgram->bind();
     m_drawProgram->setTransformMatrix(m_transformMatrix);
     m_drawProgram->setProjectionMatrix(m_projectionMatrix);
-    if(textured) {
+    if (textured)
+    {
         m_drawProgram->setTextureMatrix(m_textureMatrix);
         m_drawProgram->bindMultiTextures();
     }
@@ -93,43 +94,49 @@ void PainterOGL2::drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode)
     bool hardwareCached = coordsBuffer.isHardwareCached();
 
     // only set texture coords arrays when needed
-    if(textured) {
-        if(hardwareCached) {
+    if (textured)
+    {
+        if (hardwareCached)
+        {
             coordsBuffer.getHardwareTextureCoordArray()->bind();
             m_drawProgram->setAttributeArray(PainterShaderProgram::TEXCOORD_ATTR, nullptr, 2);
-        } else
+        }
+        else
             m_drawProgram->setAttributeArray(PainterShaderProgram::TEXCOORD_ATTR, coordsBuffer.getTextureCoordArray(), 2);
-    } else
+    }
+    else
         PainterShaderProgram::disableAttributeArray(PainterShaderProgram::TEXCOORD_ATTR);
 
     // set vertex array
-    if(hardwareCached) {
+    if (hardwareCached)
+    {
         coordsBuffer.getHardwareVertexArray()->bind();
         m_drawProgram->setAttributeArray(PainterShaderProgram::VERTEX_ATTR, nullptr, 2);
         HardwareBuffer::unbind(HardwareBuffer::VertexBuffer);
-    } else
+    }
+    else
         m_drawProgram->setAttributeArray(PainterShaderProgram::VERTEX_ATTR, coordsBuffer.getVertexArray(), 2);
 
     // draw the element in coords buffers
-    if(drawMode == Triangles)
+    if (drawMode == Triangles)
         glDrawArrays(GL_TRIANGLES, 0, vertexCount);
-    else if(drawMode == TriangleStrip)
+    else if (drawMode == TriangleStrip)
         glDrawArrays(GL_TRIANGLE_STRIP, 0, vertexCount);
 
-    if(!textured)
+    if (!textured)
         PainterShaderProgram::enableAttributeArray(PainterShaderProgram::TEXCOORD_ATTR);
 }
 
-void PainterOGL2::drawFillCoords(CoordsBuffer& coordsBuffer)
+void PainterOGL2::drawFillCoords(CoordsBuffer &coordsBuffer)
 {
     setDrawProgram(m_shaderProgram ? m_shaderProgram : m_drawSolidColorProgram.get());
     setTexture(nullptr);
     drawCoords(coordsBuffer);
 }
 
-void PainterOGL2::drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture)
+void PainterOGL2::drawTextureCoords(CoordsBuffer &coordsBuffer, const TexturePtr &texture)
 {
-    if(texture && texture->isEmpty())
+    if (texture && texture->isEmpty())
         return;
 
     setDrawProgram(m_shaderProgram ? m_shaderProgram : m_drawTexturedProgram.get());
@@ -137,9 +144,9 @@ void PainterOGL2::drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr
     drawCoords(coordsBuffer);
 }
 
-void PainterOGL2::drawTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src)
+void PainterOGL2::drawTexturedRect(const Rect &dest, const TexturePtr &texture, const Rect &src)
 {
-    if(dest.isEmpty() || src.isEmpty() || texture->isEmpty())
+    if (dest.isEmpty() || src.isEmpty() || texture->isEmpty())
         return;
 
     setDrawProgram(m_shaderProgram ? m_shaderProgram : m_drawTexturedProgram.get());
@@ -150,9 +157,9 @@ void PainterOGL2::drawTexturedRect(const Rect& dest, const TexturePtr& texture, 
     drawCoords(m_coordsBuffer, TriangleStrip);
 }
 
-void PainterOGL2::drawUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src)
+void PainterOGL2::drawUpsideDownTexturedRect(const Rect &dest, const TexturePtr &texture, const Rect &src)
 {
-    if(dest.isEmpty() || src.isEmpty() || texture->isEmpty())
+    if (dest.isEmpty() || src.isEmpty() || texture->isEmpty())
         return;
 
     setDrawProgram(m_shaderProgram ? m_shaderProgram : m_drawTexturedProgram.get());
@@ -163,9 +170,9 @@ void PainterOGL2::drawUpsideDownTexturedRect(const Rect& dest, const TexturePtr&
     drawCoords(m_coordsBuffer, TriangleStrip);
 }
 
-void PainterOGL2::drawRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src)
+void PainterOGL2::drawRepeatedTexturedRect(const Rect &dest, const TexturePtr &texture, const Rect &src)
 {
-    if(dest.isEmpty() || src.isEmpty() || texture->isEmpty())
+    if (dest.isEmpty() || src.isEmpty() || texture->isEmpty())
         return;
 
     setDrawProgram(m_shaderProgram ? m_shaderProgram : m_drawTexturedProgram.get());
@@ -176,9 +183,9 @@ void PainterOGL2::drawRepeatedTexturedRect(const Rect& dest, const TexturePtr& t
     drawCoords(m_coordsBuffer);
 }
 
-void PainterOGL2::drawFilledRect(const Rect& dest)
+void PainterOGL2::drawFilledRect(const Rect &dest)
 {
-    if(dest.isEmpty())
+    if (dest.isEmpty())
         return;
 
     setDrawProgram(m_shaderProgram ? m_shaderProgram : m_drawSolidColorProgram.get());
@@ -188,9 +195,9 @@ void PainterOGL2::drawFilledRect(const Rect& dest)
     drawCoords(m_coordsBuffer);
 }
 
-void PainterOGL2::drawFilledTriangle(const Point& a, const Point& b, const Point& c)
+void PainterOGL2::drawFilledTriangle(const Point &a, const Point &b, const Point &c)
 {
-    if(a == b || a == c || b == c)
+    if (a == b || a == c || b == c)
         return;
 
     setDrawProgram(m_shaderProgram ? m_shaderProgram : m_drawSolidColorProgram.get());
@@ -200,9 +207,9 @@ void PainterOGL2::drawFilledTriangle(const Point& a, const Point& b, const Point
     drawCoords(m_coordsBuffer);
 }
 
-void PainterOGL2::drawBoundingRect(const Rect& dest, int innerLineWidth)
+void PainterOGL2::drawBoundingRect(const Rect &dest, int innerLineWidth)
 {
-    if(dest.isEmpty() || innerLineWidth == 0)
+    if (dest.isEmpty() || innerLineWidth == 0)
         return;
 
     setDrawProgram(m_shaderProgram ? m_shaderProgram : m_drawSolidColorProgram.get());

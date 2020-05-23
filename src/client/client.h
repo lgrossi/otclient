@@ -28,7 +28,7 @@
 class Client
 {
 public:
-    void init(std::vector<std::string>& args);
+    void init(std::vector<std::string> &args);
     void terminate();
     void registerLuaFunctions();
 };

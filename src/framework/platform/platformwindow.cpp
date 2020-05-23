@@ -34,23 +34,26 @@ X11Window window;
 #include <framework/core/clock.h>
 #include <framework/graphics/image.h>
 
-PlatformWindow& g_window = window;
+PlatformWindow &g_window = window;
 
-int PlatformWindow::loadMouseCursor(const std::string& file, const Point& hotSpot)
+int PlatformWindow::loadMouseCursor(const std::string &file, const Point &hotSpot)
 {
     ImagePtr image = Image::load(file);
 
-    if(!image) {
+    if (!image)
+    {
         g_logger.traceError(stdext::format("unable to load cursor image file %s", file));
         return -1;
     }
 
-    if(image->getBpp() != 4) {
+    if (image->getBpp() != 4)
+    {
         g_logger.error("the cursor image must have 4 channels");
         return -1;
     }
 
-    if(image->getWidth() != 32 || image->getHeight() != 32) {
+    if (image->getWidth() != 32 || image->getHeight() != 32)
+    {
         g_logger.error("the cursor image must have 32x32 dimension");
         return -1;
     }
@@ -60,7 +63,8 @@ int PlatformWindow::loadMouseCursor(const std::string& file, const Point& hotSpo
 
 void PlatformWindow::updateUnmaximizedCoords()
 {
-    if(!isMaximized() && !isFullscreen()) {
+    if (!isMaximized() && !isFullscreen())
+    {
         m_unmaximizedPos = m_position;
         m_unmaximizedSize = m_size;
     }
@@ -68,21 +72,26 @@ void PlatformWindow::updateUnmaximizedCoords()
 
 void PlatformWindow::processKeyDown(Fw::Key keyCode)
 {
-    if(keyCode == Fw::KeyUnknown)
+    if (keyCode == Fw::KeyUnknown)
         return;
 
-    if(keyCode == Fw::KeyCtrl) {
+    if (keyCode == Fw::KeyCtrl)
+    {
         m_inputEvent.keyboardModifiers |= Fw::KeyboardCtrlModifier;
         return;
-    } else if(keyCode == Fw::KeyAlt) {
+    }
+    else if (keyCode == Fw::KeyAlt)
+    {
         m_inputEvent.keyboardModifiers |= Fw::KeyboardAltModifier;
         return;
-    } else if(keyCode == Fw::KeyShift) {
+    }
+    else if (keyCode == Fw::KeyShift)
+    {
         m_inputEvent.keyboardModifiers |= Fw::KeyboardShiftModifier;
         return;
     }
 
-    if(m_keysState[keyCode])
+    if (m_keysState[keyCode])
         return;
 
     m_keysState[keyCode] = true;
@@ -92,7 +101,8 @@ void PlatformWindow::processKeyDown(Fw::Key keyCode)
     m_inputEvent.type = Fw::KeyDownInputEvent;
     m_inputEvent.keyCode = keyCode;
 
-    if(m_onInputEvent) {
+    if (m_onInputEvent)
+    {
         m_onInputEvent(m_inputEvent);
 
         m_inputEvent.reset(Fw::KeyPressInputEvent);
@@ -105,31 +115,40 @@ void PlatformWindow::processKeyDown(Fw::Key keyCode)
 
 void PlatformWindow::processKeyUp(Fw::Key keyCode)
 {
-    if(keyCode == Fw::KeyUnknown)
+    if (keyCode == Fw::KeyUnknown)
         return;
 
-    if(keyCode == Fw::KeyCtrl) {
+    if (keyCode == Fw::KeyCtrl)
+    {
         m_inputEvent.keyboardModifiers &= ~Fw::KeyboardCtrlModifier;
         return;
-    } else if(keyCode == Fw::KeyAlt) {
+    }
+    else if (keyCode == Fw::KeyAlt)
+    {
         m_inputEvent.keyboardModifiers &= ~Fw::KeyboardAltModifier;
         return;
-    } else if(keyCode == Fw::KeyShift) {
+    }
+    else if (keyCode == Fw::KeyShift)
+    {
         m_inputEvent.keyboardModifiers &= ~Fw::KeyboardShiftModifier;
         return;
-    } else if(keyCode == Fw::KeyNumLock) {
-        for(uchar k = Fw::KeyNumpad0; k <= Fw::KeyNumpad9; ++k) {
-            if(m_keysState[(Fw::Key)k])
+    }
+    else if (keyCode == Fw::KeyNumLock)
+    {
+        for (uchar k = Fw::KeyNumpad0; k <= Fw::KeyNumpad9; ++k)
+        {
+            if (m_keysState[(Fw::Key)k])
                 processKeyUp((Fw::Key)k);
         }
     }
 
-    if(!m_keysState[keyCode])
+    if (!m_keysState[keyCode])
         return;
 
     m_keysState[keyCode] = false;
 
-    if(m_onInputEvent) {
+    if (m_onInputEvent)
+    {
         m_inputEvent.reset(Fw::KeyUpInputEvent);
         m_inputEvent.keyCode = keyCode;
         m_onInputEvent(m_inputEvent);
@@ -138,11 +157,12 @@ void PlatformWindow::processKeyUp(Fw::Key keyCode)
 
 void PlatformWindow::releaseAllKeys()
 {
-    for(auto it : m_keysState) {
+    for (auto it : m_keysState)
+    {
         Fw::Key keyCode = it.first;
         bool pressed = it.second;
 
-        if(!pressed)
+        if (!pressed)
             continue;
 
         processKeyUp(keyCode);
@@ -150,28 +170,31 @@ void PlatformWindow::releaseAllKeys()
 
     m_inputEvent.keyboardModifiers = 0;
 
-    for(auto &mouseButtonState: m_mouseButtonStates)
+    for (auto &mouseButtonState : m_mouseButtonStates)
         mouseButtonState = false;
 }
 
 void PlatformWindow::fireKeysPress()
 {
     // avoid massive checks
-    if(m_keyPressTimer.ticksElapsed() < 10)
+    if (m_keyPressTimer.ticksElapsed() < 10)
         return;
     m_keyPressTimer.restart();
 
-    for(auto it : m_keysState) {
+    for (auto it : m_keysState)
+    {
         Fw::Key keyCode = it.first;
         bool pressed = it.second;
 
-        if(!pressed)
+        if (!pressed)
             continue;
 
         ticks_t lastPressTicks = m_lastKeysPress[keyCode];
         ticks_t firstKeyPress = m_firstKeysPress[keyCode];
-        if(g_clock.millis() - lastPressTicks >= KEY_PRESS_REPEAT_INTERVAL) {
-            if(m_onInputEvent) {
+        if (g_clock.millis() - lastPressTicks >= KEY_PRESS_REPEAT_INTERVAL)
+        {
+            if (m_onInputEvent)
+            {
                 m_inputEvent.reset(Fw::KeyPressInputEvent);
                 m_inputEvent.keyCode = keyCode;
                 m_inputEvent.autoRepeatTicks = g_clock.millis() - firstKeyPress;
@@ -181,4 +204,3 @@ void PlatformWindow::fireKeysPress()
         }
     }
 }
-

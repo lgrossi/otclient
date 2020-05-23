@@ -48,6 +48,19 @@ UIWidget
     anchors.bottom: parent.bottom
 
   GameSidePanel
+    id: gameTopPanel
+    anchors.left: gameLeftPanel.right
+    anchors.right: gameRightPanel.left
+    anchors.top: parent.top
+    anchors.bottom: gameBottomPanel.top
+    focusable: false
+    visible: true
+    on: true
+    $!on:
+      width: 0
+      visible: false
+
+  GameSidePanel
     id: gameLeftPanel
     anchors.left: parent.left
     anchors.top: parent.top

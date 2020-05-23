@@ -34,7 +34,8 @@
 class MapView : public LuaObject
 {
 public:
-    enum ViewMode {
+    enum ViewMode
+    {
         NEAR_VIEW,
         MID_VIEW,
         FAR_VIEW,
@@ -43,16 +44,16 @@ public:
 
     MapView();
     ~MapView();
-    void draw(const Rect& rect);
+    void draw(const Rect &rect);
 
 private:
-    void updateGeometry(const Size& visibleDimension, const Size& optimizedSize);
+    void updateGeometry(const Size &visibleDimension, const Size &optimizedSize);
     void updateVisibleTilesCache(int start = 0);
     void requestVisibleTilesCacheUpdate() { m_mustUpdateVisibleTilesCache = true; }
 
 protected:
-    void onTileUpdate(const Position& pos);
-    void onMapCenterChange(const Position& pos);
+    void onTileUpdate(const Position &pos);
+    void onMapCenterChange(const Position &pos);
 
     friend class Map;
 
@@ -62,11 +63,15 @@ public:
     void unlockFirstVisibleFloor();
     int getLockedFirstVisibleFloor() { return m_lockedFirstVisibleFloor; }
 
-    void setMultifloor(bool enable) { m_multifloor = enable; requestVisibleTilesCacheUpdate(); }
+    void setMultifloor(bool enable)
+    {
+        m_multifloor = enable;
+        requestVisibleTilesCacheUpdate();
+    }
     bool isMultifloor() { return m_multifloor; }
 
     // map dimension related
-    void setVisibleDimension(const Size& visibleDimension);
+    void setVisibleDimension(const Size &visibleDimension);
     Size getVisibleDimension() { return m_visibleDimension; }
     int getTileSize() { return m_tileSize; }
     Point getVisibleCenterOffset() { return m_visibleCenterOffset; }
@@ -76,24 +81,28 @@ public:
     // view mode related
     void setViewMode(ViewMode viewMode);
     ViewMode getViewMode() { return m_viewMode; }
-    void optimizeForSize(const Size& visibleSize);
+    void optimizeForSize(const Size &visibleSize);
 
     void setAutoViewMode(bool enable);
     bool isAutoViewModeEnabled() { return m_autoViewMode; }
 
     // camera related
-    void followCreature(const CreaturePtr& creature);
+    void followCreature(const CreaturePtr &creature);
     CreaturePtr getFollowingCreature() { return m_followingCreature; }
     bool isFollowingCreature() { return m_followingCreature && m_follow; }
 
-    void setCameraPosition(const Position& pos);
+    void setCameraPosition(const Position &pos);
     Position getCameraPosition();
 
     void setMinimumAmbientLight(float intensity) { m_minimumAmbientLight = intensity; }
     float getMinimumAmbientLight() { return m_minimumAmbientLight; }
 
     // drawing related
-    void setDrawFlags(Otc::DrawFlags drawFlags) { m_drawFlags = drawFlags; requestVisibleTilesCacheUpdate(); }
+    void setDrawFlags(Otc::DrawFlags drawFlags)
+    {
+        m_drawFlags = drawFlags;
+        requestVisibleTilesCacheUpdate();
+    }
     Otc::DrawFlags getDrawFlags() { return m_drawFlags; }
 
     void setDrawTexts(bool enable) { m_drawTexts = enable; }
@@ -113,23 +122,28 @@ public:
 
     void move(int x, int y);
 
-    void setAnimated(bool animated) { m_animated = animated; requestVisibleTilesCacheUpdate(); }
+    void setAnimated(bool animated)
+    {
+        m_animated = animated;
+        requestVisibleTilesCacheUpdate();
+    }
     bool isAnimating() { return m_animated; }
 
     void setAddLightMethod(bool add) { m_lightView->setBlendEquation(add ? Painter::BlendEquation_Add : Painter::BlendEquation_Max); }
 
-    void setShader(const PainterShaderProgramPtr& shader, float fadein, float fadeout);
+    void setShader(const PainterShaderProgramPtr &shader, float fadein, float fadeout);
     PainterShaderProgramPtr getShader() { return m_shader; }
 
-    Position getPosition(const Point& point, const Size& mapSize);
+    Position getPosition(const Point &point, const Size &mapSize);
 
     MapViewPtr asMapView() { return static_self_cast<MapView>(); }
 
 private:
-    Rect calcFramebufferSource(const Size& destSize);
+    Rect calcFramebufferSource(const Size &destSize);
     int calcFirstVisibleFloor();
     int calcLastVisibleFloor();
-    Point transformPositionTo2D(const Position& position, const Position& relativePosition) {
+    Point transformPositionTo2D(const Position &position, const Position &relativePosition)
+    {
         return Point((m_virtualCenterOffset.x + (position.x - relativePosition.x) - (relativePosition.z - position.z)) * m_tileSize,
                      (m_virtualCenterOffset.y + (position.y - relativePosition.y) - (relativePosition.z - position.z)) * m_tileSize);
     }

@@ -29,12 +29,12 @@
 class SoundFile : public stdext::shared_object
 {
 public:
-    SoundFile(const FileStreamPtr& fileStream);
-    virtual ~SoundFile() { }
-    static SoundFilePtr loadSoundFile(const std::string& filename);
+    SoundFile(const FileStreamPtr &fileStream);
+    virtual ~SoundFile() {}
+    static SoundFilePtr loadSoundFile(const std::string &filename);
 
     virtual int read(void *buffer, int bufferSize) { return -1; }
-    virtual void reset() { }
+    virtual void reset() {}
     bool eof() { return m_file->eof(); }
 
     ALenum getSampleFormat();

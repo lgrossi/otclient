@@ -29,7 +29,7 @@ class OTMLEmitter
 {
 public:
     /// Emits a node and it's children to a std::string
-    static std::string emitNode(const OTMLNodePtr& node, int currentDepth = -1);
+    static std::string emitNode(const OTMLNodePtr &node, int currentDepth = -1);
 };
 
 #endif

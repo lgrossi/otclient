@@ -44,17 +44,19 @@ OTMLNodePtr OTMLNode::create(std::string tag, std::string value)
 bool OTMLNode::hasChildren()
 {
     int count = 0;
-    for(const OTMLNodePtr& child : m_children) {
-        if(!child->isNull())
+    for (const OTMLNodePtr &child : m_children)
+    {
+        if (!child->isNull())
             count++;
     }
     return count > 0;
 }
 
-OTMLNodePtr OTMLNode::get(const std::string& childTag)
+OTMLNodePtr OTMLNode::get(const std::string &childTag)
 {
-    for(const OTMLNodePtr& child : m_children) {
-        if(child->tag() == childTag && !child->isNull())
+    for (const OTMLNodePtr &child : m_children)
+    {
+        if (child->tag() == childTag && !child->isNull())
             return child;
     }
     return nullptr;
@@ -62,41 +64,47 @@ OTMLNodePtr OTMLNode::get(const std::string& childTag)
 
 OTMLNodePtr OTMLNode::getIndex(int childIndex)
 {
-    if(childIndex < size() && childIndex >= 0)
+    if (childIndex < size() && childIndex >= 0)
         return m_children[childIndex];
     return nullptr;
 }
 
-OTMLNodePtr OTMLNode::at(const std::string& childTag)
+OTMLNodePtr OTMLNode::at(const std::string &childTag)
 {
     OTMLNodePtr res;
-    for(const OTMLNodePtr& child : m_children) {
-        if(child->tag() == childTag && !child->isNull()) {
+    for (const OTMLNodePtr &child : m_children)
+    {
+        if (child->tag() == childTag && !child->isNull())
+        {
             res = child;
             break;
         }
     }
-    if(!res)
+    if (!res)
         throw OTMLException(asOTMLNode(), stdext::format("child node with tag '%s' not found", childTag));
     return res;
 }
 
 OTMLNodePtr OTMLNode::atIndex(int childIndex)
 {
-    if(childIndex >= size() || childIndex < 0)
+    if (childIndex >= size() || childIndex < 0)
         throw OTMLException(asOTMLNode(), stdext::format("child node with index '%d' not found", childIndex));
     return m_children[childIndex];
 }
 
-void OTMLNode::addChild(const OTMLNodePtr& newChild)
+void OTMLNode::addChild(const OTMLNodePtr &newChild)
 {
     // replace is needed when the tag is marked as unique
-    if(newChild->hasTag()) {
-        for(const OTMLNodePtr& node : m_children) {
-            if(node->tag() == newChild->tag() && (node->isUnique() || newChild->isUnique())) {
+    if (newChild->hasTag())
+    {
+        for (const OTMLNodePtr &node : m_children)
+        {
+            if (node->tag() == newChild->tag() && (node->isUnique() || newChild->isUnique()))
+            {
                 newChild->setUnique(true);
 
-                if(node->hasChildren() && newChild->hasChildren()) {
+                if (node->hasChildren() && newChild->hasChildren())
+                {
                     OTMLNodePtr tmpNode = node->clone();
                     tmpNode->merge(newChild);
                     newChild->copy(tmpNode);
@@ -106,11 +114,14 @@ void OTMLNode::addChild(const OTMLNodePtr& newChild)
 
                 // remove any other child with the same tag
                 auto it = m_children.begin();
-                while(it != m_children.end()) {
+                while (it != m_children.end())
+                {
                     OTMLNodePtr node = (*it);
-                    if(node != newChild && node->tag() == newChild->tag()) {
+                    if (node != newChild && node->tag() == newChild->tag())
+                    {
                         it = m_children.erase(it);
-                    } else
+                    }
+                    else
                         ++it;
                 }
                 return;
@@ -121,20 +132,22 @@ void OTMLNode::addChild(const OTMLNodePtr& newChild)
     m_children.push_back(newChild);
 }
 
-bool OTMLNode::removeChild(const OTMLNodePtr& oldChild)
+bool OTMLNode::removeChild(const OTMLNodePtr &oldChild)
 {
     auto it = std::find(m_children.begin(), m_children.end(), oldChild);
-    if(it != m_children.end()) {
+    if (it != m_children.end())
+    {
         m_children.erase(it);
         return true;
     }
     return false;
 }
 
-bool OTMLNode::replaceChild(const OTMLNodePtr& oldChild, const OTMLNodePtr& newChild)
+bool OTMLNode::replaceChild(const OTMLNodePtr &oldChild, const OTMLNodePtr &newChild)
 {
     auto it = std::find(m_children.begin(), m_children.end(), oldChild);
-    if(it != m_children.end()) {
+    if (it != m_children.end())
+    {
         it = m_children.erase(it);
         m_children.insert(it, newChild);
         return true;
@@ -142,7 +155,7 @@ bool OTMLNode::replaceChild(const OTMLNodePtr& oldChild, const OTMLNodePtr& newC
     return false;
 }
 
-void OTMLNode::copy(const OTMLNodePtr& node)
+void OTMLNode::copy(const OTMLNodePtr &node)
 {
     setTag(node->tag());
     setValue(node->rawValue());
@@ -150,13 +163,13 @@ void OTMLNode::copy(const OTMLNodePtr& node)
     setNull(node->isNull());
     setSource(node->source());
     clear();
-    for(const OTMLNodePtr& child : node->m_children)
+    for (const OTMLNodePtr &child : node->m_children)
         addChild(child->clone());
 }
 
-void OTMLNode::merge(const OTMLNodePtr& node)
+void OTMLNode::merge(const OTMLNodePtr &node)
 {
-    for(const OTMLNodePtr& child : node->m_children)
+    for (const OTMLNodePtr &child : node->m_children)
         addChild(child->clone());
     setTag(node->tag());
     setSource(node->source());
@@ -170,8 +183,8 @@ void OTMLNode::clear()
 OTMLNodeList OTMLNode::children()
 {
     OTMLNodeList children;
-    for(const OTMLNodePtr& child : m_children)
-        if(!child->isNull())
+    for (const OTMLNodePtr &child : m_children)
+        if (!child->isNull())
             children.push_back(child);
     return children;
 }
@@ -184,7 +197,7 @@ OTMLNodePtr OTMLNode::clone()
     myClone->setUnique(m_unique);
     myClone->setNull(m_null);
     myClone->setSource(m_source);
-    for(const OTMLNodePtr& child : m_children)
+    for (const OTMLNodePtr &child : m_children)
         myClone->addChild(child->clone());
     return myClone;
 }

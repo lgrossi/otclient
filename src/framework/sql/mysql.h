@@ -28,7 +28,7 @@
 #include <framework/global.h>
 
 #ifdef WINDOWS
-    #include <winsock2.h>
+#include <winsock2.h>
 #endif
 
 #include <mysql/mysql.h>
@@ -39,42 +39,42 @@ public:
     DatabaseMySQL();
     virtual ~DatabaseMySQL();
 
-    virtual void connect(const std::string& host, const std::string& user, const std::string& pass,
-                 const std::string& db, uint16 port, const std::string& unix_socket = "");
+    virtual void connect(const std::string &host, const std::string &user, const std::string &pass,
+                         const std::string &db, uint16 port, const std::string &unix_socket = "");
 
     virtual bool beginTransaction();
     virtual bool rollback();
     virtual bool commit();
 
-    virtual bool executeQuery(const std::string& query);
-    virtual DBResultPtr storeQuery(const std::string& query);
+    virtual bool executeQuery(const std::string &query);
+    virtual DBResultPtr storeQuery(const std::string &query);
 
     virtual std::string escapeString(const std::string &s);
-    virtual std::string escapeBlob(const char* s, uint32 length);
+    virtual std::string escapeBlob(const char *s, uint32 length);
 
     virtual uint64 getLastInsertedRowID();
-    virtual Fw::DatabaseEngine getDatabaseEngine() {return Fw::DatabaseMySQL;}
+    virtual Fw::DatabaseEngine getDatabaseEngine() { return Fw::DatabaseMySQL; }
 
 protected:
     bool handleError();
     bool internalExecuteQuery(const std::string &query);
 
-    MYSQL* m_handle;
+    MYSQL *m_handle;
 };
 
 class MySQLResult : public DBResult
 {
 
-friend class DatabaseMySQL;
+    friend class DatabaseMySQL;
 
 public:
-    MySQLResult(MYSQL_RES* result);
+    MySQLResult(MYSQL_RES *result);
     virtual ~MySQLResult();
 
-    virtual int32 getDataInt(const std::string& s);
-    virtual int64 getDataLong(const std::string& s);
-    virtual std::string getDataString(const std::string& s);
-    virtual const char* getDataStream(const std::string& s, uint64& size);
+    virtual int32 getDataInt(const std::string &s);
+    virtual int64 getDataLong(const std::string &s);
+    virtual std::string getDataString(const std::string &s);
+    virtual const char *getDataStream(const std::string &s, uint64 &size);
 
     virtual void free();
     virtual bool next();
@@ -84,7 +84,7 @@ protected:
     typedef std::map<const std::string, uint32> RowNames_t;
     RowNames_t m_names;
 
-    MYSQL_RES* m_result;
+    MYSQL_RES *m_result;
     MYSQL_ROW m_row;
 };
 

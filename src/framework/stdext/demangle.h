@@ -26,23 +26,27 @@
 #include <typeinfo>
 #include <string>
 
-namespace stdext {
+namespace stdext
+{
 
-/// Demangle names for GNU g++ compiler
-const char* demangle_name(const char* name);
+    /// Demangle names for GNU g++ compiler
+    const char *demangle_name(const char *name);
 
-/// Returns the name of a class
-template<typename T> std::string demangle_class() {
+    /// Returns the name of a class
+    template <typename T>
+    std::string demangle_class()
+    {
 #ifdef _MSC_VER
-    return demangle_name(typeid(T).name()) + 6;
+        return demangle_name(typeid(T).name()) + 6;
 #else
-    return demangle_name(typeid(T).name());
+        return demangle_name(typeid(T).name());
 #endif
-}
+    }
 
-/// Returns the name of a type
-template<typename T> std::string demangle_type() { return demangle_name(typeid(T).name()); }
+    /// Returns the name of a type
+    template <typename T>
+    std::string demangle_type() { return demangle_name(typeid(T).name()); }
 
-}
+} // namespace stdext
 
 #endif

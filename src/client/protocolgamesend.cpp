@@ -28,23 +28,26 @@
 #include <framework/platform/platform.h>
 #include <framework/util/crypt.h>
 
-void ProtocolGame::send(const OutputMessagePtr& outputMessage)
+void ProtocolGame::send(const OutputMessagePtr &outputMessage)
 {
     // avoid usage of automated sends (bot modules)
-    if(!g_game.checkBotProtection())
+    if (!g_game.checkBotProtection())
         return;
     Protocol::send(outputMessage);
 }
 
-void ProtocolGame::sendExtendedOpcode(uint8 opcode, const std::string& buffer)
+void ProtocolGame::sendExtendedOpcode(uint8 opcode, const std::string &buffer)
 {
-    if(m_enableSendExtendedOpcode) {
+    if (m_enableSendExtendedOpcode)
+    {
         OutputMessagePtr msg(new OutputMessage);
         msg->addU8(Proto::ClientExtendedOpcode);
         msg->addU8(opcode);
         msg->addString(buffer);
         send(msg);
-    } else {
+    }
+    else
+    {
         g_logger.error(stdext::format("Unable to send extended opcode %d, extended opcodes are not enabled", opcode));
     }
 }
@@ -57,20 +60,21 @@ void ProtocolGame::sendLoginPacket(uint challengeTimestamp, uint8 challengeRando
     msg->addU16(g_game.getOs());
     msg->addU16(g_game.getProtocolVersion());
 
-    if(g_game.getFeature(Otc::GameClientVersion))
+    if (g_game.getFeature(Otc::GameClientVersion))
         msg->addU32(g_game.getClientVersion());
 
-    if(g_game.getFeature(Otc::GameContentRevision))
+    if (g_game.getFeature(Otc::GameContentRevision))
         msg->addU16(g_things.getContentRevision());
 
-    if(g_game.getFeature(Otc::GamePreviewState))
+    if (g_game.getFeature(Otc::GamePreviewState))
         msg->addU8(0);
 
     int offset = msg->getMessageSize();
     // first RSA byte must be 0
     msg->addU8(0);
 
-    if(g_game.getFeature(Otc::GameLoginPacketEncryption)) {
+    if (g_game.getFeature(Otc::GameLoginPacketEncryption))
+    {
         // xtea key
         generateXteaKey();
         msg->addU32(m_xteaKey[0]);
@@ -80,11 +84,14 @@ void ProtocolGame::sendLoginPacket(uint challengeTimestamp, uint8 challengeRando
         msg->addU8(0); // is gm set?
     }
 
-    if(g_game.getFeature(Otc::GameSessionKey)) {
+    if (g_game.getFeature(Otc::GameSessionKey))
+    {
         msg->addString(m_sessionKey);
         msg->addString(m_characterName);
-    } else {
-        if(g_game.getFeature(Otc::GameAccountNames))
+    }
+    else
+    {
+        if (g_game.getFeature(Otc::GameAccountNames))
             msg->addString(m_accountName);
         else
             msg->addU32(stdext::from_string<uint32>(m_accountName));
@@ -92,11 +99,12 @@ void ProtocolGame::sendLoginPacket(uint challengeTimestamp, uint8 challengeRando
         msg->addString(m_characterName);
         msg->addString(m_accountPassword);
 
-        if(g_game.getFeature(Otc::GameAuthenticator))
+        if (g_game.getFeature(Otc::GameAuthenticator))
             msg->addString(m_authenticatorToken);
     }
 
-    if(g_game.getFeature(Otc::GameChallengeOnLogin)) {
+    if (g_game.getFeature(Otc::GameChallengeOnLogin))
+    {
         msg->addU32(challengeTimestamp);
         msg->addU8(challengeRandom);
     }
@@ -104,13 +112,14 @@ void ProtocolGame::sendLoginPacket(uint challengeTimestamp, uint8 challengeRando
     // ensure you log in a server with same aware range configured
     AwareRange range = g_map.getAwareRange();
 
-    if(g_game.getFeature(Otc::GameChangeMapAwareRange)) {
+    if (g_game.getFeature(Otc::GameChangeMapAwareRange))
+    {
         msg->addU8(range.right * 2);
         msg->addU8(range.bottom * 2);
     }
 
     std::string extended = callLuaField<std::string>("getLoginExtendedData");
-    if(!extended.empty())
+    if (!extended.empty())
         msg->addString(extended);
 
     // complete the bytes for rsa encryption with zeros
@@ -119,15 +128,15 @@ void ProtocolGame::sendLoginPacket(uint challengeTimestamp, uint8 challengeRando
     msg->addPaddingBytes(paddingBytes);
 
     // encrypt with RSA
-    if(g_game.getFeature(Otc::GameLoginPacketEncryption))
+    if (g_game.getFeature(Otc::GameLoginPacketEncryption))
         msg->encryptRsa();
 
-    if(g_game.getFeature(Otc::GameProtocolChecksum))
+    if (g_game.getFeature(Otc::GameProtocolChecksum))
         enableChecksum();
 
     send(msg);
 
-    if(g_game.getFeature(Otc::GameLoginPacketEncryption))
+    if (g_game.getFeature(Otc::GameLoginPacketEncryption))
         enableXteaEncryption();
 }
 
@@ -147,9 +156,10 @@ void ProtocolGame::sendLogout()
 
 void ProtocolGame::sendPing()
 {
-    if(g_game.getFeature(Otc::GameExtendedClientPing))
+    if (g_game.getFeature(Otc::GameExtendedClientPing))
         sendExtendedOpcode(2, "");
-    else {
+    else
+    {
         OutputMessagePtr msg(new OutputMessage);
         msg->addU8(Proto::ClientPing);
         Protocol::send(msg);
@@ -163,41 +173,43 @@ void ProtocolGame::sendPingBack()
     send(msg);
 }
 
-void ProtocolGame::sendAutoWalk(const std::vector<Otc::Direction>& path)
+void ProtocolGame::sendAutoWalk(const std::vector<Otc::Direction> &path)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientAutoWalk);
     msg->addU8(path.size());
-    for(Otc::Direction dir : path) {
+    for (Otc::Direction dir : path)
+    {
         uint8 byte;
-        switch(dir) {
-            case Otc::East:
-                byte = 1;
-                break;
-            case Otc::NorthEast:
-                byte = 2;
-                break;
-            case Otc::North:
-                byte = 3;
-                break;
-            case Otc::NorthWest:
-                byte = 4;
-                break;
-            case Otc::West:
-                byte = 5;
-                break;
-            case Otc::SouthWest:
-                byte = 6;
-                break;
-            case Otc::South:
-                byte = 7;
-                break;
-            case Otc::SouthEast:
-                byte = 8;
-                break;
-            default:
-                byte = 0;
-                break;
+        switch (dir)
+        {
+        case Otc::East:
+            byte = 1;
+            break;
+        case Otc::NorthEast:
+            byte = 2;
+            break;
+        case Otc::North:
+            byte = 3;
+            break;
+        case Otc::NorthWest:
+            byte = 4;
+            break;
+        case Otc::West:
+            byte = 5;
+            break;
+        case Otc::SouthWest:
+            byte = 6;
+            break;
+        case Otc::South:
+            byte = 7;
+            break;
+        case Otc::SouthEast:
+            byte = 8;
+            break;
+        default:
+            byte = 0;
+            break;
         }
         msg->addU8(byte);
     }
@@ -304,7 +316,7 @@ void ProtocolGame::sendEquipItem(int itemId, int countOrSubType)
     send(msg);
 }
 
-void ProtocolGame::sendMove(const Position& fromPos, int thingId, int stackpos, const Position& toPos, int count)
+void ProtocolGame::sendMove(const Position &fromPos, int thingId, int stackpos, const Position &toPos, int count)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientMove);
@@ -343,7 +355,7 @@ void ProtocolGame::sendSellItem(int itemId, int subType, int amount, bool ignore
     msg->addU8(Proto::ClientSellItem);
     msg->addU16(itemId);
     msg->addU8(subType);
-    if(g_game.getFeature(Otc::GameDoubleShopSellAmount))
+    if (g_game.getFeature(Otc::GameDoubleShopSellAmount))
         msg->addU16(amount);
     else
         msg->addU8(amount);
@@ -358,7 +370,7 @@ void ProtocolGame::sendCloseNpcTrade()
     send(msg);
 }
 
-void ProtocolGame::sendRequestTrade(const Position& pos, int thingId, int stackpos, uint creatureId)
+void ProtocolGame::sendRequestTrade(const Position &pos, int thingId, int stackpos, uint creatureId)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientRequestTrade);
@@ -392,7 +404,7 @@ void ProtocolGame::sendRejectTrade()
     send(msg);
 }
 
-void ProtocolGame::sendUseItem(const Position& position, int itemId, int stackpos, int index)
+void ProtocolGame::sendUseItem(const Position &position, int itemId, int stackpos, int index)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientUseItem);
@@ -403,7 +415,7 @@ void ProtocolGame::sendUseItem(const Position& position, int itemId, int stackpo
     send(msg);
 }
 
-void ProtocolGame::sendUseItemWith(const Position& fromPos, int itemId, int fromStackPos, const Position& toPos, int toThingId, int toStackPos)
+void ProtocolGame::sendUseItemWith(const Position &fromPos, int itemId, int fromStackPos, const Position &toPos, int toThingId, int toStackPos)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientUseItemWith);
@@ -416,7 +428,7 @@ void ProtocolGame::sendUseItemWith(const Position& fromPos, int itemId, int from
     send(msg);
 }
 
-void ProtocolGame::sendUseOnCreature(const Position& pos, int thingId, int stackpos, uint creatureId)
+void ProtocolGame::sendUseOnCreature(const Position &pos, int thingId, int stackpos, uint creatureId)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientUseOnCreature);
@@ -427,7 +439,7 @@ void ProtocolGame::sendUseOnCreature(const Position& pos, int thingId, int stack
     send(msg);
 }
 
-void ProtocolGame::sendRotateItem(const Position& pos, int thingId, int stackpos)
+void ProtocolGame::sendRotateItem(const Position &pos, int thingId, int stackpos)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientRotateItem);
@@ -453,7 +465,7 @@ void ProtocolGame::sendUpContainer(int containerId)
     send(msg);
 }
 
-void ProtocolGame::sendEditText(uint id, const std::string& text)
+void ProtocolGame::sendEditText(uint id, const std::string &text)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientEditText);
@@ -462,7 +474,7 @@ void ProtocolGame::sendEditText(uint id, const std::string& text)
     send(msg);
 }
 
-void ProtocolGame::sendEditList(uint id, int doorId, const std::string& text)
+void ProtocolGame::sendEditList(uint id, int doorId, const std::string &text)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientEditList);
@@ -472,7 +484,7 @@ void ProtocolGame::sendEditList(uint id, int doorId, const std::string& text)
     send(msg);
 }
 
-void ProtocolGame::sendLook(const Position& position, int thingId, int stackpos)
+void ProtocolGame::sendLook(const Position &position, int thingId, int stackpos)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientLook);
@@ -490,12 +502,13 @@ void ProtocolGame::sendLookCreature(uint32 creatureId)
     send(msg);
 }
 
-void ProtocolGame::sendTalk(Otc::MessageMode mode, int channelId, const std::string& receiver, const std::string& message)
+void ProtocolGame::sendTalk(Otc::MessageMode mode, int channelId, const std::string &receiver, const std::string &message)
 {
-    if(message.empty())
+    if (message.empty())
         return;
 
-    if(message.length() > 255) {
+    if (message.length() > 255)
+    {
         g_logger.traceError("message too large");
         return;
     }
@@ -504,7 +517,8 @@ void ProtocolGame::sendTalk(Otc::MessageMode mode, int channelId, const std::str
     msg->addU8(Proto::ClientTalk);
     msg->addU8(Proto::translateMessageModeToServer(mode));
 
-    switch(mode) {
+    switch (mode)
+    {
     case Otc::MessagePrivateTo:
     case Otc::MessageGamemasterPrivateTo:
     case Otc::MessageRVRAnswer:
@@ -547,7 +561,7 @@ void ProtocolGame::sendLeaveChannel(int channelId)
     send(msg);
 }
 
-void ProtocolGame::sendOpenPrivateChannel(const std::string& receiver)
+void ProtocolGame::sendOpenPrivateChannel(const std::string &receiver)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientOpenPrivateChannel);
@@ -555,7 +569,7 @@ void ProtocolGame::sendOpenPrivateChannel(const std::string& receiver)
     send(msg);
 }
 
-void ProtocolGame::sendOpenRuleViolation(const std::string& reporter)
+void ProtocolGame::sendOpenRuleViolation(const std::string &reporter)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientOpenRuleViolation);
@@ -563,7 +577,7 @@ void ProtocolGame::sendOpenRuleViolation(const std::string& reporter)
     send(msg);
 }
 
-void ProtocolGame::sendCloseRuleViolation(const std::string& reporter)
+void ProtocolGame::sendCloseRuleViolation(const std::string &reporter)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientCloseRuleViolation);
@@ -591,8 +605,8 @@ void ProtocolGame::sendChangeFightModes(Otc::FightModes fightMode, Otc::ChaseMod
     msg->addU8(Proto::ClientChangeFightModes);
     msg->addU8(fightMode);
     msg->addU8(chaseMode);
-    msg->addU8(safeFight ? 0x01: 0x00);
-    if(g_game.getFeature(Otc::GamePVPMode))
+    msg->addU8(safeFight ? 0x01 : 0x00);
+    if (g_game.getFeature(Otc::GamePVPMode))
         msg->addU8(pvpMode);
     send(msg);
 }
@@ -602,7 +616,7 @@ void ProtocolGame::sendAttack(uint creatureId, uint seq)
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientAttack);
     msg->addU32(creatureId);
-    if(g_game.getFeature(Otc::GameAttackSeq))
+    if (g_game.getFeature(Otc::GameAttackSeq))
         msg->addU32(seq);
     send(msg);
 }
@@ -612,7 +626,7 @@ void ProtocolGame::sendFollow(uint creatureId, uint seq)
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientFollow);
     msg->addU32(creatureId);
-    if(g_game.getFeature(Otc::GameAttackSeq))
+    if (g_game.getFeature(Otc::GameAttackSeq))
         msg->addU32(seq);
     send(msg);
 }
@@ -661,7 +675,7 @@ void ProtocolGame::sendShareExperience(bool active)
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientShareExperience);
     msg->addU8(active ? 0x01 : 0x00);
-    if(g_game.getClientVersion() < 910)
+    if (g_game.getClientVersion() < 910)
         msg->addU8(0);
     send(msg);
 }
@@ -673,7 +687,7 @@ void ProtocolGame::sendOpenOwnChannel()
     send(msg);
 }
 
-void ProtocolGame::sendInviteToOwnChannel(const std::string& name)
+void ProtocolGame::sendInviteToOwnChannel(const std::string &name)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientInviteToOwnChannel);
@@ -681,7 +695,7 @@ void ProtocolGame::sendInviteToOwnChannel(const std::string& name)
     send(msg);
 }
 
-void ProtocolGame::sendExcludeFromOwnChannel(const std::string& name)
+void ProtocolGame::sendExcludeFromOwnChannel(const std::string &name)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientExcludeFromOwnChannel);
@@ -711,11 +725,11 @@ void ProtocolGame::sendRequestOutfit()
     send(msg);
 }
 
-void ProtocolGame::sendChangeOutfit(const Outfit& outfit)
+void ProtocolGame::sendChangeOutfit(const Outfit &outfit)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientChangeOutfit);
-    if(g_game.getFeature(Otc::GameLooktypeU16))
+    if (g_game.getFeature(Otc::GameLooktypeU16))
         msg->addU16(outfit.getId());
     else
         msg->addU8(outfit.getId());
@@ -723,26 +737,29 @@ void ProtocolGame::sendChangeOutfit(const Outfit& outfit)
     msg->addU8(outfit.getBody());
     msg->addU8(outfit.getLegs());
     msg->addU8(outfit.getFeet());
-    if(g_game.getFeature(Otc::GamePlayerAddons))
+    if (g_game.getFeature(Otc::GamePlayerAddons))
         msg->addU8(outfit.getAddons());
-    if(g_game.getFeature(Otc::GamePlayerMounts))
+    if (g_game.getFeature(Otc::GamePlayerMounts))
         msg->addU16(outfit.getMount());
     send(msg);
 }
 
 void ProtocolGame::sendMountStatus(bool mount)
 {
-    if(g_game.getFeature(Otc::GamePlayerMounts)) {
+    if (g_game.getFeature(Otc::GamePlayerMounts))
+    {
         OutputMessagePtr msg(new OutputMessage);
         msg->addU8(Proto::ClientMount);
         msg->addU8(mount);
         send(msg);
-    } else {
+    }
+    else
+    {
         g_logger.error("ProtocolGame::sendMountStatus does not support the current protocol.");
     }
 }
 
-void ProtocolGame::sendAddVip(const std::string& name)
+void ProtocolGame::sendAddVip(const std::string &name)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientAddVip);
@@ -758,7 +775,7 @@ void ProtocolGame::sendRemoveVip(uint playerId)
     send(msg);
 }
 
-void ProtocolGame::sendEditVip(uint playerId, const std::string& description, int iconId, bool notifyLogin)
+void ProtocolGame::sendEditVip(uint playerId, const std::string &description, int iconId, bool notifyLogin)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientEditVip);
@@ -769,7 +786,7 @@ void ProtocolGame::sendEditVip(uint playerId, const std::string& description, in
     send(msg);
 }
 
-void ProtocolGame::sendBugReport(const std::string& comment)
+void ProtocolGame::sendBugReport(const std::string &comment)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientBugReport);
@@ -777,7 +794,7 @@ void ProtocolGame::sendBugReport(const std::string& comment)
     send(msg);
 }
 
-void ProtocolGame::sendRuleViolation(const std::string& target, int reason, int action, const std::string& comment, const std::string& statement, int statementId, bool ipBanishment)
+void ProtocolGame::sendRuleViolation(const std::string &target, int reason, int action, const std::string &comment, const std::string &statement, int statementId, bool ipBanishment)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientRuleViolation);
@@ -791,7 +808,7 @@ void ProtocolGame::sendRuleViolation(const std::string& target, int reason, int 
     send(msg);
 }
 
-void ProtocolGame::sendDebugReport(const std::string& a, const std::string& b, const std::string& c, const std::string& d)
+void ProtocolGame::sendDebugReport(const std::string &a, const std::string &b, const std::string &c, const std::string &d)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientDebugReport);
@@ -817,7 +834,7 @@ void ProtocolGame::sendRequestQuestLine(int questId)
     send(msg);
 }
 
-void ProtocolGame::sendNewNewRuleViolation(int reason, int action, const std::string& characterName, const std::string& comment, const std::string& translation)
+void ProtocolGame::sendNewNewRuleViolation(int reason, int action, const std::string &characterName, const std::string &comment, const std::string &translation)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientNewRuleViolation);
@@ -849,9 +866,9 @@ void ProtocolGame::sendAnswerModalDialog(uint32 dialog, int button, int choice)
     send(msg);
 }
 
-void ProtocolGame::sendBrowseField(const Position& position)
+void ProtocolGame::sendBrowseField(const Position &position)
 {
-    if(!g_game.getFeature(Otc::GameBrowseField))
+    if (!g_game.getFeature(Otc::GameBrowseField))
         return;
 
     OutputMessagePtr msg(new OutputMessage);
@@ -862,7 +879,7 @@ void ProtocolGame::sendBrowseField(const Position& position)
 
 void ProtocolGame::sendSeekInContainer(int cid, int index)
 {
-    if(!g_game.getFeature(Otc::GameContainerPagination))
+    if (!g_game.getFeature(Otc::GameContainerPagination))
         return;
 
     OutputMessagePtr msg(new OutputMessage);
@@ -872,14 +889,14 @@ void ProtocolGame::sendSeekInContainer(int cid, int index)
     send(msg);
 }
 
-void ProtocolGame::sendBuyStoreOffer(int offerId, int productType, const std::string& name)
+void ProtocolGame::sendBuyStoreOffer(int offerId, int productType, const std::string &name)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientBuyStoreOffer);
     msg->addU32(offerId);
     msg->addU8(productType);
 
-    if(productType == Otc::ProductTypeNameChange)
+    if (productType == Otc::ProductTypeNameChange)
         msg->addString(name);
 
     send(msg);
@@ -889,10 +906,13 @@ void ProtocolGame::sendRequestTransactionHistory(int page, int entriesPerPage)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientRequestTransactionHistory);
-    if(g_game.getClientVersion() <= 1096) {
+    if (g_game.getClientVersion() <= 1096)
+    {
         msg->addU16(page);
         msg->addU32(entriesPerPage);
-    } else {
+    }
+    else
+    {
         msg->addU32(page);
         msg->addU8(entriesPerPage);
     }
@@ -900,12 +920,13 @@ void ProtocolGame::sendRequestTransactionHistory(int page, int entriesPerPage)
     send(msg);
 }
 
-void ProtocolGame::sendRequestStoreOffers(const std::string& categoryName, int serviceType)
+void ProtocolGame::sendRequestStoreOffers(const std::string &categoryName, int serviceType)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientRequestStoreOffers);
 
-    if(g_game.getFeature(Otc::GameIngameStoreServiceType)) {
+    if (g_game.getFeature(Otc::GameIngameStoreServiceType))
+    {
         msg->addU8(serviceType);
     }
     msg->addString(categoryName);
@@ -913,12 +934,13 @@ void ProtocolGame::sendRequestStoreOffers(const std::string& categoryName, int s
     send(msg);
 }
 
-void ProtocolGame::sendOpenStore(int serviceType, const std::string& category)
+void ProtocolGame::sendOpenStore(int serviceType, const std::string &category)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientOpenStore);
 
-    if(g_game.getFeature(Otc::GameIngameStoreServiceType)) {
+    if (g_game.getFeature(Otc::GameIngameStoreServiceType))
+    {
         msg->addU8(serviceType);
         msg->addString(category);
     }
@@ -926,7 +948,7 @@ void ProtocolGame::sendOpenStore(int serviceType, const std::string& category)
     send(msg);
 }
 
-void ProtocolGame::sendTransferCoins(const std::string& recipient, int amount)
+void ProtocolGame::sendTransferCoins(const std::string &recipient, int amount)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientTransferCoins);
@@ -944,10 +966,9 @@ void ProtocolGame::sendOpenTransactionHistory(int entriesPerPage)
     send(msg);
 }
 
-
 void ProtocolGame::sendChangeMapAwareRange(int xrange, int yrange)
 {
-    if(!g_game.getFeature(Otc::GameChangeMapAwareRange))
+    if (!g_game.getFeature(Otc::GameChangeMapAwareRange))
         return;
 
     OutputMessagePtr msg(new OutputMessage);
@@ -957,7 +978,7 @@ void ProtocolGame::sendChangeMapAwareRange(int xrange, int yrange)
     send(msg);
 }
 
-void ProtocolGame::sendCameraUpdate(Position& pos)
+void ProtocolGame::sendCameraUpdate(Position &pos)
 {
     OutputMessagePtr msg(new OutputMessage);
     msg->addU8(Proto::ClientMoveCamera);
@@ -965,7 +986,7 @@ void ProtocolGame::sendCameraUpdate(Position& pos)
     send(msg);
 }
 
-void ProtocolGame::addPosition(const OutputMessagePtr& msg, const Position& position)
+void ProtocolGame::addPosition(const OutputMessagePtr &msg, const Position &position)
 {
     msg->addU16(position.x);
     msg->addU16(position.y);

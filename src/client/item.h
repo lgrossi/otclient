@@ -72,24 +72,24 @@ enum ItemAttr : uint8
 };
 
 // @bindclass
-#pragma pack(push,1) // disable memory alignment
+#pragma pack(push, 1) // disable memory alignment
 class Item : public Thing
 {
 public:
     Item();
-    virtual ~Item() { }
+    virtual ~Item() {}
 
     static ItemPtr create(int id);
     static ItemPtr createFromOtb(int id);
 
-    void draw(const Point& dest, float scaleFactor, bool animate, LightView *lightView = nullptr);
+    void draw(const Point &dest, float scaleFactor, bool animate, LightView *lightView = nullptr);
 
     void setId(uint32 id);
     void setOtbId(uint16 id);
     void setCountOrSubType(int value) { m_countOrSubType = value; }
     void setCount(int count) { m_countOrSubType = count; }
     void setSubType(int subType) { m_countOrSubType = subType; }
-    void setColor(const Color& c) { m_color = c; }
+    void setColor(const Color &c) { m_color = c; }
 
     int getCountOrSubType() { return m_countOrSubType; }
     int getSubType();
@@ -100,8 +100,8 @@ public:
     std::string getName();
     bool isValid();
 
-    void unserializeItem(const BinaryTreePtr& in);
-    void serializeItem(const OutputBinaryTreePtr& out);
+    void unserializeItem(const BinaryTreePtr &in);
+    void serializeItem(const OutputBinaryTreePtr &out);
 
     void setDepotId(uint16 depotId) { m_attribs.set(ATTR_DEPOT_ID, depotId); }
     uint16 getDepotId() { return m_attribs.get<uint16>(ATTR_DEPOT_ID); }
@@ -120,7 +120,7 @@ public:
     void setText(std::string txt) { m_attribs.set(ATTR_TEXT, txt); }
 
     Position getTeleportDestination() { return m_attribs.get<Position>(ATTR_TELE_DEST); }
-    void setTeleportDestination(const Position& pos) { m_attribs.set(ATTR_TELE_DEST, pos); }
+    void setTeleportDestination(const Position &pos) { m_attribs.set(ATTR_TELE_DEST, pos); }
 
     void setAsync(bool enable) { m_async = enable; }
 
@@ -138,16 +138,16 @@ public:
 
     ItemVector getContainerItems() { return m_containerItems; }
     ItemPtr getContainerItem(int slot) { return m_containerItems[slot]; }
-    void addContainerItemIndexed(const ItemPtr& i, int slot) { m_containerItems[slot] = i; }
-    void addContainerItem(const ItemPtr& i) { m_containerItems.push_back(i); }
+    void addContainerItemIndexed(const ItemPtr &i, int slot) { m_containerItems[slot] = i; }
+    void addContainerItem(const ItemPtr &i) { m_containerItems.push_back(i); }
     void removeContainerItem(int slot) { m_containerItems[slot] = nullptr; }
     void clearContainerItems() { m_containerItems.clear(); }
 
-    void calculatePatterns(int& xPattern, int& yPattern, int& zPattern);
+    void calculatePatterns(int &xPattern, int &yPattern, int &zPattern);
     int calculateAnimationPhase(bool animate);
     int getExactSize(int layer = 0, int xPattern = 0, int yPattern = 0, int zPattern = 0, int animationPhase = 0);
 
-    const ThingTypePtr& getThingType();
+    const ThingTypePtr &getThingType();
     ThingType *rawGetThingType();
 
 private:

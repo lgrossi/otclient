@@ -36,12 +36,12 @@ protected:
 public:
     virtual ~FrameBuffer();
 
-    void resize(const Size& size);
+    void resize(const Size &size);
     void bind();
     void release();
     void draw();
-    void draw(const Rect& dest);
-    void draw(const Rect& dest, const Rect& src);
+    void draw(const Rect &dest);
+    void draw(const Rect &dest, const Rect &src);
 
     void setBackuping(bool enabled) { m_backuping = enabled; }
     void setSmooth(bool enabled) { m_smooth = enabled; }

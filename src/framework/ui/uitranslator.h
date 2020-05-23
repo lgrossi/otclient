@@ -26,13 +26,14 @@
 #include "../const.h"
 #include <string>
 
-namespace Fw {
+namespace Fw
+{
 
-AlignmentFlag translateAlignment(std::string aligment);
-AnchorEdge translateAnchorEdge(std::string anchorEdge);
-WidgetState translateState(std::string state);
-AutoFocusPolicy translateAutoFocusPolicy(std::string policy);
+  AlignmentFlag translateAlignment(std::string aligment);
+  AnchorEdge translateAnchorEdge(std::string anchorEdge);
+  WidgetState translateState(std::string state);
+  AutoFocusPolicy translateAutoFocusPolicy(std::string policy);
 
-};
+}; // namespace Fw
 
 #endif

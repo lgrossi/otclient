@@ -37,26 +37,27 @@
 class Creature : public Thing
 {
 public:
-    enum {
+    enum
+    {
         SHIELD_BLINK_TICKS = 500,
         VOLATILE_SQUARE_DURATION = 1000
     };
 
     Creature();
 
-    virtual void draw(const Point& dest, float scaleFactor, bool animate, LightView *lightView = nullptr);
+    virtual void draw(const Point &dest, float scaleFactor, bool animate, LightView *lightView = nullptr);
 
     void internalDrawOutfit(Point dest, float scaleFactor, bool animateWalk, bool animateIdle, Otc::Direction direction, LightView *lightView = nullptr);
-    void drawOutfit(const Rect& destRect, bool resize);
-    void drawInformation(const Point& point, bool useGray, const Rect& parentRect, int drawFlags);
+    void drawOutfit(const Rect &destRect, bool resize);
+    void drawInformation(const Point &point, bool useGray, const Rect &parentRect, int drawFlags);
 
     void setId(uint32 id) { m_id = id; }
-    void setName(const std::string& name);
+    void setName(const std::string &name);
     void setHealthPercent(uint8 healthPercent);
     void setDirection(Otc::Direction direction);
-    void setOutfit(const Outfit& outfit);
-    void setOutfitColor(const Color& color, int duration);
-    void setLight(const Light& light) { m_light = light; }
+    void setOutfit(const Outfit &outfit);
+    void setOutfitColor(const Color &color, int duration);
+    void setLight(const Light &light) { m_light = light; }
     void setSpeed(uint16 speed);
     void setBaseSpeed(double baseSpeed);
     void setSkull(uint8 skull);
@@ -64,18 +65,23 @@ public:
     void setEmblem(uint8 emblem);
     void setType(uint8 type);
     void setIcon(uint8 icon);
-    void setSkullTexture(const std::string& filename);
-    void setShieldTexture(const std::string& filename, bool blink);
-    void setEmblemTexture(const std::string& filename);
-    void setTypeTexture(const std::string& filename);
-    void setIconTexture(const std::string& filename);
+    void setSkullTexture(const std::string &filename);
+    void setShieldTexture(const std::string &filename, bool blink);
+    void setEmblemTexture(const std::string &filename);
+    void setTypeTexture(const std::string &filename);
+    void setIconTexture(const std::string &filename);
     void setPassable(bool passable) { m_passable = passable; }
+    void setBoss(bool isBoss) { m_boss = isBoss; }
     void setSpeedFormula(double speedA, double speedB, double speedC);
 
     void addTimedSquare(uint8 color);
     void removeTimedSquare() { m_showTimedSquare = false; }
 
-    void showStaticSquare(const Color& color) { m_showStaticSquare = true; m_staticSquareColor = color; }
+    void showStaticSquare(const Color &color)
+    {
+        m_showStaticSquare = true;
+        m_staticSquareColor = color;
+    }
     void hideStaticSquare() { m_showStaticSquare = false; }
 
     uint32 getId() { return m_id; }
@@ -92,6 +98,7 @@ public:
     uint8 getType() { return m_type; }
     uint8 getIcon() { return m_icon; }
     bool isPassable() { return m_passable; }
+    bool isBoss() { return m_boss; }
     Point getDrawOffset();
     int getStepDuration(bool ignoreDiagonal = false, Otc::Direction dir = Otc::InvalidDirection);
     Point getWalkOffset() { return m_walkOffset; }
@@ -114,7 +121,7 @@ public:
     // walk related
     void turn(Otc::Direction direction);
     void jump(int height, int duration);
-    virtual void walk(const Position& oldPos, const Position& newPos);
+    virtual void walk(const Position &oldPos, const Position &newPos);
     virtual void stopWalk();
     void allowAppearWalk() { m_allowAppearWalk = true; }
 
@@ -126,10 +133,10 @@ public:
 
     bool isCreature() { return true; }
 
-    const ThingTypePtr& getThingType();
+    const ThingTypePtr &getThingType();
     ThingType *rawGetThingType();
 
-    virtual void onPositionChange(const Position& newPos, const Position& oldPos);
+    virtual void onPositionChange(const Position &newPos, const Position &oldPos);
     virtual void onAppear();
     virtual void onDisappear();
     virtual void onDeath();
@@ -166,6 +173,7 @@ protected:
     stdext::boolean<true> m_showShieldTexture;
     stdext::boolean<false> m_shieldBlink;
     stdext::boolean<false> m_passable;
+    stdext::boolean<false> m_boss;
     Color m_timedSquareColor;
     Color m_staticSquareColor;
     stdext::boolean<false> m_showTimedSquare;

@@ -25,50 +25,52 @@
 #include "uiminimap.h"
 #include <framework/ui/uiwidget.h>
 
-int UIPositionAnchor::getHookedPoint(const UIWidgetPtr& hookedWidget, const UIWidgetPtr& parentWidget)
+int UIPositionAnchor::getHookedPoint(const UIWidgetPtr &hookedWidget, const UIWidgetPtr &parentWidget)
 {
     UIMinimapPtr minimap = hookedWidget->static_self_cast<UIMinimap>();
     Rect hookedRect = minimap->getTileRect(m_hookedPosition);
     int point = 0;
-        if(hookedRect.isValid()) {
-        switch(m_hookedEdge) {
-            case Fw::AnchorLeft:
-                point = hookedRect.left();
-                break;
-            case Fw::AnchorRight:
-                point = hookedRect.right();
-                break;
-            case Fw::AnchorTop:
-                point = hookedRect.top();
-                break;
-            case Fw::AnchorBottom:
-                point = hookedRect.bottom();
-                break;
-            case Fw::AnchorHorizontalCenter:
-                point = hookedRect.horizontalCenter();
-                break;
-            case Fw::AnchorVerticalCenter:
-                point = hookedRect.verticalCenter();
-                break;
-            default:
-                // must never happens
-                assert(false);
-                break;
+    if (hookedRect.isValid())
+    {
+        switch (m_hookedEdge)
+        {
+        case Fw::AnchorLeft:
+            point = hookedRect.left();
+            break;
+        case Fw::AnchorRight:
+            point = hookedRect.right();
+            break;
+        case Fw::AnchorTop:
+            point = hookedRect.top();
+            break;
+        case Fw::AnchorBottom:
+            point = hookedRect.bottom();
+            break;
+        case Fw::AnchorHorizontalCenter:
+            point = hookedRect.horizontalCenter();
+            break;
+        case Fw::AnchorVerticalCenter:
+            point = hookedRect.verticalCenter();
+            break;
+        default:
+            // must never happens
+            assert(false);
+            break;
         }
     }
     return point;
 }
 
-void UIMapAnchorLayout::addPositionAnchor(const UIWidgetPtr& anchoredWidget, Fw::AnchorEdge anchoredEdge, const Position& hookedPosition, Fw::AnchorEdge hookedEdge)
+void UIMapAnchorLayout::addPositionAnchor(const UIWidgetPtr &anchoredWidget, Fw::AnchorEdge anchoredEdge, const Position &hookedPosition, Fw::AnchorEdge hookedEdge)
 {
-    if(!anchoredWidget)
+    if (!anchoredWidget)
         return;
 
     assert(anchoredWidget != getParentWidget());
 
     UIPositionAnchorPtr anchor(new UIPositionAnchor(anchoredEdge, hookedPosition, hookedEdge));
-    UIAnchorGroupPtr& anchorGroup = m_anchorsGroups[anchoredWidget];
-    if(!anchorGroup)
+    UIAnchorGroupPtr &anchorGroup = m_anchorsGroups[anchoredWidget];
+    if (!anchorGroup)
         anchorGroup = UIAnchorGroupPtr(new UIAnchorGroup);
 
     anchorGroup->addAnchor(anchor);
@@ -77,13 +79,13 @@ void UIMapAnchorLayout::addPositionAnchor(const UIWidgetPtr& anchoredWidget, Fw:
     update();
 }
 
-void UIMapAnchorLayout::centerInPosition(const UIWidgetPtr& anchoredWidget, const Position& hookedPosition)
+void UIMapAnchorLayout::centerInPosition(const UIWidgetPtr &anchoredWidget, const Position &hookedPosition)
 {
     addPositionAnchor(anchoredWidget, Fw::AnchorHorizontalCenter, hookedPosition, Fw::AnchorHorizontalCenter);
     addPositionAnchor(anchoredWidget, Fw::AnchorVerticalCenter, hookedPosition, Fw::AnchorVerticalCenter);
 }
 
-void UIMapAnchorLayout::fillPosition(const UIWidgetPtr& anchoredWidget, const Position& hookedPosition)
+void UIMapAnchorLayout::fillPosition(const UIWidgetPtr &anchoredWidget, const Position &hookedPosition)
 {
     addPositionAnchor(anchoredWidget, Fw::AnchorLeft, hookedPosition, Fw::AnchorLeft);
     addPositionAnchor(anchoredWidget, Fw::AnchorRight, hookedPosition, Fw::AnchorRight);

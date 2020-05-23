@@ -42,7 +42,7 @@ void UIMinimap::drawSelf(Fw::DrawPane drawPane)
 {
     UIWidget::drawSelf(drawPane);
 
-    if((drawPane & Fw::ForegroundPane) == 0)
+    if ((drawPane & Fw::ForegroundPane) == 0)
         return;
 
     g_minimap.draw(getPaddingRect(), getCameraPosition(), m_scale, m_color);
@@ -50,17 +50,17 @@ void UIMinimap::drawSelf(Fw::DrawPane drawPane)
 
 bool UIMinimap::setZoom(int zoom)
 {
-    if(zoom == m_zoom)
+    if (zoom == m_zoom)
         return true;
 
-    if(zoom < m_minZoom || zoom > m_maxZoom)
+    if (zoom < m_minZoom || zoom > m_maxZoom)
         return false;
 
     int oldZoom = m_zoom;
     m_zoom = zoom;
-    if(m_zoom < 0)
+    if (m_zoom < 0)
         m_scale = 1.0f / (1 << std::abs(zoom));
-    else if(m_zoom > 0)
+    else if (m_zoom > 0)
         m_scale = 1.0f * (1 << std::abs(zoom));
     else
         m_scale = 1;
@@ -70,7 +70,7 @@ bool UIMinimap::setZoom(int zoom)
     return true;
 }
 
-void UIMinimap::setCameraPosition(const Position& pos)
+void UIMinimap::setCameraPosition(const Position &pos)
 {
     Position oldPos = m_cameraPosition;
     m_cameraPosition = pos;
@@ -82,7 +82,7 @@ void UIMinimap::setCameraPosition(const Position& pos)
 bool UIMinimap::floorUp()
 {
     Position pos = getCameraPosition();
-    if(!pos.up())
+    if (!pos.up())
         return false;
     setCameraPosition(pos);
     return true;
@@ -91,42 +91,42 @@ bool UIMinimap::floorUp()
 bool UIMinimap::floorDown()
 {
     Position pos = getCameraPosition();
-    if(!pos.down())
+    if (!pos.down())
         return false;
     setCameraPosition(pos);
     return true;
 }
 
-Point UIMinimap::getTilePoint(const Position& pos)
+Point UIMinimap::getTilePoint(const Position &pos)
 {
     return g_minimap.getTilePoint(pos, getPaddingRect(), getCameraPosition(), m_scale);
 }
 
-Rect UIMinimap::getTileRect(const Position& pos)
+Rect UIMinimap::getTileRect(const Position &pos)
 {
     return g_minimap.getTileRect(pos, getPaddingRect(), getCameraPosition(), m_scale);
 }
 
-Position UIMinimap::getTilePosition(const Point& mousePos)
+Position UIMinimap::getTilePosition(const Point &mousePos)
 {
     return g_minimap.getTilePosition(mousePos, getPaddingRect(), getCameraPosition(), m_scale);
 }
 
-void UIMinimap::anchorPosition(const UIWidgetPtr& anchoredWidget, Fw::AnchorEdge anchoredEdge, const Position& hookedPosition, Fw::AnchorEdge hookedEdge)
+void UIMinimap::anchorPosition(const UIWidgetPtr &anchoredWidget, Fw::AnchorEdge anchoredEdge, const Position &hookedPosition, Fw::AnchorEdge hookedEdge)
 {
     UIMapAnchorLayoutPtr layout = m_layout->static_self_cast<UIMapAnchorLayout>();
     assert(layout);
     layout->addPositionAnchor(anchoredWidget, anchoredEdge, hookedPosition, hookedEdge);
 }
 
-void UIMinimap::fillPosition(const UIWidgetPtr& anchoredWidget, const Position& hookedPosition)
+void UIMinimap::fillPosition(const UIWidgetPtr &anchoredWidget, const Position &hookedPosition)
 {
     UIMapAnchorLayoutPtr layout = m_layout->static_self_cast<UIMapAnchorLayout>();
     assert(layout);
     layout->fillPosition(anchoredWidget, hookedPosition);
 }
 
-void UIMinimap::centerInPosition(const UIWidgetPtr& anchoredWidget, const Position& hookedPosition)
+void UIMinimap::centerInPosition(const UIWidgetPtr &anchoredWidget, const Position &hookedPosition)
 {
     UIMapAnchorLayoutPtr layout = m_layout->static_self_cast<UIMapAnchorLayout>();
     assert(layout);
@@ -138,20 +138,21 @@ void UIMinimap::onZoomChange(int zoom, int oldZoom)
     callLuaField("onZoomChange", zoom, oldZoom);
 }
 
-void UIMinimap::onCameraPositionChange(const Position& position, const Position& oldPosition)
+void UIMinimap::onCameraPositionChange(const Position &position, const Position &oldPosition)
 {
     callLuaField("onCameraPositionChange", position, oldPosition);
 }
 
-void UIMinimap::onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode)
+void UIMinimap::onStyleApply(const std::string &styleName, const OTMLNodePtr &styleNode)
 {
     UIWidget::onStyleApply(styleName, styleNode);
-    for(const OTMLNodePtr& node : styleNode->children()) {
-        if(node->tag() == "zoom")
+    for (const OTMLNodePtr &node : styleNode->children())
+    {
+        if (node->tag() == "zoom")
             setZoom(node->value<int>());
-        else if(node->tag() == "max-zoom")
+        else if (node->tag() == "max-zoom")
             setMaxZoom(node->value<int>());
-        else if(node->tag() == "min-zoom")
+        else if (node->tag() == "min-zoom")
             setMinZoom(node->value<int>());
     }
 }

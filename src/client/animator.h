@@ -45,8 +45,8 @@ class Animator : public stdext::shared_object
 public:
     Animator();
 
-    void unserialize(int animationPhases, const FileStreamPtr& fin);
-    void serialize(const FileStreamPtr& fin);
+    void unserialize(int animationPhases, const FileStreamPtr &fin);
+    void serialize(const FileStreamPtr &fin);
 
     void setPhase(int phase);
     int getPhase();
@@ -71,7 +71,7 @@ private:
     int m_startPhase;
     int m_loopCount;
     bool m_async;
-    std::vector< std::tuple<int, int> > m_phaseDurations;
+    std::vector<std::tuple<int, int>> m_phaseDurations;
 
     int m_currentDuration;
     AnimationDirection m_currentDirection;

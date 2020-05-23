@@ -33,19 +33,19 @@ public:
 
     void drawSelf(Fw::DrawPane drawPane);
 
-    bool zoomIn() { return setZoom(m_zoom+1); }
-    bool zoomOut() { return setZoom(m_zoom-1); }
+    bool zoomIn() { return setZoom(m_zoom + 1); }
+    bool zoomOut() { return setZoom(m_zoom - 1); }
 
     bool setZoom(int zoom);
     void setMinZoom(int minZoom) { m_minZoom = minZoom; }
     void setMaxZoom(int maxZoom) { m_maxZoom = maxZoom; }
-    void setCameraPosition(const Position& pos);
+    void setCameraPosition(const Position &pos);
     bool floorUp();
     bool floorDown();
 
-    Point getTilePoint(const Position& pos);
-    Rect getTileRect(const Position& pos);
-    Position getTilePosition(const Point& mousePos);
+    Point getTilePoint(const Position &pos);
+    Rect getTileRect(const Position &pos);
+    Position getTilePosition(const Point &mousePos);
 
     Position getCameraPosition() { return m_cameraPosition; }
     int getMinZoom() { return m_minZoom; }
@@ -53,14 +53,14 @@ public:
     int getZoom() { return m_zoom; }
     float getScale() { return m_scale; }
 
-    void anchorPosition(const UIWidgetPtr& anchoredWidget, Fw::AnchorEdge anchoredEdge, const Position& hookedPosition, Fw::AnchorEdge hookedEdge);
-    void fillPosition(const UIWidgetPtr& anchoredWidget, const Position& hookedPosition);
-    void centerInPosition(const UIWidgetPtr& anchoredWidget, const Position& hookedPosition);
+    void anchorPosition(const UIWidgetPtr &anchoredWidget, Fw::AnchorEdge anchoredEdge, const Position &hookedPosition, Fw::AnchorEdge hookedEdge);
+    void fillPosition(const UIWidgetPtr &anchoredWidget, const Position &hookedPosition);
+    void centerInPosition(const UIWidgetPtr &anchoredWidget, const Position &hookedPosition);
 
 protected:
     virtual void onZoomChange(int zoom, int oldZoom);
-    virtual void onCameraPositionChange(const Position& position, const Position& oldPosition);
-    virtual void onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode);
+    virtual void onCameraPositionChange(const Position &position, const Position &oldPosition);
+    virtual void onStyleApply(const std::string &styleName, const OTMLNodePtr &styleNode);
 
 private:
     void update();
