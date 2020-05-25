@@ -37,7 +37,7 @@
 #define MAX_BACKTRACE_DEPTH 128
 #define DEMANGLE_BACKTRACE_SYMBOLS
 
-void crashHandler(int signum, siginfo_t *info, void *secret)
+void crashHandler(int signum, siginfo_t* info, void* secret)
 {
     g_logger.error("Application crashed");
 
@@ -51,7 +51,7 @@ void crashHandler(int signum, siginfo_t *info, void *secret)
     ss << stdext::format("crash date: %s\n", stdext::date_time_string());
     ss.flags(std::ios::hex | std::ios::showbase);
 
-    ucontext_t context = *(ucontext_t *)secret;
+    ucontext_t context = *(ucontext_t*)secret;
 #if __WORDSIZE == 64
     ss << "  at rip = " << context.uc_mcontext.gregs[REG_RIP] << std::endl;
     ss << "     rax = " << context.uc_mcontext.gregs[REG_RAX] << std::endl;
@@ -81,27 +81,24 @@ void crashHandler(int signum, siginfo_t *info, void *secret)
     ss.flags(std::ios::dec);
     ss << "  backtrace:" << std::endl;
 
-    void *buffer[MAX_BACKTRACE_DEPTH];
+    void* buffer[MAX_BACKTRACE_DEPTH];
     int numLevels = backtrace(buffer, MAX_BACKTRACE_DEPTH);
     char **tracebackBuffer = backtrace_symbols(buffer, numLevels);
-    if (tracebackBuffer)
-    {
-        for (int i = 2; i < numLevels; i++)
-        {
+    if(tracebackBuffer) {
+        for(int i = 2; i < numLevels; i++) {
             std::string line = tracebackBuffer[i];
-            if (line.find("__libc_start_main") != std::string::npos)
+            if(line.find("__libc_start_main") != std::string::npos)
                 break;
 #ifdef DEMANGLE_BACKTRACE_SYMBOLS
             std::size_t demanglePos = line.find("(_Z");
-            if (demanglePos != std::string::npos)
-            {
+            if(demanglePos != std::string::npos) {
                 demanglePos++;
                 int len = std::min(line.find_first_of("+", demanglePos), line.find_first_of(")", demanglePos)) - demanglePos;
                 std::string funcName = line.substr(demanglePos, len);
                 line.replace(demanglePos, len, stdext::demangle_name(funcName.c_str()));
             }
 #endif
-            ss << "    " << i - 1 << ": " << line << std::endl;
+            ss << "    " << i-1 << ": " << line << std::endl;
         }
         free(tracebackBuffer);
     }
@@ -110,15 +107,13 @@ void crashHandler(int signum, siginfo_t *info, void *secret)
 
     std::string fileName = "crash_report.log";
     std::ofstream fout(fileName.c_str(), std::ios::out | std::ios::app);
-    if (fout.is_open() && fout.good())
-    {
+    if(fout.is_open() && fout.good()) {
         fout << "== application crashed\n";
         fout << ss.str();
         fout << "\n";
         fout.close();
         g_logger.info(stdext::format("Crash report saved to file %s", fileName));
-    }
-    else
+    } else
         g_logger.error("Failed to save crash report!");
 
     signal(SIGILL, SIG_DFL);
@@ -131,13 +126,13 @@ void installCrashHandler()
 {
     struct sigaction sa;
     sa.sa_sigaction = &crashHandler;
-    sigemptyset(&sa.sa_mask);
+    sigemptyset (&sa.sa_mask);
     sa.sa_flags = SA_RESTART | SA_SIGINFO;
 
-    sigaction(SIGILL, &sa, nullptr);  // illegal instruction
-    sigaction(SIGSEGV, &sa, nullptr); // segmentation fault
-    sigaction(SIGFPE, &sa, nullptr);  // floating-point exception
-    sigaction(SIGABRT, &sa, nullptr); // process aborted (asserts)
+    sigaction(SIGILL, &sa, nullptr);   // illegal instruction
+    sigaction(SIGSEGV, &sa, nullptr);  // segmentation fault
+    sigaction(SIGFPE, &sa, nullptr);   // floating-point exception
+    sigaction(SIGABRT, &sa, nullptr);  // process aborted (asserts)
 }
 
 #endif

@@ -63,7 +63,7 @@ void PainterOGL::refreshState()
 
 void PainterOGL::saveState()
 {
-    assert(m_oldStateIndex < 10);
+    assert(m_oldStateIndex<10);
     m_olderStates[m_oldStateIndex].resolution = m_resolution;
     m_olderStates[m_oldStateIndex].transformMatrix = m_transformMatrix;
     m_olderStates[m_oldStateIndex].projectionMatrix = m_projectionMatrix;
@@ -102,13 +102,13 @@ void PainterOGL::restoreSavedState()
     setAlphaWriting(m_olderStates[m_oldStateIndex].alphaWriting);
 }
 
-void PainterOGL::clear(const Color &color)
+void PainterOGL::clear(const Color& color)
 {
     glClearColor(color.rF(), color.gF(), color.bF(), color.aF());
     glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void PainterOGL::clearRect(const Color &color, const Rect &rect)
+void PainterOGL::clearRect(const Color& color, const Rect& rect)
 {
     Rect oldClipRect = m_clipRect;
     setClipRect(rect);
@@ -119,7 +119,7 @@ void PainterOGL::clearRect(const Color &color, const Rect &rect)
 
 void PainterOGL::setCompositionMode(Painter::CompositionMode compositionMode)
 {
-    if (m_compositionMode == compositionMode)
+    if(m_compositionMode == compositionMode)
         return;
     m_compositionMode = compositionMode;
     updateGlCompositionMode();
@@ -127,38 +127,35 @@ void PainterOGL::setCompositionMode(Painter::CompositionMode compositionMode)
 
 void PainterOGL::setBlendEquation(Painter::BlendEquation blendEquation)
 {
-    if (m_blendEquation == blendEquation)
+    if(m_blendEquation == blendEquation)
         return;
     m_blendEquation = blendEquation;
     updateGlBlendEquation();
 }
 
-void PainterOGL::setClipRect(const Rect &clipRect)
+void PainterOGL::setClipRect(const Rect& clipRect)
 {
-    if (m_clipRect == clipRect)
+    if(m_clipRect == clipRect)
         return;
     m_clipRect = clipRect;
     updateGlClipRect();
 }
 
-void PainterOGL::setTexture(Texture *texture)
+void PainterOGL::setTexture(Texture* texture)
 {
-    if (m_texture == texture)
+    if(m_texture == texture)
         return;
 
     m_texture = texture;
 
     uint glTextureId;
-    if (texture)
-    {
+    if(texture) {
         setTextureMatrix(texture->getTransformMatrix());
         glTextureId = texture->getId();
-    }
-    else
+    } else
         glTextureId = 0;
 
-    if (m_glTextureId != glTextureId)
-    {
+    if(m_glTextureId != glTextureId) {
         m_glTextureId = glTextureId;
         updateGlTexture();
     }
@@ -166,14 +163,14 @@ void PainterOGL::setTexture(Texture *texture)
 
 void PainterOGL::setAlphaWriting(bool enable)
 {
-    if (m_alphaWriting == enable)
+    if(m_alphaWriting == enable)
         return;
 
     m_alphaWriting = enable;
     updateGlAlphaWriting();
 }
 
-void PainterOGL::setResolution(const Size &resolution)
+void PainterOGL::setResolution(const Size& resolution)
 {
     // The projection matrix converts from Painter's coordinate system to GL's coordinate system
     //    * GL's viewport is 2x2, Painter's is width x height
@@ -188,23 +185,24 @@ void PainterOGL::setResolution(const Size &resolution)
     //   |  x  y  1  |  *  |     0.0      | -2.0 / height |      0.0      |  =  |  x'  y'  1  |
     //   -------------     |    -1.0      |      1.0      |      1.0      |     ---------------
 
-    Matrix3 projectionMatrix = {2.0f / resolution.width(), 0.0f, 0.0f,
-                                0.0f, -2.0f / resolution.height(), 0.0f,
-                                -1.0f, 1.0f, 1.0f};
+    Matrix3 projectionMatrix = { 2.0f/resolution.width(),  0.0f,                      0.0f,
+                                 0.0f,                    -2.0f/resolution.height(),  0.0f,
+                                -1.0f,                     1.0f,                      1.0f };
 
     m_resolution = resolution;
 
     setProjectionMatrix(projectionMatrix);
-    if (g_painter == this)
+    if(g_painter == this)
         updateGlViewport();
 }
 
 void PainterOGL::scale(float x, float y)
 {
     Matrix3 scaleMatrix = {
-        x, 0.0f, 0.0f,
-        0.0f, y, 0.0f,
-        0.0f, 0.0f, 1.0f};
+           x,  0.0f,  0.0f,
+        0.0f,     y,  0.0f,
+        0.0f,  0.0f,  1.0f
+    };
 
     setTransformMatrix(m_transformMatrix * scaleMatrix.transposed());
 }
@@ -212,9 +210,10 @@ void PainterOGL::scale(float x, float y)
 void PainterOGL::translate(float x, float y)
 {
     Matrix3 translateMatrix = {
-        1.0f, 0.0f, x,
-        0.0f, 1.0f, y,
-        0.0f, 0.0f, 1.0f};
+        1.0f,  0.0f,     x,
+        0.0f,  1.0f,     y,
+        0.0f,  0.0f,  1.0f
+    };
 
     setTransformMatrix(m_transformMatrix * translateMatrix.transposed());
 }
@@ -222,9 +221,10 @@ void PainterOGL::translate(float x, float y)
 void PainterOGL::rotate(float angle)
 {
     Matrix3 rotationMatrix = {
-        std::cos(angle), -std::sin(angle), 0.0f,
-        std::sin(angle), std::cos(angle), 0.0f,
-        0.0f, 0.0f, 1.0f};
+        std::cos(angle), -std::sin(angle),  0.0f,
+        std::sin(angle),  std::cos(angle),  0.0f,
+                   0.0f,             0.0f,  1.0f
+    };
 
     setTransformMatrix(m_transformMatrix * rotationMatrix.transposed());
 }
@@ -251,57 +251,53 @@ void PainterOGL::popTransformMatrix()
 
 void PainterOGL::updateGlTexture()
 {
-    if (m_glTextureId != 0)
+    if(m_glTextureId != 0)
         glBindTexture(GL_TEXTURE_2D, m_glTextureId);
 }
 
 void PainterOGL::updateGlCompositionMode()
 {
-    switch (m_compositionMode)
-    {
-    case CompositionMode_Normal:
-        if (g_graphics.canUseBlendFuncSeparate())
-            glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
-        else
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        break;
-    case CompositionMode_Multiply:
-        glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
-        break;
-    case CompositionMode_Add:
-        glBlendFunc(GL_ONE, GL_ONE);
-        break;
-    case CompositionMode_Replace:
-        glBlendFunc(GL_ONE, GL_ZERO);
-        break;
-    case CompositionMode_DestBlending:
-        glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA);
-        break;
-    case CompositionMode_Light:
-        glBlendFunc(GL_ZERO, GL_SRC_COLOR);
-        break;
+    switch(m_compositionMode) {
+        case CompositionMode_Normal:
+            if(g_graphics.canUseBlendFuncSeparate())
+                glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
+            else
+                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            break;
+        case CompositionMode_Multiply:
+            glBlendFunc(GL_DST_COLOR, GL_ONE_MINUS_SRC_ALPHA);
+            break;
+        case CompositionMode_Add:
+            glBlendFunc(GL_ONE, GL_ONE);
+            break;
+        case CompositionMode_Replace:
+            glBlendFunc(GL_ONE, GL_ZERO);
+            break;
+        case CompositionMode_DestBlending:
+            glBlendFunc(GL_ONE_MINUS_DST_ALPHA, GL_DST_ALPHA);
+            break;
+        case CompositionMode_Light:
+            glBlendFunc(GL_ZERO, GL_SRC_COLOR);
+            break;
     }
 }
 
 void PainterOGL::updateGlBlendEquation()
 {
-    if (!g_graphics.canUseBlendEquation())
+    if(!g_graphics.canUseBlendEquation())
         return;
-    if (m_blendEquation == BlendEquation_Add)
+    if(m_blendEquation == BlendEquation_Add)
         glBlendEquation(0x8006); // GL_FUNC_ADD
-    else if (m_blendEquation == BlendEquation_Max)
+    else if(m_blendEquation == BlendEquation_Max)
         glBlendEquation(0x8008); // GL_MAX
 }
 
 void PainterOGL::updateGlClipRect()
 {
-    if (m_clipRect.isValid())
-    {
+    if(m_clipRect.isValid()) {
         glEnable(GL_SCISSOR_TEST);
         glScissor(m_clipRect.left(), m_resolution.height() - m_clipRect.bottom() - 1, m_clipRect.width(), m_clipRect.height());
-    }
-    else
-    {
+    } else {
         glScissor(0, 0, m_resolution.width(), m_resolution.height());
         glDisable(GL_SCISSOR_TEST);
     }
@@ -309,10 +305,10 @@ void PainterOGL::updateGlClipRect()
 
 void PainterOGL::updateGlAlphaWriting()
 {
-    if (m_alphaWriting)
-        glColorMask(1, 1, 1, 1);
+    if(m_alphaWriting)
+        glColorMask(1,1,1,1);
     else
-        glColorMask(1, 1, 1, 0);
+        glColorMask(1,1,1,0);
 }
 
 void PainterOGL::updateGlViewport()

@@ -39,37 +39,32 @@ void Mouse::terminate()
 void Mouse::loadCursors(std::string filename)
 {
     filename = g_resources.guessFilePath(filename, "otml");
-    try
-    {
+    try {
         OTMLDocumentPtr doc = OTMLDocument::parse(filename);
         OTMLNodePtr cursorsNode = doc->at("Cursors");
 
-        for (const OTMLNodePtr &cursorNode : cursorsNode->children())
+        for(const OTMLNodePtr& cursorNode : cursorsNode->children())
             addCursor(cursorNode->tag(),
                       stdext::resolve_path(cursorNode->valueAt("image"), cursorNode->source()),
                       cursorNode->valueAt<Point>("hot-spot"));
-    }
-    catch (stdext::exception &e)
-    {
+    } catch(stdext::exception& e) {
         g_logger.error(stdext::format("unable to load cursors file: %s", e.what()));
     }
 }
 
-void Mouse::addCursor(const std::string &name, const std::string &file, const Point &hotSpot)
+void Mouse::addCursor(const std::string& name, const std::string& file, const Point& hotSpot)
 {
     int cursorId = g_window.loadMouseCursor(file, hotSpot);
-    if (cursorId >= 0)
-    {
+    if(cursorId >= 0) {
         m_cursors[name] = cursorId;
-    }
-    else
+    } else
         g_logger.error(stdext::format("unable to load cursor %s", name));
 }
 
-bool Mouse::pushCursor(const std::string &name)
+bool Mouse::pushCursor(const std::string& name)
 {
     auto it = m_cursors.find(name);
-    if (it == m_cursors.end())
+    if(it == m_cursors.end())
         return false;
 
     int cursorId = it->second;
@@ -78,29 +73,27 @@ bool Mouse::pushCursor(const std::string &name)
     return true;
 }
 
-void Mouse::popCursor(const std::string &name)
+void Mouse::popCursor(const std::string& name)
 {
-    if (m_cursorStack.empty())
+    if(m_cursorStack.empty())
         return;
 
-    if (name.empty() || m_cursors.find(name) == m_cursors.end())
+    if(name.empty() || m_cursors.find(name) == m_cursors.end())
         m_cursorStack.pop_back();
-    else
-    {
+    else {
         int cursorId = m_cursors[name];
         int index = -1;
-        for (uint i = 0; i < m_cursorStack.size(); ++i)
-        {
-            if (m_cursorStack[i] == cursorId)
+        for(uint i=0;i<m_cursorStack.size();++i) {
+            if(m_cursorStack[i] == cursorId)
                 index = i;
         }
-        if (index >= 0)
+        if(index >= 0)
             m_cursorStack.erase(m_cursorStack.begin() + index);
         else
             return;
     }
 
-    if (!m_cursorStack.empty())
+    if(!m_cursorStack.empty())
         g_window.setMouseCursor(m_cursorStack.back());
     else
         g_window.restoreMouseCursor();
@@ -118,8 +111,7 @@ bool Mouse::isPressed(Fw::MouseButton mouseButton)
 
 void Mouse::checkStackSize()
 {
-    if (m_cursorStack.size() > 5)
-    {
+    if(m_cursorStack.size() > 5) {
         g_logger.error("mouse cursor stack is too long");
         m_cursorStack.pop_front();
     }

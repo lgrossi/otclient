@@ -20,6 +20,7 @@
  * THE SOFTWARE.
  */
 
+
 #include "framebuffermanager.h"
 
 FrameBufferManager g_framebuffers;

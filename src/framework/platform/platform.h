@@ -30,11 +30,11 @@
 class Platform
 {
 public:
-    void processArgs(std::vector<std::string> &args);
-    bool spawnProcess(std::string process, const std::vector<std::string> &args);
+    void processArgs(std::vector<std::string>& args);
+    bool spawnProcess(std::string process, const std::vector<std::string>& args);
     int getProcessId();
-    bool isProcessRunning(const std::string &name);
-    bool killProcess(const std::string &name);
+    bool isProcessRunning(const std::string& name);
+    bool killProcess(const std::string& name);
     std::string getTempPath();
     std::string getCurrentDir();
     bool copyFile(std::string from, std::string to);
@@ -45,7 +45,7 @@ public:
     std::string getCPUName();
     double getTotalSystemMemory();
     std::string getOSName();
-    std::string traceback(const std::string &where, int level = 1, int maxDepth = 32);
+    std::string traceback(const std::string& where, int level = 1, int maxDepth = 32);
 };
 
 extern Platform g_platform;

@@ -46,3 +46,4 @@ private:
 extern Clock g_clock;
 
 #endif
+

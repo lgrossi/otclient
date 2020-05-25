@@ -36,7 +36,7 @@ ProtocolHttp::~ProtocolHttp()
     disconnect();
 }
 
-void ProtocolHttp::connect(const std::string &host, uint16 port)
+void ProtocolHttp::connect(const std::string& host, uint16 port)
 {
     m_connection = ConnectionPtr(new Connection);
     m_connection->setErrorCallback(std::bind(&ProtocolHttp::onError, asProtocolHttp(), std::placeholders::_1));
@@ -45,23 +45,22 @@ void ProtocolHttp::connect(const std::string &host, uint16 port)
 
 void ProtocolHttp::disconnect()
 {
-    if (m_connection)
-    {
+    if(m_connection) {
         m_connection->close();
         m_connection.reset();
     }
 }
 
-void ProtocolHttp::send(const std::string &message)
+void ProtocolHttp::send(const std::string& message)
 {
-    if (m_connection)
-        m_connection->write((uint8 *)message.c_str(), message.length());
+    if(m_connection)
+        m_connection->write((uint8*)message.c_str(), message.length());
 }
 
 void ProtocolHttp::recv()
 {
-    if (m_connection)
-        m_connection->read_until("\r\n\r\n", std::bind(&ProtocolHttp::onRecv, asProtocolHttp(), std::placeholders::_1, std::placeholders::_2));
+    if(m_connection)
+        m_connection->read_until("\r\n\r\n", std::bind(&ProtocolHttp::onRecv, asProtocolHttp(), std::placeholders::_1,  std::placeholders::_2));
 }
 
 void ProtocolHttp::onConnect()
@@ -69,13 +68,13 @@ void ProtocolHttp::onConnect()
     callLuaField("onConnect");
 }
 
-void ProtocolHttp::onRecv(uint8 *buffer, uint16 size)
+void ProtocolHttp::onRecv(uint8* buffer, uint16 size)
 {
-    std::string string = std::string((char *)buffer, (size_t)size);
+    std::string string = std::string((char*)buffer, (size_t)size);
     callLuaField("onRecv", string);
 }
 
-void ProtocolHttp::onError(const boost::system::error_code &err)
+void ProtocolHttp::onError(const boost::system::error_code& err)
 {
     callLuaField("onError", err.message(), err.value());
     disconnect();

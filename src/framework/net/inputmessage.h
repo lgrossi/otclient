@@ -30,16 +30,15 @@
 class InputMessage : public LuaObject
 {
 public:
-    enum
-    {
+    enum {
         BUFFER_MAXSIZE = 65536,
         MAX_HEADER_SIZE = 8
     };
 
     InputMessage();
 
-    void setBuffer(const std::string &buffer);
-    std::string getBuffer() { return std::string((char *)m_buffer + m_headerPos, m_messageSize); }
+    void setBuffer(const std::string& buffer);
+    std::string getBuffer() { return std::string((char*)m_buffer + m_headerPos, m_messageSize); }
 
     void skipBytes(uint16 bytes) { m_readPos += bytes; }
     void setReadPos(uint16 readPos) { m_readPos = readPos; }
@@ -50,30 +49,10 @@ public:
     std::string getString();
     double getDouble();
 
-    uint8 peekU8()
-    {
-        uint8 v = getU8();
-        m_readPos -= 1;
-        return v;
-    }
-    uint16 peekU16()
-    {
-        uint16 v = getU16();
-        m_readPos -= 2;
-        return v;
-    }
-    uint32 peekU32()
-    {
-        uint32 v = getU32();
-        m_readPos -= 4;
-        return v;
-    }
-    uint64 peekU64()
-    {
-        uint64 v = getU64();
-        m_readPos -= 8;
-        return v;
-    }
+    uint8 peekU8() { uint8 v = getU8(); m_readPos-=1; return v; }
+    uint16 peekU16() { uint16 v = getU16(); m_readPos-=2; return v; }
+    uint32 peekU32() { uint32 v = getU32(); m_readPos-=4; return v; }
+    uint64 peekU64() { uint64 v = getU64(); m_readPos-=8; return v; }
 
     bool decryptRsa(int size);
 
@@ -91,9 +70,9 @@ protected:
     void setHeaderSize(uint16 size);
     void setMessageSize(uint16 size) { m_messageSize = size; }
 
-    uint8 *getReadBuffer() { return m_buffer + m_readPos; }
-    uint8 *getHeaderBuffer() { return m_buffer + m_headerPos; }
-    uint8 *getDataBuffer() { return m_buffer + MAX_HEADER_SIZE; }
+    uint8* getReadBuffer() { return m_buffer + m_readPos; }
+    uint8* getHeaderBuffer() { return m_buffer + m_headerPos; }
+    uint8* getDataBuffer() { return m_buffer + MAX_HEADER_SIZE; }
     uint16 getHeaderSize() { return (MAX_HEADER_SIZE - m_headerPos); }
 
     uint16 readSize() { return getU16(); }

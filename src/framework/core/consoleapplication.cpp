@@ -20,6 +20,7 @@
  * THE SOFTWARE.
  */
 
+
 #include "consoleapplication.h"
 #include <framework/core/clock.h>
 #include <framework/luaengine/luainterface.h>
@@ -42,8 +43,7 @@ void ConsoleApplication::run()
 
     g_lua.callGlobalField("g_app", "onRun");
 
-    while (!m_stopping)
-    {
+    while(!m_stopping) {
         poll();
         stdext::millisleep(1);
         g_clock.update();

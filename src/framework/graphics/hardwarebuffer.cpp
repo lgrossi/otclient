@@ -31,7 +31,7 @@ HardwareBuffer::HardwareBuffer(Type type)
     m_type = type;
     m_id = 0;
     glGenBuffers(1, &m_id);
-    if (!m_id)
+    if(!m_id)
         g_logger.fatal("Unable to create hardware buffer.");
 }
 
@@ -40,6 +40,6 @@ HardwareBuffer::~HardwareBuffer()
 #ifndef NDEBUG
     assert(!g_app.isTerminated());
 #endif
-    if (g_graphics.ok())
+    if(g_graphics.ok())
         glDeleteBuffers(1, &m_id);
 }

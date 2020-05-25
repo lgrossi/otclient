@@ -28,8 +28,7 @@
 class Shader : public stdext::shared_object
 {
 public:
-    enum ShaderType
-    {
+    enum ShaderType {
         Vertex,
         Fragment
     };
@@ -37,8 +36,8 @@ public:
     Shader(ShaderType shaderType);
     ~Shader();
 
-    bool compileSourceCode(const std::string &sourceCode);
-    bool compileSourceFile(const std::string &sourceFile);
+    bool compileSourceCode(const std::string& sourceCode);
+    bool compileSourceFile(const std::string& sourceFile);
     std::string log();
 
     uint getShaderId() { return m_shaderId; }

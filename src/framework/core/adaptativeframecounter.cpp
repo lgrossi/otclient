@@ -42,11 +42,11 @@ AdaptativeFrameCounter::AdaptativeFrameCounter()
 
 bool AdaptativeFrameCounter::shouldProcessNextFrame()
 {
-    if (m_maxFps == 0)
+    if(m_maxFps == 0)
         return true;
 
     ticks_t now = g_clock.micros();
-    if (now - m_lastFrame < m_bestFrameDelay)
+    if(now - m_lastFrame < m_bestFrameDelay)
         return false;
     return true;
 }
@@ -57,25 +57,23 @@ void AdaptativeFrameCounter::processNextFrame()
     m_frames++;
     m_partialFrames++;
     m_frameDelaySum += now - m_lastFrame;
-    m_lastFrame = now;
+    m_lastFrame = now ;
 }
 
 bool AdaptativeFrameCounter::update()
 {
     ticks_t now = g_clock.micros();
     ticks_t delta = now - m_lastPartialFpsUpdate;
-    if (delta > 41000 && m_partialFrames > 0)
-    {
+    if(delta > 41000 && m_partialFrames > 0) {
         m_partialFps = m_partialFrames / (delta / 1000000.0f);
         m_lastPartialFpsUpdate = now;
         m_partialFrames = 0;
     }
 
-    delta = now - m_lastFpsUpdate;
-    if (delta >= 1000000)
-    {
+    delta =  now - m_lastFpsUpdate;
+    if(delta >= 1000000) {
         m_lastFps = m_frames;
-        if (m_frames > 0)
+        if(m_frames > 0)
             m_mediumFrameDelay = m_frameDelaySum / m_frames;
         else
             m_mediumFrameDelay = 0;
@@ -93,12 +91,9 @@ void AdaptativeFrameCounter::setMaxFps(int maxFps)
 {
     maxFps = stdext::clamp<int>(maxFps, 0, 1000);
 
-    if (maxFps != 0)
-    {
+    if(maxFps != 0) {
         m_bestFrameDelay = 1000000 / maxFps;
-    }
-    else
-    {
+    } else {
         m_maxPartialFps = 0;
         m_bestFrameDelay = 0;
     }
@@ -107,14 +102,14 @@ void AdaptativeFrameCounter::setMaxFps(int maxFps)
 
 int AdaptativeFrameCounter::getMaximumSleepMicros()
 {
-    if (m_maxFps == 0)
+    if(m_maxFps == 0)
         return 0;
     return m_lastFrame + m_bestFrameDelay - g_clock.micros();
 }
 
 float AdaptativeFrameCounter::getFrameDelayHit()
 {
-    if (m_bestFrameDelay > 0)
+    if(m_bestFrameDelay > 0)
         return ((m_bestFrameDelay - std::abs(m_bestFrameDelay - m_mediumFrameDelay)) * 100.0f) / (float)m_bestFrameDelay;
     else
         return 100.0f;

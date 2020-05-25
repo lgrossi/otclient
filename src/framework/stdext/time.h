@@ -25,28 +25,26 @@
 
 #include "types.h"
 
-namespace stdext
-{
+namespace stdext {
 
-    ticks_t time();
-    ticks_t millis();
-    ticks_t micros();
-    void millisleep(size_t ms);
-    void microsleep(size_t us);
+ticks_t time();
+ticks_t millis();
+ticks_t micros();
+void millisleep(size_t ms);
+void microsleep(size_t us);
 
-    struct timer
-    {
-    public:
-        timer() { restart(); }
-        float elapsed_seconds() { return (float)((stdext::micros() - m_start) / 1000000.0); }
-        ticks_t elapsed_millis() { return (stdext::micros() - m_start) / 1000; }
-        ticks_t elapsed_micros() { return stdext::micros() - m_start; }
-        void restart() { m_start = stdext::micros(); }
+struct timer {
+public:
+    timer() { restart(); }
+    float elapsed_seconds() { return (float)((stdext::micros() - m_start)/1000000.0); }
+    ticks_t elapsed_millis() { return (stdext::micros() - m_start)/1000; }
+    ticks_t elapsed_micros() { return stdext::micros() - m_start; }
+    void restart() { m_start = stdext::micros(); }
+private:
+    ticks_t m_start;
+};
 
-    private:
-        ticks_t m_start;
-    };
-
-} // namespace stdext
+}
 
 #endif
+

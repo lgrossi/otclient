@@ -28,8 +28,7 @@
 class PainterOGL : public Painter
 {
 public:
-    struct PainterState
-    {
+    struct PainterState {
         Size resolution;
         Matrix3 transformMatrix;
         Matrix3 projectionMatrix;
@@ -45,10 +44,10 @@ public:
     };
 
     PainterOGL();
-    virtual ~PainterOGL() {}
+    virtual ~PainterOGL() { }
 
     virtual void bind() { refreshState(); }
-    virtual void unbind() {}
+    virtual void unbind() { }
 
     void resetState();
     virtual void refreshState();
@@ -56,21 +55,21 @@ public:
     void saveAndResetState();
     void restoreSavedState();
 
-    void clear(const Color &color);
-    void clearRect(const Color &color, const Rect &rect);
+    void clear(const Color& color);
+    void clearRect(const Color& color, const Rect& rect);
 
-    virtual void setTransformMatrix(const Matrix3 &transformMatrix) { m_transformMatrix = transformMatrix; }
-    virtual void setProjectionMatrix(const Matrix3 &projectionMatrix) { m_projectionMatrix = projectionMatrix; }
-    virtual void setTextureMatrix(const Matrix3 &textureMatrix) { m_textureMatrix = textureMatrix; }
+    virtual void setTransformMatrix(const Matrix3& transformMatrix) { m_transformMatrix = transformMatrix; }
+    virtual void setProjectionMatrix(const Matrix3& projectionMatrix) { m_projectionMatrix = projectionMatrix; }
+    virtual void setTextureMatrix(const Matrix3& textureMatrix) { m_textureMatrix = textureMatrix; }
     virtual void setCompositionMode(CompositionMode compositionMode);
     virtual void setBlendEquation(BlendEquation blendEquation);
-    virtual void setClipRect(const Rect &clipRect);
+    virtual void setClipRect(const Rect& clipRect);
     virtual void setShaderProgram(PainterShaderProgram *shaderProgram) { m_shaderProgram = shaderProgram; }
     virtual void setTexture(Texture *texture);
     virtual void setAlphaWriting(bool enable);
 
-    void setTexture(const TexturePtr &texture) { setTexture(texture.get()); }
-    void setResolution(const Size &resolution);
+    void setTexture(const TexturePtr& texture) { setTexture(texture.get()); }
+    void setResolution(const Size& resolution);
 
     void scale(float x, float y);
     void translate(float x, float y);

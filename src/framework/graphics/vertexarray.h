@@ -30,17 +30,15 @@ class VertexArray
 {
 public:
     inline void addVertex(float x, float y) { m_buffer << x << y; }
-    inline void addTriangle(const Point &a, const Point &b, const Point &c)
-    {
+    inline void addTriangle(const Point& a, const Point& b, const Point& c) {
         addVertex(a.x, a.y);
         addVertex(b.x, b.y);
         addVertex(c.x, c.y);
     }
-    inline void addRect(const Rect &rect)
-    {
+    inline void addRect(const Rect& rect) {
         float top = rect.top();
-        float right = rect.right() + 1;
-        float bottom = rect.bottom() + 1;
+        float right = rect.right()+1;
+        float bottom = rect.bottom()+1;
         float left = rect.left();
 
         addVertex(left, top);
@@ -51,11 +49,10 @@ public:
         addVertex(right, bottom);
     }
 
-    inline void addQuad(const Rect &rect)
-    {
+    inline void addQuad(const Rect& rect) {
         float top = rect.top();
-        float right = rect.right() + 1;
-        float bottom = rect.bottom() + 1;
+        float right = rect.right()+1;
+        float bottom = rect.bottom()+1;
         float left = rect.left();
 
         addVertex(left, top);
@@ -64,11 +61,10 @@ public:
         addVertex(right, bottom);
     }
 
-    inline void addUpsideDownQuad(const Rect &rect)
-    {
+    inline void addUpsideDownQuad(const Rect& rect) {
         float top = rect.top();
-        float right = rect.right() + 1;
-        float bottom = rect.bottom() + 1;
+        float right = rect.right()+1;
+        float bottom = rect.bottom()+1;
         float left = rect.left();
 
         addVertex(left, bottom);

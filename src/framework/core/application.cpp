@@ -41,16 +41,14 @@
 void exitSignalHandler(int sig)
 {
     static bool signaled = false;
-    switch (sig)
-    {
-    case SIGTERM:
-    case SIGINT:
-        if (!signaled && !g_app.isStopping() && !g_app.isTerminated())
-        {
-            signaled = true;
-            g_dispatcher.addEvent(std::bind(&Application::close, &g_app));
-        }
-        break;
+    switch(sig) {
+        case SIGTERM:
+        case SIGINT:
+            if(!signaled && !g_app.isStopping() && !g_app.isTerminated()) {
+                signaled = true;
+                g_dispatcher.addEvent(std::bind(&Application::close, &g_app));
+            }
+            break;
     }
 }
 
@@ -63,7 +61,7 @@ Application::Application()
     m_stopping = false;
 }
 
-void Application::init(std::vector<std::string> &args)
+void Application::init(std::vector<std::string>& args)
 {
     // capture exit signals
     signal(SIGTERM, exitSignalHandler);
@@ -82,13 +80,12 @@ void Application::init(std::vector<std::string> &args)
     g_asyncDispatcher.init();
 
     std::string startupOptions;
-    for (uint i = 1; i < args.size(); ++i)
-    {
-        const std::string &arg = args[i];
+    for(uint i=1;i<args.size();++i) {
+        const std::string& arg = args[i];
         startupOptions += " ";
         startupOptions += arg;
     }
-    if (startupOptions.length() > 0)
+    if(startupOptions.length() > 0)
         g_logger.info(stdext::format("Startup options: %s", startupOptions));
 
     m_startupOptions = startupOptions;
@@ -168,7 +165,7 @@ void Application::exit()
 
 void Application::close()
 {
-    if (!g_lua.callGlobalField<bool>("g_app", "onClose"))
+    if(!g_lua.callGlobalField<bool>("g_app", "onClose"))
         exit();
 }
 
@@ -184,3 +181,4 @@ std::string Application::getOs()
     return "unknown";
 #endif
 }
+

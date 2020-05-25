@@ -32,15 +32,15 @@ class UICreature : public UIWidget
 public:
     void drawSelf(Fw::DrawPane drawPane);
 
-    void setCreature(const CreaturePtr &creature) { m_creature = creature; }
+    void setCreature(const CreaturePtr& creature) { m_creature = creature; }
     void setFixedCreatureSize(bool fixed) { m_fixedCreatureSize = fixed; }
-    void setOutfit(const Outfit &outfit);
+    void setOutfit(const Outfit& outfit);
 
     CreaturePtr getCreature() { return m_creature; }
     bool isFixedCreatureSize() { return m_fixedCreatureSize; }
 
 protected:
-    void onStyleApply(const std::string &styleName, const OTMLNodePtr &styleNode);
+    void onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode);
 
     CreaturePtr m_creature;
     stdext::boolean<false> m_fixedCreatureSize;

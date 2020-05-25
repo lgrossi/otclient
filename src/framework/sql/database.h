@@ -33,7 +33,7 @@ class Database : public LuaObject
 public:
     friend class DBTransaction;
 
-    Database() : m_connected(false) {}
+    Database(): m_connected(false) {}
     virtual ~Database() { m_connected = false; }
 
     /**
@@ -41,8 +41,8 @@ public:
     *
     * Connects the database to the source host.
     */
-    virtual void connect(const std::string &host, const std::string &user, const std::string &pass,
-                         const std::string &db, uint16 port, const std::string &unix_socket = "") {}
+    virtual void connect(const std::string& host, const std::string& user, const std::string& pass,
+                 const std::string& db, uint16 port, const std::string& unix_socket = "") {}
 
     /**
     * Transaction related methods.
@@ -66,7 +66,7 @@ public:
     * @param std::string query command
     * @return true on success, false on error
     */
-    virtual bool executeQuery(const std::string &query) { return false; }
+    virtual bool executeQuery(const std::string& query) { return false; }
 
     /**
     * Queries database.
@@ -76,7 +76,7 @@ public:
     * @param std::string query
     * @return results object (null on error)
     */
-    virtual DBResultPtr storeQuery(const std::string &query) { return nullptr; }
+    virtual DBResultPtr storeQuery(const std::string& query) { return nullptr; }
 
     /**
     * Escapes string for query.
@@ -86,7 +86,7 @@ public:
     * @param std::string string to be escaped
     * @return quoted string
     */
-    virtual std::string escapeString(const std::string &) { return "''"; }
+    virtual std::string escapeString(const std::string&) { return "''"; }
 
     /**
     * Escapes binary stream for query.
@@ -97,7 +97,7 @@ public:
     * @param long stream length
     * @return quoted string
     */
-    virtual std::string escapeBlob(const char *, uint32) { return "''"; }
+    virtual std::string escapeBlob(const char*, uint32) { return "''"; }
 
     /**
      * Retrieve id of last inserted row
@@ -160,25 +160,25 @@ public:
     *\returns The Integer value of the selected field and row
     *\param s The name of the field
     */
-    virtual int32 getDataInt(const std::string &) { return 0; }
+    virtual int32 getDataInt(const std::string&) { return 0; }
 
     /** Get the Long value of a field in database
     *\returns The Long value of the selected field and row
     *\param s The name of the field
     */
-    virtual int64 getDataLong(const std::string &) { return 0; }
+    virtual int64 getDataLong(const std::string&) { return 0; }
 
     /** Get the String of a field in database
     *\returns The String of the selected field and row
     *\param s The name of the field
     */
-    virtual std::string getDataString(const std::string &) { return ""; }
+    virtual std::string getDataString(const std::string&) { return ""; }
 
     /** Get the blob of a field in database
     *\returns a PropStream that is initiated with the blob data field, if not exist it returns NULL.
     *\param s The name of the field
     */
-    virtual const char *getDataStream(const std::string &, uint64 &) { return ""; }
+    virtual const char* getDataStream(const std::string&, uint64&) { return ""; }
 
     /** Result freeing
     */
@@ -202,13 +202,12 @@ public:
 */
 class DBQuery : public std::stringstream, public LuaObject
 {
-    friend class Database;
-
+friend class Database;
 public:
     DBQuery() { databaseLock.lock(); }
     ~DBQuery() { databaseLock.unlock(); }
 
-    void set(std::string &query) { str(query); }
+    void set(std::string& query) { str(query); }
     void append(char query) { putback(query); }
 
 protected:
@@ -228,7 +227,7 @@ public:
     *
     * @param DatabasePtr database wrapper
     */
-    DBInsert(const DatabasePtr &db) : m_db(db), m_rows(0) {}
+    DBInsert(const DatabasePtr& db): m_db(db), m_rows(0) {}
     ~DBInsert() {}
 
     /**
@@ -236,7 +235,7 @@ public:
     *
     * @param std::string& INSERT query
     */
-    void setQuery(const std::string &query);
+    void setQuery(const std::string& query);
 
     /**
     * Adds new row to INSERT statement.
@@ -245,12 +244,12 @@ public:
     *
     * @param std::string& row data
     */
-    bool addRow(const std::string &row);
+    bool addRow(const std::string& row);
 
     /**
     * Allows to use addRow() with stringstream as parameter.
     */
-    bool addRow(std::stringstream &row);
+    bool addRow(std::stringstream& row);
 
     /**
     * Executes current buffer.
@@ -276,7 +275,7 @@ public:
 
     ~DBTransaction()
     {
-        if (m_state == STATE_READY)
+        if(m_state == STATE_READY)
             m_db->rollback();
     }
 
@@ -288,7 +287,7 @@ public:
 
     bool commit()
     {
-        if (m_state != STATE_READY)
+        if(m_state != STATE_READY)
             return false;
 
         m_state = STATE_DONE;

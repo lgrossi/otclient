@@ -27,20 +27,14 @@
 
 class StreamSoundSource : public SoundSource
 {
-    enum
-    {
+    enum {
         STREAM_BUFFER_SIZE = 1024 * 400,
         STREAM_FRAGMENTS = 4,
         STREAM_FRAGMENT_SIZE = STREAM_BUFFER_SIZE / STREAM_FRAGMENTS
     };
 
 public:
-    enum DownMix
-    {
-        NoDownMix,
-        DownMixLeft,
-        DownMixRight
-    };
+    enum DownMix { NoDownMix, DownMixLeft, DownMixRight };
 
     StreamSoundSource();
     virtual ~StreamSoundSource();
@@ -50,7 +44,7 @@ public:
 
     bool isPlaying() { return m_playing; }
 
-    void setSoundFile(const SoundFilePtr &soundFile);
+    void setSoundFile(const SoundFilePtr& soundFile);
 
     void downMix(DownMix downMix);
 
@@ -62,7 +56,7 @@ private:
     bool fillBufferAndQueue(uint buffer);
 
     SoundFilePtr m_soundFile;
-    std::array<SoundBufferPtr, STREAM_FRAGMENTS> m_buffers;
+    std::array<SoundBufferPtr,STREAM_FRAGMENTS> m_buffers;
     DownMix m_downMix;
     stdext::boolean<false> m_looping;
     stdext::boolean<false> m_playing;

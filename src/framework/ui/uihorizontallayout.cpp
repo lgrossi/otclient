@@ -24,13 +24,13 @@
 #include "uiwidget.h"
 #include <framework/core/eventdispatcher.h>
 
-void UIHorizontalLayout::applyStyle(const OTMLNodePtr &styleNode)
+
+void UIHorizontalLayout::applyStyle(const OTMLNodePtr& styleNode)
 {
     UIBoxLayout::applyStyle(styleNode);
 
-    for (const OTMLNodePtr &node : styleNode->children())
-    {
-        if (node->tag() == "align-right")
+    for(const OTMLNodePtr& node : styleNode->children()) {
+        if(node->tag() == "align-right")
             setAlignRight(node->value<bool>());
     }
 }
@@ -38,11 +38,11 @@ void UIHorizontalLayout::applyStyle(const OTMLNodePtr &styleNode)
 bool UIHorizontalLayout::internalUpdate()
 {
     UIWidgetPtr parentWidget = getParentWidget();
-    if (!parentWidget)
+    if(!parentWidget)
         return false;
     UIWidgetList widgets = parentWidget->getChildren();
 
-    if (m_alignRight)
+    if(m_alignRight)
         std::reverse(widgets.begin(), widgets.end());
 
     bool changed = false;
@@ -51,42 +51,33 @@ bool UIHorizontalLayout::internalUpdate()
     int preferredWidth = 0;
     int gap;
 
-    for (const UIWidgetPtr &widget : widgets)
-    {
-        if (!widget->isExplicitlyVisible())
+    for(const UIWidgetPtr& widget : widgets) {
+        if(!widget->isExplicitlyVisible())
             continue;
 
         Size size = widget->getSize();
 
-        gap = (m_alignRight) ? -(widget->getMarginRight() + widget->getWidth()) : widget->getMarginLeft();
+        gap = (m_alignRight) ? -(widget->getMarginRight()+widget->getWidth()) : widget->getMarginLeft();
         pos.x += gap;
         preferredWidth += gap;
 
-        if (widget->isFixedSize())
-        {
-            if (widget->getTextAlign() & Fw::AlignTop)
-            {
+        if(widget->isFixedSize()) {
+            if(widget->getTextAlign() & Fw::AlignTop) {
                 pos.y = paddingRect.top() + widget->getMarginTop();
-            }
-            else if (widget->getTextAlign() & Fw::AlignBottom)
-            {
+            } else if(widget->getTextAlign() & Fw::AlignBottom) {
                 pos.y = paddingRect.bottom() - widget->getHeight() - widget->getMarginBottom();
                 pos.y = std::max<int>(pos.y, paddingRect.top());
-            }
-            else
-            { // center it
-                pos.y = paddingRect.top() + (paddingRect.height() - (widget->getMarginTop() + widget->getHeight() + widget->getMarginBottom())) / 2;
+            } else { // center it
+                pos.y = paddingRect.top() + (paddingRect.height() - (widget->getMarginTop() + widget->getHeight() + widget->getMarginBottom()))/2;
                 pos.y = std::max<int>(pos.y, paddingRect.top());
             }
-        }
-        else
-        {
+        } else {
             // expand height
             size.setHeight(paddingRect.height() - (widget->getMarginTop() + widget->getMarginBottom()));
-            pos.y = paddingRect.top() + (paddingRect.height() - size.height()) / 2;
+            pos.y = paddingRect.top() + (paddingRect.height() - size.height())/2;
         }
 
-        if (widget->setRect(Rect(pos - parentWidget->getVirtualOffset(), size)))
+        if(widget->setRect(Rect(pos - parentWidget->getVirtualOffset(), size)))
             changed = true;
 
         gap = (m_alignRight) ? -widget->getMarginLeft() : (widget->getWidth() + widget->getMarginRight());
@@ -98,8 +89,7 @@ bool UIHorizontalLayout::internalUpdate()
     preferredWidth -= m_spacing;
     preferredWidth += parentWidget->getPaddingLeft() + parentWidget->getPaddingRight();
 
-    if (m_fitChildren && preferredWidth != parentWidget->getWidth())
-    {
+    if(m_fitChildren && preferredWidth != parentWidget->getWidth()) {
         // must set the preferred width later
         g_dispatcher.addEvent([=] {
             parentWidget->setWidth(preferredWidth);

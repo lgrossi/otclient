@@ -28,23 +28,23 @@ Fw::AlignmentFlag Fw::translateAlignment(std::string aligment)
 {
     boost::to_lower(aligment);
     boost::erase_all(aligment, " ");
-    if (aligment == "topleft")
+    if(aligment == "topleft")
         return Fw::AlignTopLeft;
-    else if (aligment == "topright")
+    else if(aligment == "topright")
         return Fw::AlignTopRight;
-    else if (aligment == "bottomleft")
+    else if(aligment == "bottomleft")
         return Fw::AlignBottomLeft;
-    else if (aligment == "bottomright")
+    else if(aligment == "bottomright")
         return Fw::AlignBottomRight;
-    else if (aligment == "left")
+    else if(aligment == "left")
         return Fw::AlignLeftCenter;
-    else if (aligment == "right")
+    else if(aligment == "right")
         return Fw::AlignRightCenter;
-    else if (aligment == "top")
+    else if(aligment == "top")
         return Fw::AlignTopCenter;
-    else if (aligment == "bottom")
+    else if(aligment == "bottom")
         return Fw::AlignBottomCenter;
-    else if (aligment == "center")
+    else if(aligment == "center")
         return Fw::AlignCenter;
     return Fw::AlignNone;
 }
@@ -53,17 +53,17 @@ Fw::AnchorEdge Fw::translateAnchorEdge(std::string anchorEdge)
 {
     boost::to_lower(anchorEdge);
     boost::erase_all(anchorEdge, " ");
-    if (anchorEdge == "left")
+    if(anchorEdge == "left")
         return Fw::AnchorLeft;
-    else if (anchorEdge == "right")
+    else if(anchorEdge == "right")
         return Fw::AnchorRight;
-    else if (anchorEdge == "top")
+    else if(anchorEdge == "top")
         return Fw::AnchorTop;
-    else if (anchorEdge == "bottom")
+    else if(anchorEdge == "bottom")
         return Fw::AnchorBottom;
-    else if (anchorEdge == "horizontalcenter")
+    else if(anchorEdge == "horizontalcenter")
         return Fw::AnchorHorizontalCenter;
-    else if (anchorEdge == "verticalcenter")
+    else if(anchorEdge == "verticalcenter")
         return Fw::AnchorVerticalCenter;
     return Fw::AnchorNone;
 }
@@ -72,31 +72,31 @@ Fw::WidgetState Fw::translateState(std::string state)
 {
     boost::to_lower(state);
     boost::trim(state);
-    if (state == "active")
+    if(state == "active")
         return Fw::ActiveState;
-    else if (state == "focus")
+    else if(state == "focus")
         return Fw::FocusState;
-    else if (state == "hover")
+    else if(state == "hover")
         return Fw::HoverState;
-    else if (state == "pressed")
+    else if(state == "pressed")
         return Fw::PressedState;
-    else if (state == "checked")
+    else if(state == "checked")
         return Fw::CheckedState;
-    else if (state == "disabled")
+    else if(state == "disabled")
         return Fw::DisabledState;
-    else if (state == "on")
+    else if(state == "on")
         return Fw::OnState;
-    else if (state == "first")
+    else if(state == "first")
         return Fw::FirstState;
-    else if (state == "middle")
+    else if(state == "middle")
         return Fw::MiddleState;
-    else if (state == "last")
+    else if(state == "last")
         return Fw::LastState;
-    else if (state == "alternate")
+    else if(state == "alternate")
         return Fw::AlternateState;
-    else if (state == "dragging")
+    else if(state == "dragging")
         return Fw::DraggingState;
-    else if (state == "hidden")
+    else if(state == "hidden")
         return Fw::HiddenState;
     return Fw::InvalidState;
 }
@@ -105,9 +105,9 @@ Fw::AutoFocusPolicy Fw::translateAutoFocusPolicy(std::string policy)
 {
     boost::to_lower(policy);
     boost::trim(policy);
-    if (policy == "first")
+    if(policy == "first")
         return Fw::AutoFocusFirst;
-    else if (policy == "last")
+    else if(policy == "last")
         return Fw::AutoFocusLast;
     return Fw::AutoFocusNone;
 }

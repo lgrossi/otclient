@@ -33,7 +33,7 @@
 
 Client g_client;
 
-void Client::init(std::vector<std::string> &args)
+void Client::init(std::vector<std::string>& args)
 {
     // register needed lua functions
     registerLuaFunctions();
@@ -45,7 +45,7 @@ void Client::init(std::vector<std::string> &args)
     g_things.init();
 
     //TODO: restore options
-    /*
+/*
     if(g_graphics.parseOption(arg))
         continue;
 

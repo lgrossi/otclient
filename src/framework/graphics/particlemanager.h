@@ -31,7 +31,7 @@ class ParticleManager
 {
 public:
     bool importParticle(std::string file);
-    ParticleEffectPtr createEffect(const std::string &name);
+    ParticleEffectPtr createEffect(const std::string& name);
     void terminate();
 
     void poll();
@@ -39,8 +39,8 @@ public:
     ParticleTypePtr getParticleType(std::string name) { return m_particleTypes[name]; }
     ParticleEffectTypePtr getParticleEffectType(std::string name) { return m_effectsTypes[name]; }
 
-    const std::map<std::string, ParticleTypePtr> &getParticleTypes() { return m_particleTypes; }
-    const std::map<std::string, ParticleEffectTypePtr> &getEffectsTypes() { return m_effectsTypes; }
+    const std::map<std::string, ParticleTypePtr>& getParticleTypes() { return m_particleTypes; }
+    const std::map<std::string, ParticleEffectTypePtr>& getEffectsTypes() { return m_effectsTypes; }
 
 private:
     std::list<ParticleEffectPtr> m_effects;

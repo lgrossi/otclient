@@ -29,22 +29,22 @@
 #include <framework/luaengine/luaobject.h>
 
 // @bindclass
-#pragma pack(push, 1) // disable memory alignment
+#pragma pack(push,1) // disable memory alignment
 class Thing : public LuaObject
 {
 public:
     Thing();
-    virtual ~Thing() {}
+    virtual ~Thing() { }
 
-    virtual void draw(const Point & /*dest*/, float /*scaleFactor*/, bool /*animate*/, LightView * /*lightView*/ = nullptr) {}
+    virtual void draw(const Point& /*dest*/, float /*scaleFactor*/, bool /*animate*/, LightView* /*lightView*/ = nullptr) { }
 
-    virtual void setId(uint32 /*id*/) {}
-    void setPosition(const Position &position);
+    virtual void setId(uint32 /*id*/) { }
+    void setPosition(const Position& position);
 
     virtual uint32 getId() { return 0; }
     Position getPosition() { return m_position; }
     int getStackPriority();
-    const TilePtr &getTile();
+    const TilePtr& getTile();
     ContainerPtr getParentContainer();
     int getStackPos();
 
@@ -60,7 +60,7 @@ public:
     virtual bool isStaticText() { return false; }
 
     // type shortcuts
-    virtual const ThingTypePtr &getThingType();
+    virtual const ThingTypePtr& getThingType();
     virtual ThingType *rawGetThingType();
     Size getSize() { return rawGetThingType()->getSize(); }
     int getWidth() { return rawGetThingType()->getWidth(); }
@@ -123,9 +123,9 @@ public:
     bool isTopEffect() { return rawGetThingType()->isTopEffect(); }
     MarketData getMarketData() { return rawGetThingType()->getMarketData(); }
 
-    virtual void onPositionChange(const Position & /*newPos*/, const Position & /*oldPos*/) {}
-    virtual void onAppear() {}
-    virtual void onDisappear() {}
+    virtual void onPositionChange(const Position& /*newPos*/, const Position& /*oldPos*/) { }
+    virtual void onAppear() { }
+    virtual void onDisappear() { }
 
 protected:
     Position m_position;
@@ -134,3 +134,4 @@ protected:
 #pragma pack(pop)
 
 #endif
+

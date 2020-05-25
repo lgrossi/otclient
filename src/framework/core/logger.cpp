@@ -34,20 +34,20 @@
 
 Logger g_logger;
 
-void Logger::log(Fw::LogLevel level, const std::string &message)
+void Logger::log(Fw::LogLevel level, const std::string& message)
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
 #ifdef NDEBUG
-    if (level == Fw::LogDebug)
+    if(level == Fw::LogDebug)
         return;
 #endif
 
     static bool ignoreLogs = false;
-    if (ignoreLogs)
+    if(ignoreLogs)
         return;
 
-    const static std::string logPrefixes[] = {"", "", "WARNING: ", "ERROR: ", "FATAL ERROR: "};
+    const static std::string logPrefixes[] = { "", "", "WARNING: ", "ERROR: ", "FATAL ERROR: " };
 
     std::string outmsg = logPrefixes[level] + message;
 
@@ -69,28 +69,25 @@ void Logger::log(Fw::LogLevel level, const std::string &message)
 
     std::cout << outmsg << std::endl;
 
-    if (m_outFile.good())
-    {
+    if(m_outFile.good()) {
         m_outFile << outmsg << std::endl;
         m_outFile.flush();
     }
 
     std::size_t now = std::time(nullptr);
     m_logMessages.emplace_back(level, outmsg, now);
-    if (m_logMessages.size() > MAX_LOG_HISTORY)
+    if(m_logMessages.size() > MAX_LOG_HISTORY)
         m_logMessages.pop_front();
 
-    if (m_onLog)
-    {
+    if(m_onLog) {
         // schedule log callback, because this callback can run lua code that may affect the current state
         g_dispatcher.addEvent([=] {
-            if (m_onLog)
+            if(m_onLog)
                 m_onLog(level, outmsg, now);
         });
     }
 
-    if (level == Fw::LogFatal)
-    {
+    if(level == Fw::LogFatal) {
 #ifdef FW_GRAPHICS
         g_window.displayFatalError(message);
 #endif
@@ -99,20 +96,20 @@ void Logger::log(Fw::LogLevel level, const std::string &message)
     }
 }
 
-void Logger::logFunc(Fw::LogLevel level, const std::string &message, std::string prettyFunction)
+void Logger::logFunc(Fw::LogLevel level, const std::string& message, std::string prettyFunction)
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
     prettyFunction = prettyFunction.substr(0, prettyFunction.find_first_of('('));
-    if (prettyFunction.find_last_of(' ') != std::string::npos)
+    if(prettyFunction.find_last_of(' ') != std::string::npos)
         prettyFunction = prettyFunction.substr(prettyFunction.find_last_of(' ') + 1);
+
 
     std::stringstream ss;
     ss << message;
 
-    if (!prettyFunction.empty())
-    {
-        if (g_lua.isInCppCallback())
+    if(!prettyFunction.empty()) {
+        if(g_lua.isInCppCallback())
             ss << g_lua.traceback("", 1);
         ss << g_platform.traceback(prettyFunction, 1, 8);
     }
@@ -124,23 +121,20 @@ void Logger::fireOldMessages()
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
-    if (m_onLog)
-    {
+    if(m_onLog) {
         auto backup = m_logMessages;
-        for (const LogMessage &logMessage : backup)
-        {
+        for(const LogMessage& logMessage : backup) {
             m_onLog(logMessage.level, logMessage.message, logMessage.when);
         }
     }
 }
 
-void Logger::setLogFile(const std::string &file)
+void Logger::setLogFile(const std::string& file)
 {
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
 
     m_outFile.open(stdext::utf8_to_latin1(file).c_str(), std::ios::out | std::ios::app);
-    if (!m_outFile.is_open() || !m_outFile.good())
-    {
+    if(!m_outFile.is_open() || !m_outFile.good()) {
         g_logger.error(stdext::format("Unable to save log to '%s'", file));
         return;
     }

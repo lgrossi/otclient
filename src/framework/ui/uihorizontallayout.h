@@ -28,15 +28,11 @@
 class UIHorizontalLayout : public UIBoxLayout
 {
 public:
-    UIHorizontalLayout(UIWidgetPtr parentWidget) : UIBoxLayout(parentWidget) {}
+    UIHorizontalLayout(UIWidgetPtr parentWidget) : UIBoxLayout(parentWidget) { }
 
-    void applyStyle(const OTMLNodePtr &styleNode);
+    void applyStyle(const OTMLNodePtr& styleNode);
 
-    void setAlignRight(bool aliginRight)
-    {
-        m_alignRight = aliginRight;
-        update();
-    }
+    void setAlignRight(bool aliginRight) { m_alignRight = aliginRight; update(); }
 
     bool isUIHorizontalLayout() { return true; }
 

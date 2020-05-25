@@ -31,13 +31,11 @@
 class Painter
 {
 public:
-    enum BlendEquation
-    {
+    enum BlendEquation {
         BlendEquation_Add,
         BlendEquation_Max
     };
-    enum CompositionMode
-    {
+    enum CompositionMode {
         CompositionMode_Normal,
         CompositionMode_Multiply,
         CompositionMode_Add,
@@ -45,53 +43,53 @@ public:
         CompositionMode_DestBlending,
         CompositionMode_Light
     };
-    enum DrawMode
-    {
+    enum DrawMode {
         Triangles = GL_TRIANGLES,
         TriangleStrip = GL_TRIANGLE_STRIP
     };
 
-    Painter();
-    virtual ~Painter() {}
 
-    virtual void bind() {}
-    virtual void unbind() {}
+    Painter();
+    virtual ~Painter() { }
+
+    virtual void bind() { }
+    virtual void unbind() { }
 
     virtual void saveState() = 0;
     virtual void saveAndResetState() = 0;
     virtual void restoreSavedState() = 0;
 
-    virtual void clear(const Color &color) = 0;
+    virtual void clear(const Color& color) = 0;
 
-    virtual void drawCoords(CoordsBuffer &coordsBuffer, DrawMode drawMode = Triangles) = 0;
-    virtual void drawFillCoords(CoordsBuffer &coordsBuffer) = 0;
-    virtual void drawTextureCoords(CoordsBuffer &coordsBuffer, const TexturePtr &texture) = 0;
-    virtual void drawTexturedRect(const Rect &dest, const TexturePtr &texture, const Rect &src) = 0;
-    void drawTexturedRect(const Rect &dest, const TexturePtr &texture) { drawTexturedRect(dest, texture, Rect(Point(0, 0), texture->getSize())); }
-    virtual void drawUpsideDownTexturedRect(const Rect &dest, const TexturePtr &texture, const Rect &src) = 0;
-    virtual void drawRepeatedTexturedRect(const Rect &dest, const TexturePtr &texture, const Rect &src) = 0;
-    virtual void drawFilledRect(const Rect &dest) = 0;
-    virtual void drawFilledTriangle(const Point &a, const Point &b, const Point &c) = 0;
-    virtual void drawBoundingRect(const Rect &dest, int innerLineWidth = 1) = 0;
+    virtual void drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode = Triangles) = 0;
+    virtual void drawFillCoords(CoordsBuffer& coordsBuffer) = 0;
+    virtual void drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture) = 0;
+    virtual void drawTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) = 0;
+    void drawTexturedRect(const Rect& dest, const TexturePtr& texture) { drawTexturedRect(dest, texture, Rect(Point(0,0), texture->getSize())); }
+    virtual void drawUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) = 0;
+    virtual void drawRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src) = 0;
+    virtual void drawFilledRect(const Rect& dest) = 0;
+    virtual void drawFilledTriangle(const Point& a, const Point& b, const Point& c) = 0;
+    virtual void drawBoundingRect(const Rect& dest, int innerLineWidth = 1) = 0;
 
     virtual void setTexture(Texture *texture) = 0;
-    virtual void setClipRect(const Rect &clipRect) = 0;
-    virtual void setColor(const Color &color) { m_color = color; }
+    virtual void setClipRect(const Rect& clipRect) = 0;
+    virtual void setColor(const Color& color) { m_color = color; }
     virtual void setAlphaWriting(bool enable) = 0;
     virtual void setBlendEquation(BlendEquation blendEquation) = 0;
     virtual void setShaderProgram(PainterShaderProgram *shaderProgram) { m_shaderProgram = shaderProgram; }
-    void setShaderProgram(const PainterShaderProgramPtr &shaderProgram) { setShaderProgram(shaderProgram.get()); }
+    void setShaderProgram(const PainterShaderProgramPtr& shaderProgram) { setShaderProgram(shaderProgram.get()); }
 
     virtual void scale(float x, float y) = 0;
     void scale(float factor) { scale(factor, factor); }
     virtual void translate(float x, float y) = 0;
-    void translate(const Point &p) { translate(p.x, p.y); }
+    void translate(const Point& p) { translate(p.x, p.y); }
     virtual void rotate(float angle) = 0;
     virtual void rotate(float x, float y, float angle) = 0;
-    void rotate(const Point &p, float angle) { rotate(p.x, p.y, angle); }
+    void rotate(const Point& p, float angle) { rotate(p.x, p.y, angle); }
 
     virtual void setOpacity(float opacity) { m_opacity = opacity; }
-    virtual void setResolution(const Size &resolution) { m_resolution = resolution; }
+    virtual void setResolution(const Size& resolution) { m_resolution = resolution; }
 
     Size getResolution() { return m_resolution; }
     Color getColor() { return m_color; }

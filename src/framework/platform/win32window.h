@@ -59,8 +59,8 @@ public:
     void init();
     void terminate();
 
-    void move(const Point &pos);
-    void resize(const Size &size);
+    void move(const Point& pos);
+    void resize(const Size& size);
     void show();
     void hide();
     void maximize();
@@ -68,29 +68,29 @@ public:
     void swapBuffers();
     void showMouse();
     void hideMouse();
-    void displayFatalError(const std::string &message);
+    void displayFatalError(const std::string& message);
 
     void setMouseCursor(int cursorId);
     void restoreMouseCursor();
 
-    void setTitle(const std::string &title);
-    void setMinimumSize(const Size &minimumSize);
+    void setTitle(const std::string& title);
+    void setMinimumSize(const Size& minimumSize);
     void setFullscreen(bool fullscreen);
     void setVerticalSync(bool enable);
-    void setIcon(const std::string &file);
-    void setClipboardText(const std::string &text);
+    void setIcon(const std::string& file);
+    void setClipboardText(const std::string& text);
 
     Size getDisplaySize();
     std::string getClipboardText();
     std::string getPlatformType();
 
 protected:
-    int internalLoadMouseCursor(const ImagePtr &image, const Point &hotSpot);
+    int internalLoadMouseCursor(const ImagePtr& image, const Point& hotSpot);
 
 private:
     Rect getClientRect();
     Rect getWindowRect();
-    Rect adjustWindowRect(const Rect &rect);
+    Rect adjustWindowRect(const Rect& rect);
 
     std::vector<HCURSOR> m_cursors;
     HWND m_window;
@@ -101,8 +101,8 @@ private:
     bool m_hidden;
 
 #ifdef DIRECTX
-    LPDIRECT3D9 m_d3d;          // the pointer to our Direct3D interface
-    LPDIRECT3DDEVICE9 m_d3ddev; // the pointer to the device class
+    LPDIRECT3D9 m_d3d;    // the pointer to our Direct3D interface
+    LPDIRECT3DDEVICE9 m_d3ddev;    // the pointer to the device class
 #endif
 
 #ifdef OPENGL_ES

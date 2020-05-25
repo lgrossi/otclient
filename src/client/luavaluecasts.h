@@ -29,23 +29,23 @@
 #include "outfit.h"
 
 // outfit
-int push_luavalue(const Outfit &outfit);
-bool luavalue_cast(int index, Outfit &outfit);
+int push_luavalue(const Outfit& outfit);
+bool luavalue_cast(int index, Outfit& outfit);
 
 // position
-int push_luavalue(const Position &pos);
-bool luavalue_cast(int index, Position &pos);
+int push_luavalue(const Position& pos);
+bool luavalue_cast(int index, Position& pos);
 
 // market
-int push_luavalue(const MarketData &data);
-bool luavalue_cast(int index, MarketData &data);
+int push_luavalue(const MarketData& data);
+bool luavalue_cast(int index, MarketData& data);
 
 // light
-int push_luavalue(const Light &light);
-bool luavalue_cast(int index, Light &light);
+int push_luavalue(const Light& light);
+bool luavalue_cast(int index, Light& light);
 
 // unjustified points
-int push_luavalue(const UnjustifiedPoints &unjustifiedPoints);
-bool luavalue_cast(int index, UnjustifiedPoints &unjustifiedPoints);
+int push_luavalue(const UnjustifiedPoints& unjustifiedPoints);
+bool luavalue_cast(int index, UnjustifiedPoints& unjustifiedPoints);
 
 #endif

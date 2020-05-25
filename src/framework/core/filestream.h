@@ -34,8 +34,8 @@ struct PHYSFS_File;
 class FileStream : public LuaObject
 {
 public:
-    FileStream(const std::string &name, PHYSFS_File *fileHandle, bool writeable);
-    FileStream(const std::string &name, const std::string &buffer);
+    FileStream(const std::string& name, PHYSFS_File *fileHandle, bool writeable);
+    FileStream(const std::string& name, const std::string& buffer);
     ~FileStream();
 
     void cache();
@@ -71,24 +71,15 @@ public:
     void add16(int16 v);
     void add32(int32 v);
     void add64(int64 v);
-    void addString(const std::string &v);
-    void addPos(uint16 x, uint16 y, uint8 z)
-    {
-        addU16(x);
-        addU16(y);
-        addU8(z);
-    }
-    void addPoint(const Point &p)
-    {
-        addU8(p.x);
-        addU8(p.y);
-    }
+    void addString(const std::string& v);
+    void addPos(uint16 x, uint16 y, uint8 z) { addU16(x); addU16(y); addU8(z); }
+    void addPoint(const Point& p) { addU8(p.x); addU8(p.y); }
 
     FileStreamPtr asFileStream() { return static_self_cast<FileStream>(); }
 
 private:
     void checkWrite();
-    void throwError(const std::string &message, bool physfsError = false);
+    void throwError(const std::string& message, bool physfsError = false);
 
     std::string m_name;
     PHYSFS_File *m_fileHandle;

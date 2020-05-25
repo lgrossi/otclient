@@ -29,15 +29,11 @@
 class UIVerticalLayout : public UIBoxLayout
 {
 public:
-    UIVerticalLayout(UIWidgetPtr parentWidget) : UIBoxLayout(parentWidget) {}
+    UIVerticalLayout(UIWidgetPtr parentWidget) : UIBoxLayout(parentWidget) { }
 
-    void applyStyle(const OTMLNodePtr &styleNode);
+    void applyStyle(const OTMLNodePtr& styleNode);
 
-    void setAlignBottom(bool aliginBottom)
-    {
-        m_alignBottom = aliginBottom;
-        update();
-    }
+    void setAlignBottom(bool aliginBottom) { m_alignBottom = aliginBottom; update(); }
     bool isAlignBottom() { return m_alignBottom; }
 
     bool isUIVerticalLayout() { return true; }

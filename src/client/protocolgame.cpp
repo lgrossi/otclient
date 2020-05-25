@@ -26,7 +26,7 @@
 #include "item.h"
 #include "localplayer.h"
 
-void ProtocolGame::login(const std::string &accountName, const std::string &accountPassword, const std::string &host, uint16 port, const std::string &characterName, const std::string &authenticatorToken, const std::string &sessionKey)
+void ProtocolGame::login(const std::string& accountName, const std::string& accountPassword, const std::string& host, uint16 port, const std::string& characterName, const std::string& authenticatorToken, const std::string& sessionKey)
 {
     m_accountName = accountName;
     m_accountPassword = accountPassword;
@@ -44,26 +44,23 @@ void ProtocolGame::onConnect()
 
     m_localPlayer = g_game.getLocalPlayer();
 
-    if (g_game.getFeature(Otc::GameProtocolChecksum))
+    if(g_game.getFeature(Otc::GameProtocolChecksum))
         enableChecksum();
 
-    if (!g_game.getFeature(Otc::GameChallengeOnLogin))
+    if(!g_game.getFeature(Otc::GameChallengeOnLogin))
         sendLoginPacket(0, 0);
 
     recv();
 }
 
-void ProtocolGame::onRecv(const InputMessagePtr &inputMessage)
+void ProtocolGame::onRecv(const InputMessagePtr& inputMessage)
 {
-    if (m_firstRecv)
-    {
+    if(m_firstRecv) {
         m_firstRecv = false;
 
-        if (g_game.getFeature(Otc::GameMessageSizeCheck))
-        {
+        if(g_game.getFeature(Otc::GameMessageSizeCheck)) {
             int size = inputMessage->getU16();
-            if (size != inputMessage->getUnreadSize())
-            {
+            if(size != inputMessage->getUnreadSize()) {
                 g_logger.traceError("invalid message size");
                 return;
             }
@@ -74,7 +71,7 @@ void ProtocolGame::onRecv(const InputMessagePtr &inputMessage)
     recv();
 }
 
-void ProtocolGame::onError(const boost::system::error_code &error)
+void ProtocolGame::onError(const boost::system::error_code& error)
 {
     g_game.processConnectionError(error);
     disconnect();

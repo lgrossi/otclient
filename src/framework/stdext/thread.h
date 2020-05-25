@@ -34,15 +34,14 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/condition_variable.hpp>
 
-namespace std
-{
-    using boost::condition_variable;
-    using boost::lock_guard;
+namespace std {
+    using boost::thread;
     using boost::mutex;
     using boost::recursive_mutex;
-    using boost::thread;
+    using boost::lock_guard;
     using boost::unique_lock;
-} // namespace std
+    using boost::condition_variable;
+}
 
 #else
 
@@ -53,3 +52,4 @@ namespace std
 #endif
 
 #endif
+

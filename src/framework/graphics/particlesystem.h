@@ -28,14 +28,13 @@
 #include "particleemitter.h"
 #include "particleaffector.h"
 
-class ParticleSystem : public stdext::shared_object
-{
+class ParticleSystem : public stdext::shared_object {
 public:
     ParticleSystem();
 
-    void load(const OTMLNodePtr &node);
+    void load(const OTMLNodePtr& node);
 
-    void addParticle(const ParticlePtr &particle);
+    void addParticle(const ParticlePtr& particle);
 
     void render();
     void update();

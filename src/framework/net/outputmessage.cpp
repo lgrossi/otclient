@@ -35,12 +35,12 @@ void OutputMessage::reset()
     m_messageSize = 0;
 }
 
-void OutputMessage::setBuffer(const std::string &buffer)
+void OutputMessage::setBuffer(const std::string& buffer)
 {
     int len = buffer.size();
     reset();
     checkWrite(len);
-    memcpy((char *)(m_buffer + m_writePos), buffer.c_str(), len);
+    memcpy((char*)(m_buffer + m_writePos), buffer.c_str(), len);
     m_writePos += len;
     m_messageSize += len;
 }
@@ -77,24 +77,24 @@ void OutputMessage::addU64(uint64 value)
     m_messageSize += 8;
 }
 
-void OutputMessage::addString(const std::string &buffer)
+void OutputMessage::addString(const std::string& buffer)
 {
     int len = buffer.length();
-    if (len > MAX_STRING_LENGTH)
+    if(len > MAX_STRING_LENGTH)
         throw stdext::exception(stdext::format("string length > %d", MAX_STRING_LENGTH));
     checkWrite(len + 2);
     addU16(len);
-    memcpy((char *)(m_buffer + m_writePos), buffer.c_str(), len);
+    memcpy((char*)(m_buffer + m_writePos), buffer.c_str(), len);
     m_writePos += len;
     m_messageSize += len;
 }
 
 void OutputMessage::addPaddingBytes(int bytes, uint8 byte)
 {
-    if (bytes <= 0)
+    if(bytes <= 0)
         return;
     checkWrite(bytes);
-    memset((void *)&m_buffer[m_writePos], byte, bytes);
+    memset((void*)&m_buffer[m_writePos], byte, bytes);
     m_writePos += bytes;
     m_messageSize += bytes;
 }
@@ -102,10 +102,10 @@ void OutputMessage::addPaddingBytes(int bytes, uint8 byte)
 void OutputMessage::encryptRsa()
 {
     int size = g_crypt.rsaGetSize();
-    if (m_messageSize < size)
+    if(m_messageSize < size)
         throw stdext::exception("insufficient bytes in buffer to encrypt");
 
-    if (!g_crypt.rsaEncrypt((unsigned char *)m_buffer + m_writePos - size, size))
+    if(!g_crypt.rsaEncrypt((unsigned char*)m_buffer + m_writePos - size, size))
         throw stdext::exception("rsa encryption failed");
 }
 
@@ -128,13 +128,13 @@ void OutputMessage::writeMessageSize()
 
 bool OutputMessage::canWrite(int bytes)
 {
-    if (m_writePos + bytes > BUFFER_MAXSIZE)
+    if(m_writePos + bytes > BUFFER_MAXSIZE)
         return false;
     return true;
 }
 
 void OutputMessage::checkWrite(int bytes)
 {
-    if (!canWrite(bytes))
+    if(!canWrite(bytes))
         throw stdext::exception("OutputMessage max buffer size reached");
 }

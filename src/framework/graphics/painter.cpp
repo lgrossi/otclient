@@ -29,4 +29,5 @@ Painter *g_painter = nullptr;
 
 Painter::Painter()
 {
+
 }

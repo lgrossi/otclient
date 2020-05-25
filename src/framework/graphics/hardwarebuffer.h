@@ -20,6 +20,7 @@
  * THE SOFTWARE.
  */
 
+
 #ifndef HARDWAREBUFFER_H
 #define HARDWAREBUFFER_H
 
@@ -28,17 +29,15 @@
 class HardwareBuffer
 {
 public:
-    enum Type
-    {
+    enum Type {
         VertexBuffer = GL_ARRAY_BUFFER,
-        IndexBuffer = GL_ELEMENT_ARRAY_BUFFER
+        IndexBuffer  = GL_ELEMENT_ARRAY_BUFFER
     };
 
-    enum UsagePattern
-    {
-        StreamDraw = GL_STREAM_DRAW,
-        StaticDraw = GL_STATIC_DRAW,
-        DynamicDraw = GL_DYNAMIC_DRAW
+    enum UsagePattern {
+        StreamDraw          = GL_STREAM_DRAW,
+        StaticDraw          = GL_STATIC_DRAW,
+        DynamicDraw         = GL_DYNAMIC_DRAW
     };
 
     HardwareBuffer(Type type);

@@ -38,10 +38,9 @@ void FrameBuffer::internalCreate()
 {
     m_prevBoundFbo = 0;
     m_fbo = 0;
-    if (g_graphics.canUseFBO())
-    {
+    if(g_graphics.canUseFBO()) {
         glGenFramebuffers(1, &m_fbo);
-        if (!m_fbo)
+        if(!m_fbo)
             g_logger.fatal("Unable to create framebuffer object");
     }
 }
@@ -51,35 +50,31 @@ FrameBuffer::~FrameBuffer()
 #ifndef NDEBUG
     assert(!g_app.isTerminated());
 #endif
-    if (g_graphics.ok() && m_fbo != 0)
+    if(g_graphics.ok() && m_fbo != 0)
         glDeleteFramebuffers(1, &m_fbo);
 }
 
-void FrameBuffer::resize(const Size &size)
+void FrameBuffer::resize(const Size& size)
 {
     assert(size.isValid());
 
-    if (m_texture && m_texture->getSize() == size)
+    if(m_texture && m_texture->getSize() == size)
         return;
 
     m_texture = TexturePtr(new Texture(size));
     m_texture->setSmooth(m_smooth);
     m_texture->setUpsideDown(true);
 
-    if (m_fbo)
-    {
+    if(m_fbo) {
         internalBind();
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_texture->getId(), 0);
 
         GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        if (status != GL_FRAMEBUFFER_COMPLETE)
+        if(status != GL_FRAMEBUFFER_COMPLETE)
             g_logger.fatal("Unable to setup framebuffer object");
         internalRelease();
-    }
-    else
-    {
-        if (m_backuping)
-        {
+    } else {
+        if(m_backuping) {
             m_screenBackup = TexturePtr(new Texture(size));
             m_screenBackup->setUpsideDown(true);
         }
@@ -101,31 +96,28 @@ void FrameBuffer::release()
 
 void FrameBuffer::draw()
 {
-    Rect rect(0, 0, getSize());
+    Rect rect(0,0, getSize());
     g_painter->drawTexturedRect(rect, m_texture, rect);
 }
 
-void FrameBuffer::draw(const Rect &dest, const Rect &src)
+void FrameBuffer::draw(const Rect& dest, const Rect& src)
 {
     g_painter->drawTexturedRect(dest, m_texture, src);
 }
 
-void FrameBuffer::draw(const Rect &dest)
+void FrameBuffer::draw(const Rect& dest)
 {
-    g_painter->drawTexturedRect(dest, m_texture, Rect(0, 0, getSize()));
+    g_painter->drawTexturedRect(dest, m_texture, Rect(0,0, getSize()));
 }
 
 void FrameBuffer::internalBind()
 {
-    if (m_fbo)
-    {
+    if(m_fbo) {
         assert(boundFbo != m_fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
         m_prevBoundFbo = boundFbo;
         boundFbo = m_fbo;
-    }
-    else if (m_backuping)
-    {
+    } else if(m_backuping) {
         // backup screen color buffer into a texture
         m_screenBackup->copyFromScreen(Rect(0, 0, getSize()));
     }
@@ -133,22 +125,18 @@ void FrameBuffer::internalBind()
 
 void FrameBuffer::internalRelease()
 {
-    if (m_fbo)
-    {
+    if(m_fbo) {
         assert(boundFbo == m_fbo);
         glBindFramebuffer(GL_FRAMEBUFFER, m_prevBoundFbo);
         boundFbo = m_prevBoundFbo;
-    }
-    else
-    {
+    } else {
         Rect screenRect(0, 0, getSize());
 
         // copy the drawn color buffer into the framebuffer texture
         m_texture->copyFromScreen(screenRect);
 
         // restore screen original content
-        if (m_backuping)
-        {
+        if(m_backuping) {
             glDisable(GL_BLEND);
             g_painter->setColor(Color::white);
             g_painter->drawTexturedRect(screenRect, m_screenBackup, screenRect);
@@ -159,8 +147,7 @@ void FrameBuffer::internalRelease()
 
 Size FrameBuffer::getSize()
 {
-    if (m_fbo == 0)
-    {
+    if(m_fbo == 0) {
         // the buffer size is limited by the window size
         return Size(std::min<int>(m_texture->getWidth(), g_window.getWidth()),
                     std::min<int>(m_texture->getHeight(), g_window.getHeight()));

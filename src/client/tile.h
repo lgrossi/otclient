@@ -56,27 +56,26 @@ enum tileflags_t : uint32
 class Tile : public LuaObject
 {
 public:
-    enum
-    {
+    enum {
         MAX_THINGS = 10
     };
 
-    Tile(const Position &position);
+    Tile(const Position& position);
 
-    void draw(const Point &dest, float scaleFactor, int drawFlags, LightView *lightView = nullptr);
+    void draw(const Point& dest, float scaleFactor, int drawFlags, LightView *lightView = nullptr);
 
 public:
     void clean();
 
-    void addWalkingCreature(const CreaturePtr &creature);
-    void removeWalkingCreature(const CreaturePtr &creature);
+    void addWalkingCreature(const CreaturePtr& creature);
+    void removeWalkingCreature(const CreaturePtr& creature);
 
-    void addThing(const ThingPtr &thing, int stackPos);
+    void addThing(const ThingPtr& thing, int stackPos);
     bool removeThing(ThingPtr thing);
     ThingPtr getThing(int stackPos);
     EffectPtr getEffect(uint16 id);
-    bool hasThing(const ThingPtr &thing);
-    int getThingStackPos(const ThingPtr &thing);
+    bool hasThing(const ThingPtr& thing);
+    int getThingStackPos(const ThingPtr& thing);
     ThingPtr getTopThing();
 
     ThingPtr getTopLookThing();
@@ -85,7 +84,7 @@ public:
     ThingPtr getTopMoveThing();
     ThingPtr getTopMultiUseThing();
 
-    const Position &getPosition() { return m_position; }
+    const Position& getPosition() { return m_position; }
     int getDrawElevation() { return m_drawElevation; }
     std::vector<ItemPtr> getItems();
     std::vector<CreaturePtr> getCreatures();

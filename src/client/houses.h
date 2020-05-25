@@ -42,13 +42,13 @@ class House : public LuaObject
 {
 public:
     House();
-    House(uint32 hId, const std::string &name = "", const Position &pos = Position());
+    House(uint32 hId, const std::string& name = "", const Position& pos=Position());
     ~House() { m_tiles.clear(); }
 
-    void setTile(const TilePtr &tile);
-    TilePtr getTile(const Position &pos);
+    void setTile(const TilePtr& tile);
+    TilePtr getTile(const Position& pos);
 
-    void setName(const std::string &name) { m_attribs.set(HouseAttrName, name); }
+    void setName(const std::string& name) { m_attribs.set(HouseAttrName, name); }
     std::string getName() { return m_attribs.get<std::string>(HouseAttrName); }
 
     void setId(uint32 hId) { m_attribs.set(HouseAttrId, hId); }
@@ -63,16 +63,16 @@ public:
     void setRent(uint32 r) { m_attribs.set(HouseAttrRent, r); }
     uint32 getRent() { return m_attribs.get<uint32>(HouseAttrRent); }
 
-    void setEntry(const Position &p) { m_attribs.set(HouseAttrEntry, p); }
+    void setEntry(const Position& p) { m_attribs.set(HouseAttrEntry, p); }
     Position getEntry() { return m_attribs.get<Position>(HouseAttrEntry); }
 
-    void addDoor(const ItemPtr &door);
-    void removeDoor(const ItemPtr &door) { removeDoorById(door->getDoorId()); }
+    void addDoor(const ItemPtr& door);
+    void removeDoor(const ItemPtr& door) { removeDoorById(door->getDoorId()); }
     void removeDoorById(uint32 doorId);
 
 protected:
-    void load(const TiXmlElement *elem);
-    void save(TiXmlElement *elem);
+    void load(const TiXmlElement* elem);
+    void save(TiXmlElement* elem);
 
 private:
     stdext::packed_storage<uint8> m_attribs;
@@ -84,18 +84,17 @@ private:
     friend class HouseManager;
 };
 
-class HouseManager
-{
+class HouseManager {
 public:
     HouseManager();
 
-    void addHouse(const HousePtr &house);
+    void addHouse(const HousePtr& house);
     void removeHouse(uint32 houseId);
     HousePtr getHouse(uint32 houseId);
     HousePtr getHouseByName(std::string name);
 
-    void load(const std::string &fileName);
-    void save(const std::string &fileName);
+    void load(const std::string& fileName);
+    void save(const std::string& fileName);
 
     void sort();
     void clear() { m_houses.clear(); }

@@ -33,7 +33,7 @@ AnimatedText::AnimatedText()
     m_cachedText.setAlign(Fw::AlignLeft);
 }
 
-void AnimatedText::drawText(const Point &dest, const Rect &visibleRect)
+void AnimatedText::drawText(const Point& dest, const Rect& visibleRect)
 {
     static float tf = Otc::ANIMATED_TEXT_DURATION;
     static float tftf = Otc::ANIMATED_TEXT_DURATION * Otc::ANIMATED_TEXT_DURATION;
@@ -43,8 +43,7 @@ void AnimatedText::drawText(const Point &dest, const Rect &visibleRect)
     float t = m_animationTimer.ticksElapsed();
     p.x += (24 - textSize.width() / 2);
 
-    if (g_game.getFeature(Otc::GameDiagonalAnimatedText))
-    {
+    if(g_game.getFeature(Otc::GameDiagonalAnimatedText)) {
         p.x -= (4 * t / tf) + (8 * t * t / tftf);
     }
 
@@ -52,12 +51,10 @@ void AnimatedText::drawText(const Point &dest, const Rect &visibleRect)
     p += m_offset;
     Rect rect(p, textSize);
 
-    if (visibleRect.contains(rect))
-    {
+    if(visibleRect.contains(rect)) {
         //TODO: cache into a framebuffer
         float t0 = tf / 1.2;
-        if (t > t0)
-        {
+        if(t > t0) {
             Color color = m_color;
             color.setAlpha((float)(1 - (t - t0) / (tf - t0)));
             g_painter->setColor(color);
@@ -82,24 +79,23 @@ void AnimatedText::setColor(int color)
     m_color = Color::from8bit(color);
 }
 
-void AnimatedText::setText(const std::string &text)
+void AnimatedText::setText(const std::string& text)
 {
     m_cachedText.setText(text);
 }
 
-bool AnimatedText::merge(const AnimatedTextPtr &other)
+bool AnimatedText::merge(const AnimatedTextPtr& other)
 {
-    if (other->getColor() != m_color)
+    if(other->getColor() != m_color)
         return false;
 
-    if (other->getCachedText().getFont() != m_cachedText.getFont())
+    if(other->getCachedText().getFont() != m_cachedText.getFont())
         return false;
 
-    if (m_animationTimer.ticksElapsed() > Otc::ANIMATED_TEXT_DURATION / 2.5)
+    if(m_animationTimer.ticksElapsed() > Otc::ANIMATED_TEXT_DURATION / 2.5)
         return false;
 
-    try
-    {
+    try {
         int number = stdext::safe_cast<int>(m_cachedText.getText());
         int otherNumber = stdext::safe_cast<int>(other->getCachedText().getText());
 
@@ -107,8 +103,7 @@ bool AnimatedText::merge(const AnimatedTextPtr &other)
         m_cachedText.setText(text);
         return true;
     }
-    catch (...)
-    {
+    catch(...) {
         return false;
     }
 }

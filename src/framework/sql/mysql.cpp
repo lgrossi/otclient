@@ -29,8 +29,7 @@
 DatabaseMySQL::DatabaseMySQL()
 {
     m_handle = new MYSQL();
-    if (!mysql_init(m_handle))
-    {
+    if(!mysql_init(m_handle)) {
         g_logger.fatal("Failed to initialize MySQL connection handle.");
     }
 
@@ -44,21 +43,19 @@ DatabaseMySQL::~DatabaseMySQL()
     delete m_handle;
 }
 
-void DatabaseMySQL::connect(const std::string &host, const std::string &user, const std::string &pass,
-                            const std::string &db, uint16 port, const std::string &unix_socket)
+void DatabaseMySQL::connect(const std::string& host, const std::string& user, const std::string& pass,
+             const std::string& db, uint16 port, const std::string& unix_socket)
 {
-    if (!mysql_real_connect(m_handle,
-                            host.c_str(),
-                            user.c_str(),
-                            pass.c_str(),
-                            db.c_str(),
-                            port,
-                            unix_socket.empty() ? NULL : unix_socket.c_str(), 0))
-    {
+    if(!mysql_real_connect(m_handle,
+                           host.c_str(),
+                           user.c_str(),
+                           pass.c_str(),
+                           db.c_str(),
+                           port,
+                           unix_socket.empty() ? NULL : unix_socket.c_str(), 0)) {
         g_logger.error(stdext::format("Failed to connect to database. MYSQL ERROR: %s", mysql_error(m_handle)));
     }
-    else
-    {
+    else {
         setConnected(true);
     }
 }
@@ -68,25 +65,22 @@ bool DatabaseMySQL::handleError()
     unsigned int error = mysql_errno(m_handle);
     g_logger.error(stdext::format("MYSQL error code = %d, message: %s", error, mysql_error(m_handle)));
 
-    if (error == CR_SOCKET_CREATE_ERROR ||
-        error == CR_CONNECTION_ERROR ||
-        error == CR_CONN_HOST_ERROR ||
-        error == CR_IPSOCK_ERROR ||
-        error == CR_UNKNOWN_HOST ||
-        error == CR_SERVER_GONE_ERROR ||
-        error == CR_SERVER_LOST ||
-        error == CR_SERVER_HANDSHAKE_ERR)
-    {
+    if(error == CR_SOCKET_CREATE_ERROR ||
+       error == CR_CONNECTION_ERROR ||
+       error == CR_CONN_HOST_ERROR ||
+       error == CR_IPSOCK_ERROR ||
+       error == CR_UNKNOWN_HOST ||
+       error == CR_SERVER_GONE_ERROR ||
+       error == CR_SERVER_LOST ||
+       error == CR_SERVER_HANDSHAKE_ERR) {
         g_logger.error("MYSQL connection lost, trying to reconnect...");
         setConnected(false);
 
         ticks_t startTime = stdext::millis();
-        while (true)
-        {
+        while(true) {
             bool connected = (mysql_ping(m_handle) == 0);
             ticks_t diffTime = (stdext::millis() - startTime);
-            if (connected)
-            {
+            if(connected) {
                 g_logger.info(stdext::format("MySQL reconneted in %d ms", diffTime));
                 setConnected(true);
                 return true;
@@ -105,8 +99,7 @@ bool DatabaseMySQL::beginTransaction()
 
 bool DatabaseMySQL::rollback()
 {
-    if (mysql_rollback(m_handle))
-    {
+    if(mysql_rollback(m_handle)) {
         g_logger.error(stdext::format("[DatabaseMySQL::rollback] ERROR: %s (%s)", mysql_error(m_handle), mysql_errno(m_handle)));
         return false;
     }
@@ -116,8 +109,7 @@ bool DatabaseMySQL::rollback()
 
 bool DatabaseMySQL::commit()
 {
-    if (mysql_commit(m_handle))
-    {
+    if(mysql_commit(m_handle)) {
         g_logger.error(stdext::format("[DatabaseMySQL::commit] ERROR: %s (%s)", mysql_error(m_handle), mysql_errno(m_handle)));
         return false;
     }
@@ -127,10 +119,8 @@ bool DatabaseMySQL::commit()
 
 bool DatabaseMySQL::internalExecuteQuery(const std::string &query)
 {
-    while (mysql_real_query(m_handle, query.c_str(), query.length()) != 0)
-    {
-        if (!handleError())
-        {
+    while(mysql_real_query(m_handle, query.c_str(), query.length()) != 0) {
+        if(!handleError()) {
             return false;
         }
     }
@@ -140,16 +130,12 @@ bool DatabaseMySQL::internalExecuteQuery(const std::string &query)
 
 bool DatabaseMySQL::executeQuery(const std::string &query)
 {
-    if (internalExecuteQuery(query))
-    {
-        MYSQL_RES *res = mysql_store_result(m_handle);
+    if(internalExecuteQuery(query)) {
+        MYSQL_RES* res = mysql_store_result(m_handle);
 
-        if (res)
-        {
+        if(res) {
             mysql_free_result(res);
-        }
-        else if (mysql_errno(m_handle) != 0)
-        {
+        } else if(mysql_errno(m_handle) != 0) {
             handleError();
         }
 
@@ -159,23 +145,20 @@ bool DatabaseMySQL::executeQuery(const std::string &query)
     return false;
 }
 
-DBResultPtr DatabaseMySQL::storeQuery(const std::string &query)
+DBResultPtr DatabaseMySQL::storeQuery(const std::string& query)
 {
-    while (internalExecuteQuery(query))
-    {
-        MYSQL_RES *res = mysql_store_result(m_handle);
+    while(internalExecuteQuery(query)) {
+        MYSQL_RES* res = mysql_store_result(m_handle);
 
-        if (res)
-        {
+        if(res) {
             DBResultPtr result = (DBResultPtr)MySQLResultPtr(new MySQLResult(res));
-            if (!verifyResult(result))
+            if(!verifyResult(result))
                 break;
 
             return result;
         }
-        else if (mysql_errno(m_handle) != 0)
-        {
-            if (!handleError())
+        else if(mysql_errno(m_handle) != 0) {
+            if(!handleError())
                 break;
         }
 
@@ -192,17 +175,16 @@ uint64 DatabaseMySQL::getLastInsertedRowID()
 
 std::string DatabaseMySQL::escapeString(const std::string &s)
 {
-    return escapeBlob(s.c_str(), s.length());
+    return escapeBlob( s.c_str(), s.length() );
 }
 
-std::string DatabaseMySQL::escapeBlob(const char *s, uint32 length)
+std::string DatabaseMySQL::escapeBlob(const char* s, uint32 length)
 {
-    if (!s)
-    {
+    if(!s) {
         return std::string();
     }
 
-    char *output = new char[length * 2 + 1];
+    char* output = new char[length * 2 + 1];
     mysql_real_escape_string(m_handle, output, s, length);
 
     std::string res = "'";
@@ -213,47 +195,46 @@ std::string DatabaseMySQL::escapeBlob(const char *s, uint32 length)
     return res;
 }
 
-int32 MySQLResult::getDataInt(const std::string &s)
+int32 MySQLResult::getDataInt(const std::string& s)
 {
     RowNames_t::iterator it = m_names.find(s);
-    if (it != m_names.end())
+    if(it != m_names.end())
         return m_row[it->second] ? atoi(m_row[it->second]) : 0;
 
     g_logger.error(stdext::format("[MySQLResult::getDataInt] Error: %d", s));
     return 0;
 }
 
-int64 MySQLResult::getDataLong(const std::string &s)
+int64 MySQLResult::getDataLong(const std::string& s)
 {
     RowNames_t::iterator it = m_names.find(s);
-    if (it != m_names.end())
+    if(it != m_names.end())
         return m_row[it->second] ? atoll(m_row[it->second]) : 0;
 
     g_logger.error(stdext::format("[MySQLResult::getDataLong] Error: %d", s));
     return 0;
 }
 
-std::string MySQLResult::getDataString(const std::string &s)
+std::string MySQLResult::getDataString(const std::string& s)
 {
     RowNames_t::iterator it = m_names.find(s);
-    if (it != m_names.end())
+    if(it != m_names.end())
         return m_row[it->second] ? std::string(m_row[it->second]) : std::string();
 
     g_logger.error(stdext::format("[MySQLResult::getDataString] Error: %d", s));
     return std::string();
 }
 
-const char *MySQLResult::getDataStream(const std::string &s, uint64 &size)
+const char* MySQLResult::getDataStream(const std::string& s, uint64& size)
 {
     size = 0;
     RowNames_t::iterator it = m_names.find(s);
-    if (it == m_names.end())
-    {
+    if(it == m_names.end()) {
         g_logger.error(stdext::format("[MySQLResult::getDataStream] Error: %d", s));
         return NULL;
     }
 
-    if (!m_row[it->second])
+    if(!m_row[it->second])
         return NULL;
 
     size = mysql_fetch_lengths(m_result)[it->second];
@@ -262,8 +243,7 @@ const char *MySQLResult::getDataStream(const std::string &s, uint64 &size)
 
 void MySQLResult::free()
 {
-    if (!m_result)
-    {
+    if(!m_result) {
         g_logger.fatal("[MySQLResult::free] Error: trying to free already freed result");
         return;
     }
@@ -280,19 +260,18 @@ bool MySQLResult::next()
 
 MySQLResult::~MySQLResult()
 {
-    if (m_result)
+    if(m_result)
         mysql_free_result(m_result);
 }
 
-MySQLResult::MySQLResult(MYSQL_RES *result)
+MySQLResult::MySQLResult(MYSQL_RES* result)
 {
     m_result = result;
     m_names.clear();
 
-    MYSQL_FIELD *field;
+    MYSQL_FIELD* field;
     int32 i = 0;
-    while ((field = mysql_fetch_field(m_result)))
-    {
+    while((field = mysql_fetch_field(m_result))) {
         m_names[field->name] = i++;
     }
 }

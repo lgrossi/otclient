@@ -30,8 +30,7 @@
 class OutputMessage : public LuaObject
 {
 public:
-    enum
-    {
+    enum {
         BUFFER_MAXSIZE = 65536,
         MAX_STRING_LENGTH = 65536,
         MAX_HEADER_SIZE = 8
@@ -41,14 +40,14 @@ public:
 
     void reset();
 
-    void setBuffer(const std::string &buffer);
-    std::string getBuffer() { return std::string((char *)m_buffer + m_headerPos, m_messageSize); }
+    void setBuffer(const std::string& buffer);
+    std::string getBuffer() { return std::string((char*)m_buffer + m_headerPos, m_messageSize); }
 
     void addU8(uint8 value);
     void addU16(uint16 value);
     void addU32(uint32 value);
     void addU64(uint64 value);
-    void addString(const std::string &buffer);
+    void addString(const std::string& buffer);
     void addPaddingBytes(int bytes, uint8 byte = 0);
 
     void encryptRsa();
@@ -60,9 +59,9 @@ public:
     void setMessageSize(uint16 messageSize) { m_messageSize = messageSize; }
 
 protected:
-    uint8 *getWriteBuffer() { return m_buffer + m_writePos; }
-    uint8 *getHeaderBuffer() { return m_buffer + m_headerPos; }
-    uint8 *getDataBuffer() { return m_buffer + MAX_HEADER_SIZE; }
+    uint8* getWriteBuffer() { return m_buffer + m_writePos; }
+    uint8* getHeaderBuffer() { return m_buffer + m_headerPos; }
+    uint8* getDataBuffer() { return m_buffer + MAX_HEADER_SIZE; }
 
     void writeChecksum();
     void writeMessageSize();

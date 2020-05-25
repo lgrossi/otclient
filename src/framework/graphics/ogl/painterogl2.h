@@ -40,15 +40,15 @@ public:
     void bind();
     void unbind();
 
-    void drawCoords(CoordsBuffer &coordsBuffer, DrawMode drawMode = Triangles);
-    void drawFillCoords(CoordsBuffer &coordsBuffer);
-    void drawTextureCoords(CoordsBuffer &coordsBuffer, const TexturePtr &texture);
-    void drawTexturedRect(const Rect &dest, const TexturePtr &texture, const Rect &src);
-    void drawUpsideDownTexturedRect(const Rect &dest, const TexturePtr &texture, const Rect &src);
-    void drawRepeatedTexturedRect(const Rect &dest, const TexturePtr &texture, const Rect &src);
-    void drawFilledRect(const Rect &dest);
-    void drawFilledTriangle(const Point &a, const Point &b, const Point &c);
-    void drawBoundingRect(const Rect &dest, int innerLineWidth = 1);
+    void drawCoords(CoordsBuffer& coordsBuffer, DrawMode drawMode = Triangles);
+    void drawFillCoords(CoordsBuffer& coordsBuffer);
+    void drawTextureCoords(CoordsBuffer& coordsBuffer, const TexturePtr& texture);
+    void drawTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
+    void drawUpsideDownTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
+    void drawRepeatedTexturedRect(const Rect& dest, const TexturePtr& texture, const Rect& src);
+    void drawFilledRect(const Rect& dest);
+    void drawFilledTriangle(const Point& a, const Point& b, const Point& c);
+    void drawBoundingRect(const Rect& dest, int innerLineWidth = 1);
 
     void setDrawProgram(PainterShaderProgram *drawProgram) { m_drawProgram = drawProgram; }
 

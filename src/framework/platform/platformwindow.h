@@ -31,20 +31,19 @@
 //@bindsingleton g_window
 class PlatformWindow
 {
-    enum
-    {
+    enum {
         KEY_PRESS_REPEAT_INTERVAL = 30,
     };
 
-    typedef std::function<void(const Size &)> OnResizeCallback;
-    typedef std::function<void(const InputEvent &)> OnInputEventCallback;
+    typedef std::function<void(const Size&)> OnResizeCallback;
+    typedef std::function<void(const InputEvent&)> OnInputEventCallback;
 
 public:
     virtual void init() = 0;
     virtual void terminate() = 0;
 
-    virtual void move(const Point &pos) = 0;
-    virtual void resize(const Size &size) = 0;
+    virtual void move(const Point& pos) = 0;
+    virtual void resize(const Size& size) = 0;
     virtual void show() = 0;
     virtual void hide() = 0;
     virtual void maximize() = 0;
@@ -52,18 +51,18 @@ public:
     virtual void swapBuffers() = 0;
     virtual void showMouse() = 0;
     virtual void hideMouse() = 0;
-    virtual void displayFatalError(const std::string &message) {}
+    virtual void displayFatalError(const std::string& message) { }
 
-    int loadMouseCursor(const std::string &file, const Point &hotSpot);
+    int loadMouseCursor(const std::string& file, const Point& hotSpot);
     virtual void setMouseCursor(int cursorId) = 0;
     virtual void restoreMouseCursor() = 0;
 
-    virtual void setTitle(const std::string &title) = 0;
-    virtual void setMinimumSize(const Size &minimumSize) = 0;
+    virtual void setTitle(const std::string& title) = 0;
+    virtual void setMinimumSize(const Size& minimumSize) = 0;
     virtual void setFullscreen(bool fullscreen) = 0;
     virtual void setVerticalSync(bool enable) = 0;
-    virtual void setIcon(const std::string &iconFile) = 0;
-    virtual void setClipboardText(const std::string &text) = 0;
+    virtual void setIcon(const std::string& iconFile) = 0;
+    virtual void setClipboardText(const std::string& text) = 0;
 
     virtual Size getDisplaySize() = 0;
     virtual std::string getClipboardText() = 0;
@@ -91,12 +90,12 @@ public:
     bool isFullscreen() { return m_fullscreen; }
     bool hasFocus() { return m_focused; }
 
-    void setOnClose(const std::function<void()> &onClose) { m_onClose = onClose; }
-    void setOnResize(const OnResizeCallback &onResize) { m_onResize = onResize; }
-    void setOnInputEvent(const OnInputEventCallback &onInputEvent) { m_onInputEvent = onInputEvent; }
+    void setOnClose(const std::function<void()>& onClose) { m_onClose = onClose; }
+    void setOnResize(const OnResizeCallback& onResize) { m_onResize = onResize; }
+    void setOnInputEvent(const OnInputEventCallback& onInputEvent) { m_onInputEvent = onInputEvent; }
 
 protected:
-    virtual int internalLoadMouseCursor(const ImagePtr &image, const Point &hotSpot) = 0;
+    virtual int internalLoadMouseCursor(const ImagePtr& image, const Point& hotSpot) = 0;
 
     void updateUnmaximizedCoords();
 
@@ -130,6 +129,6 @@ protected:
     OnInputEventCallback m_onInputEvent;
 };
 
-extern PlatformWindow &g_window;
+extern PlatformWindow& g_window;
 
 #endif

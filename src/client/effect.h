@@ -30,13 +30,12 @@
 // @bindclass
 class Effect : public Thing
 {
-    enum
-    {
+    enum {
         EFFECT_TICKS_PER_FRAME = 75
     };
 
 public:
-    void drawEffect(const Point &dest, float scaleFactor, bool animate, int offsetX = 0, int offsetY = 0, LightView *lightView = nullptr);
+    void drawEffect(const Point& dest, float scaleFactor, bool animate, int offsetX = 0, int offsetY = 0, LightView *lightView = nullptr);
 
     void setId(uint32 id);
     uint32 getId() { return m_id; }
@@ -44,7 +43,7 @@ public:
     EffectPtr asEffect() { return static_self_cast<Effect>(); }
     bool isEffect() { return true; }
 
-    const ThingTypePtr &getThingType();
+    const ThingTypePtr& getThingType();
     ThingType *rawGetThingType();
 
 protected:

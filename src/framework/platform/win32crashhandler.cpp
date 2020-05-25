@@ -32,10 +32,10 @@
 
 #ifdef _MSC_VER
 
-#pragma warning(push)
-#pragma warning(disable : 4091) // warning C4091: 'typedef ': ignored on left of '' when no variable is declared
+#pragma warning (push)
+#pragma warning (disable:4091) // warning C4091: 'typedef ': ignored on left of '' when no variable is declared
 #include <imagehlp.h>
-#pragma warning(pop)
+#pragma warning (pop)
 
 #else
 
@@ -45,57 +45,34 @@
 
 const char *getExceptionName(DWORD exceptionCode)
 {
-    switch (exceptionCode)
-    {
-    case EXCEPTION_ACCESS_VIOLATION:
-        return "Access violation";
-    case EXCEPTION_DATATYPE_MISALIGNMENT:
-        return "Datatype misalignment";
-    case EXCEPTION_BREAKPOINT:
-        return "Breakpoint";
-    case EXCEPTION_SINGLE_STEP:
-        return "Single step";
-    case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:
-        return "Array bounds exceeded";
-    case EXCEPTION_FLT_DENORMAL_OPERAND:
-        return "Float denormal operand";
-    case EXCEPTION_FLT_DIVIDE_BY_ZERO:
-        return "Float divide by zero";
-    case EXCEPTION_FLT_INEXACT_RESULT:
-        return "Float inexact result";
-    case EXCEPTION_FLT_INVALID_OPERATION:
-        return "Float invalid operation";
-    case EXCEPTION_FLT_OVERFLOW:
-        return "Float overflow";
-    case EXCEPTION_FLT_STACK_CHECK:
-        return "Float stack check";
-    case EXCEPTION_FLT_UNDERFLOW:
-        return "Float underflow";
-    case EXCEPTION_INT_DIVIDE_BY_ZERO:
-        return "Integer divide by zero";
-    case EXCEPTION_INT_OVERFLOW:
-        return "Integer overflow";
-    case EXCEPTION_PRIV_INSTRUCTION:
-        return "Privileged instruction";
-    case EXCEPTION_IN_PAGE_ERROR:
-        return "In page error";
-    case EXCEPTION_ILLEGAL_INSTRUCTION:
-        return "Illegal instruction";
-    case EXCEPTION_NONCONTINUABLE_EXCEPTION:
-        return "Noncontinuable exception";
-    case EXCEPTION_STACK_OVERFLOW:
-        return "Stack overflow";
-    case EXCEPTION_INVALID_DISPOSITION:
-        return "Invalid disposition";
-    case EXCEPTION_GUARD_PAGE:
-        return "Guard page";
-    case EXCEPTION_INVALID_HANDLE:
-        return "Invalid handle";
+    switch (exceptionCode) {
+        case EXCEPTION_ACCESS_VIOLATION:         return "Access violation";
+        case EXCEPTION_DATATYPE_MISALIGNMENT:    return "Datatype misalignment";
+        case EXCEPTION_BREAKPOINT:               return "Breakpoint";
+        case EXCEPTION_SINGLE_STEP:              return "Single step";
+        case EXCEPTION_ARRAY_BOUNDS_EXCEEDED:    return "Array bounds exceeded";
+        case EXCEPTION_FLT_DENORMAL_OPERAND:     return "Float denormal operand";
+        case EXCEPTION_FLT_DIVIDE_BY_ZERO:       return "Float divide by zero";
+        case EXCEPTION_FLT_INEXACT_RESULT:       return "Float inexact result";
+        case EXCEPTION_FLT_INVALID_OPERATION:    return "Float invalid operation";
+        case EXCEPTION_FLT_OVERFLOW:             return "Float overflow";
+        case EXCEPTION_FLT_STACK_CHECK:          return "Float stack check";
+        case EXCEPTION_FLT_UNDERFLOW:            return "Float underflow";
+        case EXCEPTION_INT_DIVIDE_BY_ZERO:       return "Integer divide by zero";
+        case EXCEPTION_INT_OVERFLOW:             return "Integer overflow";
+        case EXCEPTION_PRIV_INSTRUCTION:         return "Privileged instruction";
+        case EXCEPTION_IN_PAGE_ERROR:            return "In page error";
+        case EXCEPTION_ILLEGAL_INSTRUCTION:      return "Illegal instruction";
+        case EXCEPTION_NONCONTINUABLE_EXCEPTION: return "Noncontinuable exception";
+        case EXCEPTION_STACK_OVERFLOW:           return "Stack overflow";
+        case EXCEPTION_INVALID_DISPOSITION:      return "Invalid disposition";
+        case EXCEPTION_GUARD_PAGE:               return "Guard page";
+        case EXCEPTION_INVALID_HANDLE:           return "Invalid handle";
     }
     return "Unknown exception";
 }
 
-void Stacktrace(LPEXCEPTION_POINTERS e, std::stringstream &ss)
+void Stacktrace(LPEXCEPTION_POINTERS e, std::stringstream& ss)
 {
     PIMAGEHLP_SYMBOL pSym;
     STACKFRAME sf;
@@ -129,14 +106,13 @@ void Stacktrace(LPEXCEPTION_POINTERS e, std::stringstream &ss)
     process = GetCurrentProcess();
     thread = GetCurrentThread();
 
-    while (1)
-    {
-        more = StackWalk(machineType, process, thread, &sf, e->ContextRecord, NULL, SymFunctionTableAccess, SymGetModuleBase, NULL);
-        if (!more || sf.AddrFrame.Offset == 0)
+    while(1) {
+        more = StackWalk(machineType,  process, thread, &sf, e->ContextRecord, NULL, SymFunctionTableAccess, SymGetModuleBase, NULL);
+        if(!more || sf.AddrFrame.Offset == 0)
             break;
 
         dwModBase = SymGetModuleBase(process, sf.AddrPC.Offset);
-        if (dwModBase)
+        if(dwModBase)
             GetModuleFileName((HINSTANCE)dwModBase, modname, MAX_PATH);
         else
             strcpy(modname, "Unknown");
@@ -145,7 +121,7 @@ void Stacktrace(LPEXCEPTION_POINTERS e, std::stringstream &ss)
         pSym->SizeOfStruct = sizeof(symBuffer);
         pSym->MaxNameLength = 254;
 
-        if (SymGetSymFromAddr(process, sf.AddrPC.Offset, &Disp, pSym))
+        if(SymGetSymFromAddr(process, sf.AddrPC.Offset, &Disp, pSym))
             ss << stdext::format("    %d: %s(%s+%#0lx) [0x%016lX]\n", count, modname, pSym->Name, Disp, sf.AddrPC.Offset);
         else
             ss << stdext::format("    %d: %s [0x%016lX]\n", count, modname, sf.AddrPC.Offset);
@@ -182,21 +158,18 @@ LONG CALLBACK ExceptionHandler(LPEXCEPTION_POINTERS e)
     GetCurrentDirectory(sizeof(dir) - 1, dir);
     std::string fileName = stdext::format("%s\\crashreport.log", dir);
     std::ofstream fout(fileName.c_str(), std::ios::out | std::ios::app);
-    if (fout.is_open() && fout.good())
-    {
+    if(fout.is_open() && fout.good()) {
         fout << ss.str();
         fout.close();
         g_logger.info(stdext::format("Crash report saved to file %s", fileName));
-    }
-    else
+    } else
         g_logger.error("Failed to save crash report!");
 
     // inform the user
     std::string msg = stdext::format(
         "The application has crashed.\n\n"
         "A crash report has been written to:\n"
-        "%s",
-        fileName.c_str());
+        "%s", fileName.c_str());
     MessageBox(NULL, msg.c_str(), "Application crashed", 0);
 
     // this seems to silently close the application

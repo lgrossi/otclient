@@ -28,15 +28,15 @@ UIBoxLayout::UIBoxLayout(UIWidgetPtr parentWidget) : UILayout(parentWidget)
     m_spacing = 0;
 }
 
-void UIBoxLayout::applyStyle(const OTMLNodePtr &styleNode)
+void UIBoxLayout::applyStyle(const OTMLNodePtr& styleNode)
 {
     UILayout::applyStyle(styleNode);
 
-    for (const OTMLNodePtr &node : styleNode->children())
-    {
-        if (node->tag() == "spacing")
+    for(const OTMLNodePtr& node : styleNode->children()) {
+        if(node->tag() == "spacing")
             setSpacing(node->value<int>());
-        else if (node->tag() == "fit-children")
+        else if(node->tag() == "fit-children")
             setFitChildren(node->value<bool>());
     }
 }
+

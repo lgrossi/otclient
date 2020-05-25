@@ -40,58 +40,54 @@ ParticleEmitter::ParticleEmitter()
     m_active = false;
 }
 
-void ParticleEmitter::load(const OTMLNodePtr &node)
+void ParticleEmitter::load(const OTMLNodePtr& node)
 {
-    for (const OTMLNodePtr &childNode : node->children())
-    {
+    for(const OTMLNodePtr& childNode : node->children()) {
         // self related
-        if (childNode->tag() == "position")
+        if(childNode->tag() == "position")
             m_position = childNode->value<Point>();
-        else if (childNode->tag() == "duration")
+        else if(childNode->tag() == "duration")
             m_duration = childNode->value<float>();
-        else if (childNode->tag() == "delay")
+        else if(childNode->tag() == "delay")
             m_delay = childNode->value<float>();
-        else if (childNode->tag() == "burst-rate")
+        else if(childNode->tag() == "burst-rate")
             m_burstRate = childNode->value<float>();
-        else if (childNode->tag() == "burst-count")
+        else if(childNode->tag() == "burst-count")
             m_burstCount = childNode->value<int>();
-        else if (childNode->tag() == "particle-type")
+        else if(childNode->tag() == "particle-type")
             m_particleType = g_particles.getParticleType(childNode->value());
     }
 
-    if (!m_particleType)
+    if(!m_particleType)
         stdext::throw_exception("emitter didn't provide a valid particle type");
 }
 
-void ParticleEmitter::update(float elapsedTime, const ParticleSystemPtr &system)
+void ParticleEmitter::update(float elapsedTime, const ParticleSystemPtr& system)
 {
     m_elapsedTime += elapsedTime;
 
     // check if finished
-    if (m_duration > 0 && m_elapsedTime >= m_duration + m_delay)
-    {
+    if(m_duration > 0 && m_elapsedTime >= m_duration + m_delay) {
         m_finished = true;
         return;
     }
 
-    if (!m_active && m_elapsedTime > m_delay)
+    if(!m_active && m_elapsedTime > m_delay)
         m_active = true;
 
-    if (!m_active)
+    if(!m_active)
         return;
 
     int nextBurst = std::floor((m_elapsedTime - m_delay) * m_burstRate) + 1;
     const ParticleType *type = m_particleType.get();
-    for (int b = m_currentBurst; b < nextBurst; ++b)
-    {
+    for(int b = m_currentBurst; b < nextBurst; ++b) {
         // every burst created at same position.
         float pRadius = stdext::random_range(type->pMinPositionRadius, type->pMaxPositionRadius);
         float pAngle = stdext::random_range(type->pMinPositionAngle, type->pMaxPositionAngle);
 
         Point pPosition = m_position + Point(pRadius * std::cos(pAngle), pRadius * std::sin(pAngle));
 
-        for (int p = 0; p < m_burstCount; ++p)
-        {
+        for(int p = 0; p < m_burstCount; ++p) {
             float pDuration = stdext::random_range(type->pMinDuration, type->pMaxDuration);
 
             // particles initial velocity
@@ -105,10 +101,10 @@ void ParticleEmitter::update(float elapsedTime, const ParticleSystemPtr &system)
             PointF pAcceleration(pAccelerationAbs * std::cos(pAccelerationAngle), pAccelerationAbs * std::sin(pAccelerationAngle));
 
             ParticlePtr particle(new Particle(pPosition, type->pStartSize, type->pFinalSize,
-                                              pVelocity, pAcceleration,
-                                              pDuration, type->pIgnorePhysicsAfter,
-                                              type->pColors, type->pColorsStops,
-                                              type->pCompositionMode, type->pTexture));
+                                                pVelocity, pAcceleration,
+                                                pDuration, type->pIgnorePhysicsAfter,
+                                                type->pColors, type->pColorsStops,
+                                                type->pCompositionMode, type->pTexture));
             system->addParticle(particle);
         }
     }

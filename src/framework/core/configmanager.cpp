@@ -31,8 +31,7 @@ void ConfigManager::init()
 
 void ConfigManager::terminate()
 {
-    if (m_settings)
-    {
+    if(m_settings) {
         // ensure settings are saved
         m_settings->save();
 
@@ -40,8 +39,7 @@ void ConfigManager::terminate()
         m_settings = nullptr;
     }
 
-    for (ConfigPtr config : m_configs)
-    {
+    for(ConfigPtr config : m_configs) {
         config->unload();
         config = nullptr;
     }
@@ -54,12 +52,10 @@ ConfigPtr ConfigManager::getSettings()
     return m_settings;
 }
 
-ConfigPtr ConfigManager::get(const std::string &file)
+ConfigPtr ConfigManager::get(const std::string& file)
 {
-    for (const ConfigPtr config : m_configs)
-    {
-        if (config->getFileName() == file)
-        {
+    for(const ConfigPtr config : m_configs) {
+        if(config->getFileName() == file) {
             return config;
         }
     }
@@ -68,25 +64,21 @@ ConfigPtr ConfigManager::get(const std::string &file)
 
 ConfigPtr ConfigManager::loadSettings(const std::string file)
 {
-    if (file.empty())
-    {
+    if(file.empty()) {
         g_logger.error("Must provide a configuration file to load.");
     }
-    else
-    {
-        if (m_settings->load(file))
-        {
+    else {
+        if(m_settings->load(file)) {
             return m_settings;
         }
     }
     return nullptr;
 }
 
-ConfigPtr ConfigManager::create(const std::string &file)
+ConfigPtr ConfigManager::create(const std::string& file)
 {
     ConfigPtr config = load(file);
-    if (!config)
-    {
+    if(!config) {
         config = ConfigPtr(new Config());
 
         config->load(file);
@@ -97,26 +89,21 @@ ConfigPtr ConfigManager::create(const std::string &file)
     return config;
 }
 
-ConfigPtr ConfigManager::load(const std::string &file)
+ConfigPtr ConfigManager::load(const std::string& file)
 {
-    if (file.empty())
-    {
+    if(file.empty()) {
         g_logger.error("Must provide a configuration file to load.");
         return nullptr;
     }
-    else
-    {
+    else {
         ConfigPtr config = get(file);
-        if (!config)
-        {
+        if(!config) {
             config = ConfigPtr(new Config());
 
-            if (config->load(file))
-            {
+            if(config->load(file)) {
                 m_configs.push_back(config);
             }
-            else
-            {
+            else {
                 // cannot load config
                 config = nullptr;
             }
@@ -125,11 +112,10 @@ ConfigPtr ConfigManager::load(const std::string &file)
     }
 }
 
-bool ConfigManager::unload(const std::string &file)
+bool ConfigManager::unload(const std::string& file)
 {
     ConfigPtr config = get(file);
-    if (config)
-    {
+    if(config) {
         config->unload();
         remove(config);
         config = nullptr;

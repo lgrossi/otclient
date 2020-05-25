@@ -28,15 +28,15 @@
 class LuaException : public stdext::exception
 {
 public:
-    LuaException(const std::string &error, int traceLevel = -1);
-    virtual ~LuaException() throw() {}
+    LuaException(const std::string& error, int traceLevel = -1);
+    virtual ~LuaException() throw() { }
 
-    void generateLuaErrorMessage(const std::string &error, int traceLevel);
+    void generateLuaErrorMessage(const std::string& error, int traceLevel);
 
-    virtual const char *what() const throw() { return m_what.c_str(); }
+    virtual const char* what() const throw() { return m_what.c_str(); }
 
 protected:
-    LuaException() {}
+    LuaException() { }
 
     std::string m_what;
 };
@@ -50,7 +50,7 @@ public:
 class LuaBadValueCastException : public LuaException
 {
 public:
-    LuaBadValueCastException(const std::string &luaTypeName, const std::string &cppTypeName);
+    LuaBadValueCastException(const std::string& luaTypeName, const std::string& cppTypeName);
 };
 
 #endif

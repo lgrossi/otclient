@@ -30,23 +30,22 @@
 // @bindclass
 class Missile : public Thing
 {
-    enum
-    {
+    enum {
         TICKS_PER_FRAME = 75
     };
 
 public:
-    void draw(const Point &dest, float scaleFactor, bool animate, LightView *lightView = nullptr);
+    void draw(const Point& dest, float scaleFactor, bool animate, LightView *lightView = nullptr);
 
     void setId(uint32 id);
-    void setPath(const Position &fromPosition, const Position &toPosition);
+    void setPath(const Position& fromPosition, const Position& toPosition);
 
     uint32 getId() { return m_id; }
 
     MissilePtr asMissile() { return static_self_cast<Missile>(); }
     bool isMissile() { return true; }
 
-    const ThingTypePtr &getThingType();
+    const ThingTypePtr& getThingType();
     ThingType *rawGetThingType();
 
 private:

@@ -35,9 +35,9 @@ public:
     void shutdown();
     void poll();
 
-    EventPtr addEvent(const std::function<void()> &callback, bool pushFront = false);
-    ScheduledEventPtr scheduleEvent(const std::function<void()> &callback, int delay);
-    ScheduledEventPtr cycleEvent(const std::function<void()> &callback, int delay);
+    EventPtr addEvent(const std::function<void()>& callback, bool pushFront = false);
+    ScheduledEventPtr scheduleEvent(const std::function<void()>& callback, int delay);
+    ScheduledEventPtr cycleEvent(const std::function<void()>& callback, int delay);
 
 private:
     std::list<EventPtr> m_eventList;

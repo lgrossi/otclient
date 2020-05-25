@@ -36,17 +36,15 @@
 
 #include <bitset>
 
-struct UnjustifiedPoints
-{
-    bool operator==(const UnjustifiedPoints &other)
-    {
+struct UnjustifiedPoints {
+    bool operator==(const UnjustifiedPoints& other) {
         return killsDay == other.killsDay &&
-               killsDayRemaining == other.killsDayRemaining &&
-               killsWeek == other.killsWeek &&
-               killsWeekRemaining == other.killsWeekRemaining &&
-               killsMonth == other.killsMonth &&
-               killsMonthRemaining == other.killsMonthRemaining &&
-               skullTime == other.skullTime;
+            killsDayRemaining == other.killsDayRemaining &&
+            killsWeek == other.killsWeek &&
+            killsWeekRemaining == other.killsWeekRemaining &&
+            killsMonth == other.killsMonth &&
+            killsMonthRemaining == other.killsMonthRemaining &&
+            skullTime == other.skullTime;
     }
     uint8 killsDay;
     uint8 killsDayRemaining;
@@ -72,15 +70,15 @@ private:
     void resetGameStates();
 
 protected:
-    void processConnectionError(const boost::system::error_code &ec);
+    void processConnectionError(const boost::system::error_code& ec);
     void processDisconnect();
     void processPing();
     void processPingBack();
 
-    void processUpdateNeeded(const std::string &signature);
-    void processLoginError(const std::string &error);
-    void processLoginAdvice(const std::string &message);
-    void processLoginWait(const std::string &message, int time);
+    void processUpdateNeeded(const std::string& signature);
+    void processLoginError(const std::string& error);
+    void processLoginAdvice(const std::string& message);
+    void processLoginWait(const std::string& message, int time);
     void processLoginToken(bool unknown);
     void processLogin();
     void processPendingGame();
@@ -90,8 +88,8 @@ protected:
     void processGameEnd();
     void processDeath(int deathType, int penality);
 
-    void processGMActions(const std::vector<uint8> &actions);
-    void processInventoryChange(int slot, const ItemPtr &item);
+    void processGMActions(const std::vector<uint8>& actions);
+    void processInventoryChange(int slot, const ItemPtr& item);
     void processAttackCancel(uint seq);
     void processWalkCancel(Otc::Direction direction);
 
@@ -99,69 +97,69 @@ protected:
     void processPlayerModes(Otc::FightModes fightMode, Otc::ChaseModes chaseMode, bool safeMode, Otc::PVPModes pvpMode);
 
     // message related
-    void processTextMessage(Otc::MessageMode mode, const std::string &text);
-    void processTalk(const std::string &name, int level, Otc::MessageMode mode, const std::string &text, int channelId, const Position &pos);
+    void processTextMessage(Otc::MessageMode mode, const std::string& text);
+    void processTalk(const std::string& name, int level, Otc::MessageMode mode, const std::string& text, int channelId, const Position& pos);
 
     // container related
-    void processOpenContainer(int containerId, const ItemPtr &containerItem, const std::string &name, int capacity, bool hasParent, const std::vector<ItemPtr> &items, bool isUnlocked, bool hasPages, int containerSize, int firstIndex);
+    void processOpenContainer(int containerId, const ItemPtr& containerItem, const std::string& name, int capacity, bool hasParent, const std::vector<ItemPtr>& items, bool isUnlocked, bool hasPages, int containerSize, int firstIndex);
     void processCloseContainer(int containerId);
-    void processContainerAddItem(int containerId, const ItemPtr &item, int slot);
-    void processContainerUpdateItem(int containerId, int slot, const ItemPtr &item);
-    void processContainerRemoveItem(int containerId, int slot, const ItemPtr &lastItem);
+    void processContainerAddItem(int containerId, const ItemPtr& item, int slot);
+    void processContainerUpdateItem(int containerId, int slot, const ItemPtr& item);
+    void processContainerRemoveItem(int containerId, int slot, const ItemPtr& lastItem);
 
     // channel related
-    void processChannelList(const std::vector<std::tuple<int, std::string>> &channelList);
-    void processOpenChannel(int channelId, const std::string &name);
-    void processOpenPrivateChannel(const std::string &name);
-    void processOpenOwnPrivateChannel(int channelId, const std::string &name);
+    void processChannelList(const std::vector<std::tuple<int, std::string> >& channelList);
+    void processOpenChannel(int channelId, const std::string& name);
+    void processOpenPrivateChannel(const std::string& name);
+    void processOpenOwnPrivateChannel(int channelId, const std::string& name);
     void processCloseChannel(int channelId);
 
     // rule violations
     void processRuleViolationChannel(int channelId);
-    void processRuleViolationRemove(const std::string &name);
-    void processRuleViolationCancel(const std::string &name);
+    void processRuleViolationRemove(const std::string& name);
+    void processRuleViolationCancel(const std::string& name);
     void processRuleViolationLock();
 
     // vip related
-    void processVipAdd(uint id, const std::string &name, uint status, const std::string &description, int iconId, bool notifyLogin);
+    void processVipAdd(uint id, const std::string& name, uint status, const std::string& description, int iconId, bool notifyLogin);
     void processVipStateChange(uint id, uint status);
 
     // tutorial hint
     void processTutorialHint(int id);
-    void processAddAutomapFlag(const Position &pos, int icon, const std::string &message);
-    void processRemoveAutomapFlag(const Position &pos, int icon, const std::string &message);
+    void processAddAutomapFlag(const Position& pos, int icon, const std::string& message);
+    void processRemoveAutomapFlag(const Position& pos, int icon, const std::string& message);
 
     // outfit
-    void processOpenOutfitWindow(const Outfit &currentOutfit, const std::vector<std::tuple<int, std::string, int>> &outfitList,
-                                 const std::vector<std::tuple<int, std::string>> &mountList);
+    void processOpenOutfitWindow(const Outfit& currentOutfit, const std::vector<std::tuple<int, std::string, int> >& outfitList,
+                                 const std::vector<std::tuple<int, std::string> >& mountList);
 
     // npc trade
-    void processOpenNpcTrade(const std::vector<std::tuple<ItemPtr, std::string, int, int, int>> &items);
-    void processPlayerGoods(int money, const std::vector<std::tuple<ItemPtr, int>> &goods);
+    void processOpenNpcTrade(const std::vector<std::tuple<ItemPtr, std::string, int, int, int> >& items);
+    void processPlayerGoods(int money, const std::vector<std::tuple<ItemPtr, int> >& goods);
     void processCloseNpcTrade();
 
     // player trade
-    void processOwnTrade(const std::string &name, const std::vector<ItemPtr> &items);
-    void processCounterTrade(const std::string &name, const std::vector<ItemPtr> &items);
+    void processOwnTrade(const std::string& name, const std::vector<ItemPtr>& items);
+    void processCounterTrade(const std::string& name, const std::vector<ItemPtr>& items);
     void processCloseTrade();
 
     // edit text/list
-    void processEditText(uint id, int itemId, int maxLength, const std::string &text, const std::string &writer, const std::string &date);
-    void processEditList(uint id, int doorId, const std::string &text);
+    void processEditText(uint id, int itemId, int maxLength, const std::string& text, const std::string& writer, const std::string& date);
+    void processEditList(uint id, int doorId, const std::string& text);
 
     // questlog
-    void processQuestLog(const std::vector<std::tuple<int, std::string, bool>> &questList);
-    void processQuestLine(int questId, const std::vector<std::tuple<std::string, std::string>> &questMissions);
+    void processQuestLog(const std::vector<std::tuple<int, std::string, bool> >& questList);
+    void processQuestLine(int questId, const std::vector<std::tuple<std::string, std::string> >& questMissions);
 
     // modal dialogs >= 970
-    void processModalDialog(uint32 id, std::string title, std::string message, std::vector<std::tuple<int, std::string>> buttonList, int enterButton, int escapeButton, std::vector<std::tuple<int, std::string>> choiceList, bool priority);
+    void processModalDialog(uint32 id, std::string title, std::string message, std::vector<std::tuple<int, std::string> > buttonList, int enterButton, int escapeButton, std::vector<std::tuple<int, std::string> > choiceList, bool priority);
 
     friend class ProtocolGame;
     friend class Map;
 
 public:
     // login related
-    void loginWorld(const std::string &account, const std::string &password, const std::string &worldName, const std::string &worldHost, int worldPort, const std::string &characterName, const std::string &authenticatorToken, const std::string &sessionKey);
+    void loginWorld(const std::string& account, const std::string& password, const std::string& worldName, const std::string& worldHost, int worldPort, const std::string& characterName, const std::string& authenticatorToken, const std::string& sessionKey);
     void cancelLogin();
     void forceLogout();
     void safeLogout();
@@ -175,21 +173,21 @@ public:
     void stop();
 
     // item related
-    void look(const ThingPtr &thing, bool isBattleList = false);
-    void move(const ThingPtr &thing, const Position &toPos, int count);
-    void moveToParentContainer(const ThingPtr &thing, int count);
-    void rotate(const ThingPtr &thing);
-    void use(const ThingPtr &thing);
-    void useWith(const ItemPtr &item, const ThingPtr &toThing);
+    void look(const ThingPtr& thing, bool isBattleList = false);
+    void move(const ThingPtr &thing, const Position& toPos, int count);
+    void moveToParentContainer(const ThingPtr& thing, int count);
+    void rotate(const ThingPtr& thing);
+    void use(const ThingPtr& thing);
+    void useWith(const ItemPtr& item, const ThingPtr& toThing);
     void useInventoryItem(int itemId);
-    void useInventoryItemWith(int itemId, const ThingPtr &toThing);
+    void useInventoryItemWith(int itemId, const ThingPtr& toThing);
     ItemPtr findItemInContainers(uint itemId, int subType);
 
     // container related
-    int open(const ItemPtr &item, const ContainerPtr &previousContainer);
-    void openParent(const ContainerPtr &container);
-    void close(const ContainerPtr &container);
-    void refreshContainer(const ContainerPtr &container);
+    int open(const ItemPtr& item, const ContainerPtr& previousContainer);
+    void openParent(const ContainerPtr& container);
+    void close(const ContainerPtr& container);
+    void refreshContainer(const ContainerPtr& container);
 
     // attack/follow related
     void attack(CreaturePtr creature);
@@ -199,19 +197,19 @@ public:
     void cancelAttackAndFollow();
 
     // talk related
-    void talk(const std::string &message);
-    void talkChannel(Otc::MessageMode mode, int channelId, const std::string &message);
-    void talkPrivate(Otc::MessageMode mode, const std::string &receiver, const std::string &message);
+    void talk(const std::string& message);
+    void talkChannel(Otc::MessageMode mode, int channelId, const std::string& message);
+    void talkPrivate(Otc::MessageMode mode, const std::string& receiver, const std::string& message);
 
     // channel related
-    void openPrivateChannel(const std::string &receiver);
+    void openPrivateChannel(const std::string& receiver);
     void requestChannels();
     void joinChannel(int channelId);
     void leaveChannel(int channelId);
     void closeNpcChannel();
     void openOwnChannel();
-    void inviteToOwnChannel(const std::string &name);
-    void excludeFromOwnChannel(const std::string &name);
+    void inviteToOwnChannel(const std::string& name);
+    void excludeFromOwnChannel(const std::string& name);
 
     // party related
     void partyInvite(int creatureId);
@@ -223,12 +221,12 @@ public:
 
     // outfit related
     void requestOutfit();
-    void changeOutfit(const Outfit &outfit);
+    void changeOutfit(const Outfit& outfit);
 
     // vip related
-    void addVip(const std::string &name);
+    void addVip(const std::string& name);
     void removeVip(int playerId);
-    void editVip(int playerId, const std::string &description, int iconId, bool notifyLogin);
+    void editVip(int playerId, const std::string& description, int iconId, bool notifyLogin);
 
     // fight modes related
     void setChaseMode(Otc::ChaseModes chaseMode);
@@ -247,55 +245,55 @@ public:
     int getOpenPvpSituations() { return m_openPvpSituations; }
 
     // npc trade related
-    void inspectNpcTrade(const ItemPtr &item);
-    void buyItem(const ItemPtr &item, int amount, bool ignoreCapacity, bool buyWithBackpack);
-    void sellItem(const ItemPtr &item, int amount, bool ignoreEquipped);
+    void inspectNpcTrade(const ItemPtr& item);
+    void buyItem(const ItemPtr& item, int amount, bool ignoreCapacity, bool buyWithBackpack);
+    void sellItem(const ItemPtr& item, int amount, bool ignoreEquipped);
     void closeNpcTrade();
 
     // player trade related
-    void requestTrade(const ItemPtr &item, const CreaturePtr &creature);
+    void requestTrade(const ItemPtr& item, const CreaturePtr& creature);
     void inspectTrade(bool counterOffer, int index);
     void acceptTrade();
     void rejectTrade();
 
     // house window and editable items related
-    void editText(uint id, const std::string &text);
-    void editList(uint id, int doorId, const std::string &text);
+    void editText(uint id, const std::string& text);
+    void editList(uint id, int doorId, const std::string& text);
 
     // rule violations (only gms)
-    void openRuleViolation(const std::string &reporter);
-    void closeRuleViolation(const std::string &reporter);
+    void openRuleViolation(const std::string& reporter);
+    void closeRuleViolation(const std::string& reporter);
     void cancelRuleViolation();
 
     // reports
-    void reportBug(const std::string &comment);
-    void reportRuleViolation(const std::string &target, int reason, int action, const std::string &comment, const std::string &statement, int statementId, bool ipBanishment);
-    void debugReport(const std::string &a, const std::string &b, const std::string &c, const std::string &d);
+    void reportBug(const std::string& comment);
+    void reportRuleViolation(const std::string& target, int reason, int action, const std::string& comment, const std::string& statement, int statementId, bool ipBanishment);
+    void debugReport(const std::string& a, const std::string& b, const std::string& c, const std::string& d);
 
     // questlog related
     void requestQuestLog();
     void requestQuestLine(int questId);
 
     // 870 only
-    void equipItem(const ItemPtr &item);
+    void equipItem(const ItemPtr& item);
     void mount(bool mount);
 
     // 910 only
-    void requestItemInfo(const ItemPtr &item, int index);
+    void requestItemInfo(const ItemPtr& item, int index);
 
     // >= 970 modal dialog
     void answerModalDialog(uint32 dialog, int button, int choice);
 
     // >= 984 browse field
-    void browseField(const Position &position);
+    void browseField(const Position& position);
     void seekInContainer(int cid, int index);
 
     // >= 1080 ingame store
-    void buyStoreOffer(int offerId, int productType, const std::string &name = "");
+    void buyStoreOffer(int offerId, int productType, const std::string& name = "");
     void requestTransactionHistory(int page, int entriesPerPage);
-    void requestStoreOffers(const std::string &categoryName, int serviceType = 0);
-    void openStore(int serviceType = 0, const std::string &category = "");
-    void transferCoins(const std::string &recipient, int amount);
+    void requestStoreOffers(const std::string& categoryName, int serviceType = 0);
+    void openStore(int serviceType = 0, const std::string& category = "");
+    void transferCoins(const std::string& recipient, int amount);
     void openTransactionHistory(int entriesPerPage);
 
     //void reportRuleViolation2();
@@ -304,7 +302,7 @@ public:
 
     // otclient only
     void changeMapAwareRange(int xrange, int yrange);
-    void updateCamera(Position &pos);
+    void updateCamera(Position& pos);
 
     // dynamic support for game features
     void enableFeature(Otc::GameFeature feature) { m_features.set(feature, true); }
@@ -359,8 +357,8 @@ protected:
     void disableBotCall() { m_denyBotCall = true; }
 
 private:
-    void setAttackingCreature(const CreaturePtr &creature);
-    void setFollowingCreature(const CreaturePtr &creature);
+    void setAttackingCreature(const CreaturePtr& creature);
+    void setFollowingCreature(const CreaturePtr& creature);
 
     LocalPlayerPtr m_localPlayer;
     CreaturePtr m_attackingCreature;

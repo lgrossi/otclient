@@ -37,7 +37,7 @@ public:
     Protocol();
     virtual ~Protocol();
 
-    void connect(const std::string &host, uint16 port);
+    void connect(const std::string& host, uint16 port);
     void disconnect();
 
     bool isConnected();
@@ -45,7 +45,7 @@ public:
     ticks_t getElapsedTicksSinceLastRead() { return m_connection ? m_connection->getElapsedTicksSinceLastRead() : -1; }
 
     ConnectionPtr getConnection() { return m_connection; }
-    void setConnection(const ConnectionPtr &connection) { m_connection = connection; }
+    void setConnection(const ConnectionPtr& connection) { m_connection = connection; }
 
     void generateXteaKey();
     void setXteaKey(uint32 a, uint32 b, uint32 c, uint32 d);
@@ -54,24 +54,24 @@ public:
 
     void enableChecksum() { m_checksumEnabled = true; }
 
-    virtual void send(const OutputMessagePtr &outputMessage);
+    virtual void send(const OutputMessagePtr& outputMessage);
     virtual void recv();
 
     ProtocolPtr asProtocol() { return static_self_cast<Protocol>(); }
 
 protected:
     virtual void onConnect();
-    virtual void onRecv(const InputMessagePtr &inputMessage);
-    virtual void onError(const boost::system::error_code &err);
+    virtual void onRecv(const InputMessagePtr& inputMessage);
+    virtual void onError(const boost::system::error_code& err);
 
     uint32 m_xteaKey[4];
 
 private:
-    void internalRecvHeader(uint8 *buffer, uint16 size);
-    void internalRecvData(uint8 *buffer, uint16 size);
+    void internalRecvHeader(uint8* buffer, uint16 size);
+    void internalRecvData(uint8* buffer, uint16 size);
 
-    bool xteaDecrypt(const InputMessagePtr &inputMessage);
-    void xteaEncrypt(const OutputMessagePtr &outputMessage);
+    bool xteaDecrypt(const InputMessagePtr& inputMessage);
+    void xteaEncrypt(const OutputMessagePtr& outputMessage);
 
     bool m_checksumEnabled;
     bool m_xteaEncryptionEnabled;

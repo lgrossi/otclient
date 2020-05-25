@@ -28,9 +28,8 @@
 #include <framework/stdext/thread.h>
 #include <fstream>
 
-struct LogMessage
-{
-    LogMessage(Fw::LogLevel level, const std::string &message, std::size_t when) : level(level), message(message), when(when) {}
+struct LogMessage {
+    LogMessage(Fw::LogLevel level, const std::string& message, std::size_t when) : level(level), message(message), when(when) { }
     Fw::LogLevel level;
     std::string message;
     std::size_t when;
@@ -39,26 +38,25 @@ struct LogMessage
 // @bindsingleton g_logger
 class Logger
 {
-    enum
-    {
+    enum {
         MAX_LOG_HISTORY = 1000
     };
 
-    typedef std::function<void(Fw::LogLevel, const std::string &, int64)> OnLogCallback;
+    typedef std::function<void(Fw::LogLevel, const std::string&, int64)> OnLogCallback;
 
 public:
-    void log(Fw::LogLevel level, const std::string &message);
-    void logFunc(Fw::LogLevel level, const std::string &message, std::string prettyFunction);
+    void log(Fw::LogLevel level, const std::string& message);
+    void logFunc(Fw::LogLevel level, const std::string& message, std::string prettyFunction);
 
-    void debug(const std::string &what) { log(Fw::LogDebug, what); }
-    void info(const std::string &what) { log(Fw::LogInfo, what); }
-    void warning(const std::string &what) { log(Fw::LogWarning, what); }
-    void error(const std::string &what) { log(Fw::LogError, what); }
-    void fatal(const std::string &what) { log(Fw::LogFatal, what); }
+    void debug(const std::string& what) { log(Fw::LogDebug, what); }
+    void info(const std::string& what) { log(Fw::LogInfo, what); }
+    void warning(const std::string& what) { log(Fw::LogWarning, what); }
+    void error(const std::string& what) { log(Fw::LogError, what); }
+    void fatal(const std::string& what) { log(Fw::LogFatal, what); }
 
     void fireOldMessages();
-    void setLogFile(const std::string &file);
-    void setOnLog(const OnLogCallback &onLog) { m_onLog = onLog; }
+    void setLogFile(const std::string& file);
+    void setOnLog(const OnLogCallback& onLog) { m_onLog = onLog; }
 
 private:
     std::list<LogMessage> m_logMessages;
@@ -75,30 +73,26 @@ extern Logger g_logger;
 #define traceWarning(a) logFunc(Fw::LogWarning, a, __PRETTY_FUNCTION__)
 #define traceError(a) logFunc(Fw::LogError, a, __PRETTY_FUNCTION__)
 
-#define logTraceCounter()                   \
-    {                                       \
-        static int __count = 0;             \
-        static Timer __timer;               \
-        __count++;                          \
-        if (__timer.ticksElapsed() >= 1000) \
-        {                                   \
-            logTraceDebug(__count);         \
-            __count = 0;                    \
-            __timer.restart();              \
-        }                                   \
-    }
+#define logTraceCounter() { \
+    static int __count = 0; \
+    static Timer __timer; \
+    __count++; \
+    if(__timer.ticksElapsed() >= 1000) { \
+        logTraceDebug(__count); \
+        __count = 0; \
+        __timer.restart(); \
+    } \
+}
 
-#define logTraceFrameCounter()          \
-    {                                   \
-        static int __count = 0;         \
-        static Timer __timer;           \
-        __count++;                      \
-        if (__timer.ticksElapsed() > 0) \
-        {                               \
-            logTraceDebug(__count);     \
-            __count = 0;                \
-            __timer.restart();          \
-        }                               \
-    }
+#define logTraceFrameCounter() { \
+    static int __count = 0; \
+    static Timer __timer; \
+    __count++; \
+    if(__timer.ticksElapsed() > 0) { \
+        logTraceDebug(__count); \
+        __count = 0; \
+        __timer.restart(); \
+    } \
+}
 
 #endif

@@ -28,8 +28,7 @@
 // @bindclass
 class LocalPlayer : public Player
 {
-    enum
-    {
+    enum {
         PREWALK_TIMEOUT = 1000
     };
 
@@ -39,7 +38,7 @@ public:
     void unlockWalk() { m_walkLockExpiration = 0; }
     void lockWalk(int millis = 250);
     void stopAutoWalk();
-    bool autoWalk(const Position &destination);
+    bool autoWalk(const Position& destination);
     bool canWalk(Otc::Direction direction);
 
     void setStates(int states);
@@ -57,12 +56,12 @@ public:
     void setStamina(double stamina);
     void setKnown(bool known) { m_known = known; }
     void setPendingGame(bool pending) { m_pending = pending; }
-    void setInventoryItem(Otc::InventorySlot inventory, const ItemPtr &item);
+    void setInventoryItem(Otc::InventorySlot inventory, const ItemPtr& item);
     void setVocation(int vocation);
     void setPremium(bool premium);
     void setRegenerationTime(double regenerationTime);
     void setOfflineTrainingTime(double offlineTrainingTime);
-    void setSpells(const std::vector<int> &spells);
+    void setSpells(const std::vector<int>& spells);
     void setBlessings(int blessings);
 
     int getStates() { return m_states; }
@@ -90,7 +89,7 @@ public:
     ItemPtr getInventoryItem(Otc::InventorySlot inventory) { return m_inventoryItems[inventory]; }
     int getBlessings() { return m_blessings; }
 
-    bool hasSight(const Position &pos);
+    bool hasSight(const Position& pos);
     bool isKnown() { return m_known; }
     bool isPreWalking() { return m_preWalking; }
     bool isAutoWalking() { return m_autoWalkDestination.isValid(); }
@@ -102,10 +101,10 @@ public:
     bool isLocalPlayer() { return true; }
 
     virtual void onAppear();
-    virtual void onPositionChange(const Position &newPos, const Position &oldPos);
+    virtual void onPositionChange(const Position& newPos, const Position& oldPos);
 
 protected:
-    void walk(const Position &oldPos, const Position &newPos);
+    void walk(const Position& oldPos, const Position& newPos);
     void preWalk(Otc::Direction direction);
     void cancelWalk(Otc::Direction direction = Otc::InvalidDirection);
     void stopWalk();

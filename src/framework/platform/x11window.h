@@ -56,8 +56,8 @@ public:
     void init();
     void terminate();
 
-    void move(const Point &pos);
-    void resize(const Size &size);
+    void move(const Point& pos);
+    void resize(const Size& size);
     void show();
     void hide();
     void maximize();
@@ -69,19 +69,19 @@ public:
     void setMouseCursor(int cursorId);
     void restoreMouseCursor();
 
-    void setTitle(const std::string &title);
-    void setMinimumSize(const Size &minimumSize);
+    void setTitle(const std::string& title);
+    void setMinimumSize(const Size& minimumSize);
     void setFullscreen(bool fullscreen);
     void setVerticalSync(bool enable);
-    void setIcon(const std::string &file);
-    void setClipboardText(const std::string &text);
+    void setIcon(const std::string& file);
+    void setClipboardText(const std::string& text);
 
     Size getDisplaySize();
     std::string getClipboardText();
     std::string getPlatformType();
 
 protected:
-    int internalLoadMouseCursor(const ImagePtr &image, const Point &hotSpot);
+    int internalLoadMouseCursor(const ImagePtr& image, const Point& hotSpot);
 
 private:
     Display *m_display;
@@ -110,3 +110,4 @@ private:
 };
 
 #endif
+

@@ -29,7 +29,7 @@
 class Event : public LuaObject
 {
 public:
-    Event(const std::function<void()> &callback);
+    Event(const std::function<void()>& callback);
     virtual ~Event();
 
     virtual void execute();

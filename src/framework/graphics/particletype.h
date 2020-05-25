@@ -33,7 +33,7 @@ class ParticleType : public LuaObject
 public:
     ParticleType();
 
-    void load(const OTMLNodePtr &node);
+    void load(const OTMLNodePtr& node);
 
     std::string getName() { return pName; }
 

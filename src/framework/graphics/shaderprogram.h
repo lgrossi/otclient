@@ -29,8 +29,7 @@
 // @bindclass
 class ShaderProgram : public LuaObject
 {
-    enum
-    {
+    enum {
         MAX_UNIFORM_LOCATIONS = 30
     };
 
@@ -38,10 +37,10 @@ public:
     ShaderProgram();
     ~ShaderProgram();
 
-    bool addShader(const ShaderPtr &shader);
-    bool addShaderFromSourceCode(Shader::ShaderType shaderType, const std::string &sourceCode);
-    bool addShaderFromSourceFile(Shader::ShaderType shaderType, const std::string &sourceFile);
-    void removeShader(const ShaderPtr &shader);
+    bool addShader(const ShaderPtr& shader);
+    bool addShaderFromSourceCode(Shader::ShaderType shaderType, const std::string& sourceCode);
+    bool addShaderFromSourceFile(Shader::ShaderType shaderType, const std::string& sourceFile);
+    void removeShader(const ShaderPtr& shader);
     void removeAllShaders();
     virtual bool link();
     bool bind();
@@ -66,22 +65,22 @@ public:
     void setAttributeValue(const char *name, float x, float y) { glVertexAttrib2f(getAttributeLocation(name), x, y); }
     void setAttributeValue(const char *name, float x, float y, float z) { glVertexAttrib3f(getAttributeLocation(name), x, y, z); }
 
-    void setUniformValue(int location, const Color &color) { glUniform4f(m_uniformLocations[location], color.rF(), color.gF(), color.bF(), color.aF()); }
+    void setUniformValue(int location, const Color& color) { glUniform4f(m_uniformLocations[location], color.rF(), color.gF(), color.bF(), color.aF()); }
     void setUniformValue(int location, int value) { glUniform1i(m_uniformLocations[location], value); }
     void setUniformValue(int location, float value) { glUniform1f(m_uniformLocations[location], value); }
     void setUniformValue(int location, float x, float y) { glUniform2f(m_uniformLocations[location], x, y); }
     void setUniformValue(int location, float x, float y, float z) { glUniform3f(m_uniformLocations[location], x, y, z); }
     void setUniformValue(int location, float x, float y, float z, float w) { glUniform4f(m_uniformLocations[location], x, y, z, w); }
-    void setUniformValue(int location, const Matrix2 &mat) { glUniformMatrix2fv(m_uniformLocations[location], 1, GL_FALSE, mat.data()); }
-    void setUniformValue(int location, const Matrix3 &mat) { glUniformMatrix3fv(m_uniformLocations[location], 1, GL_FALSE, mat.data()); }
-    void setUniformValue(const char *name, const Color &color) { glUniform4f(glGetUniformLocation(m_programId, name), color.rF(), color.gF(), color.bF(), color.aF()); }
+    void setUniformValue(int location, const Matrix2& mat) { glUniformMatrix2fv(m_uniformLocations[location], 1, GL_FALSE, mat.data()); }
+    void setUniformValue(int location, const Matrix3& mat) { glUniformMatrix3fv(m_uniformLocations[location], 1, GL_FALSE, mat.data()); }
+    void setUniformValue(const char *name, const Color& color) { glUniform4f(glGetUniformLocation(m_programId, name), color.rF(), color.gF(), color.bF(), color.aF()); }
     void setUniformValue(const char *name, int value) { glUniform1i(glGetUniformLocation(m_programId, name), value); }
     void setUniformValue(const char *name, float value) { glUniform1f(glGetUniformLocation(m_programId, name), value); }
     void setUniformValue(const char *name, float x, float y) { glUniform2f(glGetUniformLocation(m_programId, name), x, y); }
     void setUniformValue(const char *name, float x, float y, float z) { glUniform3f(glGetUniformLocation(m_programId, name), x, y, z); }
     void setUniformValue(const char *name, float x, float y, float z, float w) { glUniform4f(glGetUniformLocation(m_programId, name), x, y, z, w); }
-    void setUniformValue(const char *name, const Matrix2 &mat) { glUniformMatrix2fv(glGetUniformLocation(m_programId, name), 1, GL_FALSE, mat.data()); }
-    void setUniformValue(const char *name, const Matrix3 &mat) { glUniformMatrix3fv(glGetUniformLocation(m_programId, name), 1, GL_FALSE, mat.data()); }
+    void setUniformValue(const char *name, const Matrix2& mat) { glUniformMatrix2fv(glGetUniformLocation(m_programId, name), 1, GL_FALSE, mat.data()); }
+    void setUniformValue(const char *name, const Matrix3& mat) { glUniformMatrix3fv(glGetUniformLocation(m_programId, name), 1, GL_FALSE, mat.data()); }
     // TODO: Point, PointF, Color, Size, SizeF ?
 
     bool isLinked() { return m_linked; }

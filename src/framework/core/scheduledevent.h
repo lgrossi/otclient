@@ -30,7 +30,7 @@
 class ScheduledEvent : public Event
 {
 public:
-    ScheduledEvent(const std::function<void()> &callback, int delay, int maxCycles);
+    ScheduledEvent(const std::function<void()>& callback, int delay, int maxCycles);
     void execute();
     bool nextCycle();
 
@@ -47,11 +47,9 @@ private:
     int m_cyclesExecuted;
 };
 
-struct lessScheduledEvent : std::binary_function<ScheduledEventPtr, ScheduledEventPtr &, bool>
-{
-    bool operator()(const ScheduledEventPtr &a, const ScheduledEventPtr &b)
-    {
-        return b->ticks() < a->ticks();
+struct lessScheduledEvent : std::binary_function<ScheduledEventPtr, ScheduledEventPtr&, bool> {
+    bool operator()(const ScheduledEventPtr& a, const ScheduledEventPtr& b) {
+        return  b->ticks() < a->ticks();
     }
 };
 

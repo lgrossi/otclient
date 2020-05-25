@@ -20,6 +20,7 @@
  * THE SOFTWARE.
  */
 
+
 #include "graphicalapplication.h"
 #include <framework/core/clock.h>
 #include <framework/core/eventdispatcher.h>
@@ -37,7 +38,7 @@
 
 GraphicalApplication g_app;
 
-void GraphicalApplication::init(std::vector<std::string> &args)
+void GraphicalApplication::init(std::vector<std::string>& args)
 {
     Application::init(args);
 
@@ -96,6 +97,7 @@ void GraphicalApplication::terminate()
     g_graphics.terminate();
     g_window.terminate();
 
+
     m_terminated = true;
 }
 
@@ -119,13 +121,11 @@ void GraphicalApplication::run()
 
     g_lua.callGlobalField("g_app", "onRun");
 
-    while (!m_stopping)
-    {
+    while(!m_stopping) {
         // poll all events before rendering
         poll();
 
-        if (g_window.isVisible())
-        {
+        if(g_window.isVisible()) {
             // the screen consists of two panes
             // background pane - high updated and animated pane (where the game are stuff happens)
             // foreground pane - steady pane with few animated stuff (UI)
@@ -134,26 +134,21 @@ void GraphicalApplication::run()
 
             bool cacheForeground = g_graphics.canCacheBackbuffer() && m_foregroundFrameCounter.getMaxFps() != 0;
 
-            if (m_backgroundFrameCounter.shouldProcessNextFrame())
-            {
+            if(m_backgroundFrameCounter.shouldProcessNextFrame()) {
                 redraw = true;
 
-                if (m_mustRepaint || m_foregroundFrameCounter.shouldProcessNextFrame())
-                {
+                if(m_mustRepaint || m_foregroundFrameCounter.shouldProcessNextFrame()) {
                     m_mustRepaint = false;
                     updateForeground = true;
                 }
             }
 
-            if (redraw)
-            {
-                if (cacheForeground)
-                {
+            if(redraw) {
+                if(cacheForeground) {
                     Rect viewportRect(0, 0, g_painter->getResolution());
 
                     // draw the foreground into a texture
-                    if (updateForeground)
-                    {
+                    if(updateForeground) {
                         m_foregroundFrameCounter.processNextFrame();
 
                         // draw foreground
@@ -176,9 +171,7 @@ void GraphicalApplication::run()
                     g_painter->setColor(Color::white);
                     g_painter->setOpacity(1.0);
                     g_painter->drawTexturedRect(viewportRect, m_foreground, viewportRect);
-                }
-                else
-                {
+                } else {
                     m_foregroundFrameCounter.processNextFrame();
                     m_backgroundFrameCounter.processNextFrame();
                     g_ui.render(Fw::BothPanes);
@@ -191,18 +184,17 @@ void GraphicalApplication::run()
             // only update the current time once per frame to gain performance
             g_clock.update();
 
-            if (m_backgroundFrameCounter.update())
+            if(m_backgroundFrameCounter.update())
                 g_lua.callGlobalField("g_app", "onFps", m_backgroundFrameCounter.getLastFps());
             m_foregroundFrameCounter.update();
 
             int sleepMicros = m_backgroundFrameCounter.getMaximumSleepMicros();
-            if (sleepMicros >= AdaptativeFrameCounter::MINIMUM_MICROS_SLEEP)
+            if(sleepMicros >= AdaptativeFrameCounter::MINIMUM_MICROS_SLEEP)
                 stdext::microsleep(sleepMicros);
-        }
-        else
-        {
+
+        } else {
             // sleeps until next poll to avoid massive cpu usage
-            stdext::millisleep(POLL_CYCLE_DELAY + 1);
+            stdext::millisleep(POLL_CYCLE_DELAY+1);
             g_clock.update();
         }
     }
@@ -232,22 +224,21 @@ void GraphicalApplication::close()
     m_onInputEvent = false;
 }
 
-void GraphicalApplication::resize(const Size &size)
+void GraphicalApplication::resize(const Size& size)
 {
     m_onInputEvent = true;
     g_graphics.resize(size);
     g_ui.resize(size);
     m_onInputEvent = false;
 
-    if (g_graphics.canCacheBackbuffer())
-    {
+    if(g_graphics.canCacheBackbuffer()) {
         m_foreground = TexturePtr(new Texture(size));
         m_foreground->setUpsideDown(true);
     }
     m_mustRepaint = true;
 }
 
-void GraphicalApplication::inputEvent(const InputEvent &event)
+void GraphicalApplication::inputEvent(const InputEvent& event)
 {
     m_onInputEvent = true;
     g_ui.inputEvent(event);

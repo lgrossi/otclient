@@ -35,7 +35,7 @@ public:
     ProtocolHttp();
     virtual ~ProtocolHttp();
 
-    void connect(const std::string &host, uint16 port);
+    void connect(const std::string& host, uint16 port);
     void disconnect();
 
     void send(const std::string &message);
@@ -45,8 +45,8 @@ public:
 
 protected:
     void onConnect();
-    void onRecv(uint8 *buffer, uint16 size);
-    void onError(const boost::system::error_code &err);
+    void onRecv(uint8* buffer, uint16 size);
+    void onError(const boost::system::error_code& err);
 
 private:
     ConnectionPtr m_connection;

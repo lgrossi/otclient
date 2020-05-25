@@ -59,60 +59,56 @@ LocalPlayer::LocalPlayer()
 
 void LocalPlayer::lockWalk(int millis)
 {
-    m_walkLockExpiration = std::max<int>(m_walkLockExpiration, (ticks_t)g_clock.millis() + millis);
+    m_walkLockExpiration = std::max<int>(m_walkLockExpiration, (ticks_t) g_clock.millis() + millis);
 }
 
 bool LocalPlayer::canWalk(Otc::Direction)
 {
     // cannot walk while locked
-    if (m_walkLockExpiration != 0 && g_clock.millis() < m_walkLockExpiration)
+    if(m_walkLockExpiration != 0 && g_clock.millis() < m_walkLockExpiration)
         return false;
 
     // paralyzed
-    if (m_speed == 0)
+    if(m_speed == 0)
         return false;
 
     // last walk is not done yet
-    if ((m_walkTimer.ticksElapsed() < getStepDuration()) && !isAutoWalking())
+    if((m_walkTimer.ticksElapsed() < getStepDuration()) && !isAutoWalking())
         return false;
 
     // prewalk has a timeout, because for some reason that I don't know yet the server sometimes doesn't answer the prewalk
     bool prewalkTimeouted = m_walking && m_preWalking && m_walkTimer.ticksElapsed() >= getStepDuration() + PREWALK_TIMEOUT;
 
     // avoid doing more walks than wanted when receiving a lot of walks from server
-    if (!m_lastPrewalkDone && m_preWalking && !prewalkTimeouted)
+    if(!m_lastPrewalkDone && m_preWalking && !prewalkTimeouted)
         return false;
 
     // cannot walk while already walking
-    if ((m_walking && !isAutoWalking()) && (!prewalkTimeouted || m_secondPreWalk))
+    if((m_walking && !isAutoWalking()) && (!prewalkTimeouted || m_secondPreWalk))
         return false;
 
     return true;
 }
 
-void LocalPlayer::walk(const Position &oldPos, const Position &newPos)
+void LocalPlayer::walk(const Position& oldPos, const Position& newPos)
 {
     // a prewalk was going on
-    if (m_preWalking)
-    {
+    if(m_preWalking) {
         // switch to normal walking
         m_preWalking = false;
         m_secondPreWalk = false;
         m_lastPrewalkDone = true;
         // if is to the last prewalk destination, updates the walk preserving the animation
-        if (newPos == m_lastPrewalkDestination)
-        {
+        if(newPos == m_lastPrewalkDestination) {
             updateWalk();
-            // was to another direction, replace the walk
-        }
-        else
+        // was to another direction, replace the walk
+        } else
             Creature::walk(oldPos, newPos);
     }
     // no prewalk was going on, this must be an server side automated walk
-    else
-    {
+    else {
         m_serverWalking = true;
-        if (m_serverWalkEndEvent)
+        if(m_serverWalkEndEvent)
             m_serverWalkEndEvent->cancel();
 
         Creature::walk(oldPos, newPos);
@@ -124,15 +120,14 @@ void LocalPlayer::preWalk(Otc::Direction direction)
     Position newPos = m_position.translatedToDirection(direction);
 
     // avoid reanimating prewalks
-    if (m_preWalking)
-    {
+    if(m_preWalking) {
         m_secondPreWalk = true;
         return;
     }
 
     m_preWalking = true;
 
-    if (m_serverWalkEndEvent)
+    if(m_serverWalkEndEvent)
         m_serverWalkEndEvent->cancel();
 
     // start walking to direction
@@ -144,41 +139,38 @@ void LocalPlayer::preWalk(Otc::Direction direction)
 void LocalPlayer::cancelWalk(Otc::Direction direction)
 {
     // only cancel client side walks
-    if (m_walking && m_preWalking)
+    if(m_walking && m_preWalking)
         stopWalk();
 
     m_lastPrewalkDone = true;
     m_idleTimer.restart();
     lockWalk();
 
-    if (m_autoWalkDestination.isValid())
-    {
+    if(m_autoWalkDestination.isValid()) {
         g_game.stop();
         auto self = asLocalPlayer();
-        if (m_autoWalkContinueEvent)
+        if(m_autoWalkContinueEvent)
             m_autoWalkContinueEvent->cancel();
         m_autoWalkContinueEvent = g_dispatcher.scheduleEvent([self]() {
-            if (self->m_autoWalkDestination.isValid())
+            if(self->m_autoWalkDestination.isValid())
                 self->autoWalk(self->m_autoWalkDestination);
-        },
-                                                             500);
+        }, 500);
     }
 
     // turn to the cancel direction
-    if (direction != Otc::InvalidDirection)
+    if(direction != Otc::InvalidDirection)
         setDirection(direction);
 
     callLuaField("onCancelWalk", direction);
 }
 
-bool LocalPlayer::autoWalk(const Position &destination)
+bool LocalPlayer::autoWalk(const Position& destination)
 {
-    if (g_game.getClientVersion() <= 740 && m_position.isInRange(destination, 1, 1))
+    if(g_game.getClientVersion() <= 740 && m_position.isInRange(destination, 1, 1))
         return g_game.walk(m_position.getDirectionFromPosition(destination));
 
     bool tryKnownPath = false;
-    if (destination != m_autoWalkDestination)
-    {
+    if(destination != m_autoWalkDestination) {
         m_knownCompletePath = false;
         tryKnownPath = true;
     }
@@ -186,39 +178,34 @@ bool LocalPlayer::autoWalk(const Position &destination)
     std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> result;
     std::vector<Otc::Direction> limitedPath;
 
-    if (destination == m_position)
+    if(destination == m_position)
         return true;
 
     // try to find a path that we know
-    if (tryKnownPath || m_knownCompletePath)
-    {
+    if(tryKnownPath || m_knownCompletePath) {
         result = g_map.findPath(m_position, destination, 50000, 0);
-        if (std::get<1>(result) == Otc::PathFindResultOk)
-        {
+        if(std::get<1>(result) == Otc::PathFindResultOk) {
             limitedPath = std::get<0>(result);
             // limit to 127 steps
-            if (limitedPath.size() > 127)
+            if(limitedPath.size() > 127)
                 limitedPath.resize(127);
             m_knownCompletePath = true;
         }
     }
 
     // no known path found, try to discover one
-    if (limitedPath.empty())
-    {
+    if(limitedPath.empty()) {
         result = g_map.findPath(m_position, destination, 50000, Otc::PathFindAllowNotSeenTiles);
-        if (std::get<1>(result) != Otc::PathFindResultOk)
-        {
+        if(std::get<1>(result) != Otc::PathFindResultOk) {
             callLuaField("onAutoWalkFail", std::get<1>(result));
             stopAutoWalk();
             return false;
         }
 
         Position currentPos = m_position;
-        for (auto dir : std::get<0>(result))
-        {
+        for(auto dir : std::get<0>(result)) {
             currentPos = currentPos.translatedToDirection(dir);
-            if (!hasSight(currentPos))
+            if(!hasSight(currentPos))
                 break;
             else
                 limitedPath.push_back(dir);
@@ -246,7 +233,7 @@ void LocalPlayer::stopAutoWalk()
     m_lastAutoWalkPosition = Position();
     m_knownCompletePath = false;
 
-    if (m_autoWalkContinueEvent)
+    if(m_autoWalkContinueEvent)
         m_autoWalkContinueEvent->cancel();
 }
 
@@ -261,20 +248,18 @@ void LocalPlayer::stopWalk()
 void LocalPlayer::updateWalkOffset(int totalPixelsWalked)
 {
     // pre walks offsets are calculated in the oposite direction
-    if (m_preWalking)
-    {
-        m_walkOffset = Point(0, 0);
-        if (m_direction == Otc::North || m_direction == Otc::NorthEast || m_direction == Otc::NorthWest)
+    if(m_preWalking) {
+        m_walkOffset = Point(0,0);
+        if(m_direction == Otc::North || m_direction == Otc::NorthEast || m_direction == Otc::NorthWest)
             m_walkOffset.y = -totalPixelsWalked;
-        else if (m_direction == Otc::South || m_direction == Otc::SouthEast || m_direction == Otc::SouthWest)
+        else if(m_direction == Otc::South || m_direction == Otc::SouthEast || m_direction == Otc::SouthWest)
             m_walkOffset.y = totalPixelsWalked;
 
-        if (m_direction == Otc::East || m_direction == Otc::NorthEast || m_direction == Otc::SouthEast)
+        if(m_direction == Otc::East || m_direction == Otc::NorthEast || m_direction == Otc::SouthEast)
             m_walkOffset.x = totalPixelsWalked;
-        else if (m_direction == Otc::West || m_direction == Otc::NorthWest || m_direction == Otc::SouthWest)
+        else if(m_direction == Otc::West || m_direction == Otc::NorthWest || m_direction == Otc::SouthWest)
             m_walkOffset.x = -totalPixelsWalked;
-    }
-    else
+    } else
         Creature::updateWalkOffset(totalPixelsWalked);
 }
 
@@ -290,7 +275,7 @@ void LocalPlayer::updateWalk()
     updateWalkingTile();
 
     // terminate walk only when client and server side walk are completed
-    if (m_walking && !m_preWalking && m_walkTimer.ticksElapsed() >= stepDuration)
+    if(m_walking && !m_preWalking && m_walkTimer.ticksElapsed() >= stepDuration)
         terminateWalk();
 }
 
@@ -303,14 +288,12 @@ void LocalPlayer::terminateWalk()
 
     auto self = asLocalPlayer();
 
-    if (m_serverWalking)
-    {
-        if (m_serverWalkEndEvent)
+    if(m_serverWalking) {
+        if(m_serverWalkEndEvent)
             m_serverWalkEndEvent->cancel();
         m_serverWalkEndEvent = g_dispatcher.scheduleEvent([self] {
             self->m_serverWalking = false;
-        },
-                                                          100);
+        }, 100);
     }
 }
 
@@ -319,20 +302,19 @@ void LocalPlayer::onAppear()
     Creature::onAppear();
 }
 
-void LocalPlayer::onPositionChange(const Position &newPos, const Position &oldPos)
+void LocalPlayer::onPositionChange(const Position& newPos, const Position& oldPos)
 {
     Creature::onPositionChange(newPos, oldPos);
 
-    if (newPos == m_autoWalkDestination)
+    if(newPos == m_autoWalkDestination)
         stopAutoWalk();
-    else if (m_autoWalkDestination.isValid() && newPos == m_lastAutoWalkPosition)
+    else if(m_autoWalkDestination.isValid() && newPos == m_lastAutoWalkPosition)
         autoWalk(m_autoWalkDestination);
 }
 
 void LocalPlayer::setStates(int states)
 {
-    if (m_states != states)
-    {
+    if(m_states != states) {
         int oldStates = m_states;
         m_states = states;
 
@@ -342,8 +324,7 @@ void LocalPlayer::setStates(int states)
 
 void LocalPlayer::setSkill(Otc::Skill skill, int level, int levelPercent)
 {
-    if (skill >= Otc::LastSkill)
-    {
+    if(skill >= Otc::LastSkill) {
         g_logger.traceError("invalid skill");
         return;
     }
@@ -351,8 +332,7 @@ void LocalPlayer::setSkill(Otc::Skill skill, int level, int levelPercent)
     int oldLevel = m_skillsLevel[skill];
     int oldLevelPercent = m_skillsLevelPercent[skill];
 
-    if (level != oldLevel || levelPercent != oldLevelPercent)
-    {
+    if(level != oldLevel || levelPercent != oldLevelPercent) {
         m_skillsLevel[skill] = level;
         m_skillsLevelPercent[skill] = levelPercent;
 
@@ -362,15 +342,13 @@ void LocalPlayer::setSkill(Otc::Skill skill, int level, int levelPercent)
 
 void LocalPlayer::setBaseSkill(Otc::Skill skill, int baseLevel)
 {
-    if (skill >= Otc::LastSkill)
-    {
+    if(skill >= Otc::LastSkill) {
         g_logger.traceError("invalid skill");
         return;
     }
 
     int oldBaseLevel = m_skillsBaseLevel[skill];
-    if (baseLevel != oldBaseLevel)
-    {
+    if(baseLevel != oldBaseLevel) {
         m_skillsBaseLevel[skill] = baseLevel;
 
         callLuaField("onBaseSkillChange", skill, baseLevel, oldBaseLevel);
@@ -379,8 +357,7 @@ void LocalPlayer::setBaseSkill(Otc::Skill skill, int baseLevel)
 
 void LocalPlayer::setHealth(double health, double maxHealth)
 {
-    if (m_health != health || m_maxHealth != maxHealth)
-    {
+    if(m_health != health || m_maxHealth != maxHealth) {
         double oldHealth = m_health;
         double oldMaxHealth = m_maxHealth;
         m_health = health;
@@ -389,9 +366,8 @@ void LocalPlayer::setHealth(double health, double maxHealth)
         callLuaField("onHealthChange", health, maxHealth, oldHealth, oldMaxHealth);
 
         // cannot walk while dying
-        if (health == 0)
-        {
-            if (isPreWalking())
+        if(health == 0) {
+            if(isPreWalking())
                 stopWalk();
             lockWalk();
         }
@@ -400,8 +376,7 @@ void LocalPlayer::setHealth(double health, double maxHealth)
 
 void LocalPlayer::setFreeCapacity(double freeCapacity)
 {
-    if (m_freeCapacity != freeCapacity)
-    {
+    if(m_freeCapacity != freeCapacity) {
         double oldFreeCapacity = m_freeCapacity;
         m_freeCapacity = freeCapacity;
 
@@ -411,8 +386,7 @@ void LocalPlayer::setFreeCapacity(double freeCapacity)
 
 void LocalPlayer::setTotalCapacity(double totalCapacity)
 {
-    if (m_totalCapacity != totalCapacity)
-    {
+    if(m_totalCapacity != totalCapacity) {
         double oldTotalCapacity = m_totalCapacity;
         m_totalCapacity = totalCapacity;
 
@@ -422,8 +396,7 @@ void LocalPlayer::setTotalCapacity(double totalCapacity)
 
 void LocalPlayer::setExperience(double experience)
 {
-    if (m_experience != experience)
-    {
+    if(m_experience != experience) {
         double oldExperience = m_experience;
         m_experience = experience;
 
@@ -433,8 +406,7 @@ void LocalPlayer::setExperience(double experience)
 
 void LocalPlayer::setLevel(double level, double levelPercent)
 {
-    if (m_level != level || m_levelPercent != levelPercent)
-    {
+    if(m_level != level || m_levelPercent != levelPercent) {
         double oldLevel = m_level;
         double oldLevelPercent = m_levelPercent;
         m_level = level;
@@ -446,8 +418,7 @@ void LocalPlayer::setLevel(double level, double levelPercent)
 
 void LocalPlayer::setMana(double mana, double maxMana)
 {
-    if (m_mana != mana || m_maxMana != maxMana)
-    {
+    if(m_mana != mana || m_maxMana != maxMana) {
         double oldMana = m_mana;
         double oldMaxMana;
         m_mana = mana;
@@ -459,8 +430,7 @@ void LocalPlayer::setMana(double mana, double maxMana)
 
 void LocalPlayer::setMagicLevel(double magicLevel, double magicLevelPercent)
 {
-    if (m_magicLevel != magicLevel || m_magicLevelPercent != magicLevelPercent)
-    {
+    if(m_magicLevel != magicLevel || m_magicLevelPercent != magicLevelPercent) {
         double oldMagicLevel = m_magicLevel;
         double oldMagicLevelPercent = m_magicLevelPercent;
         m_magicLevel = magicLevel;
@@ -472,8 +442,7 @@ void LocalPlayer::setMagicLevel(double magicLevel, double magicLevelPercent)
 
 void LocalPlayer::setBaseMagicLevel(double baseMagicLevel)
 {
-    if (m_baseMagicLevel != baseMagicLevel)
-    {
+    if(m_baseMagicLevel != baseMagicLevel) {
         double oldBaseMagicLevel = m_baseMagicLevel;
         m_baseMagicLevel = baseMagicLevel;
 
@@ -483,8 +452,7 @@ void LocalPlayer::setBaseMagicLevel(double baseMagicLevel)
 
 void LocalPlayer::setSoul(double soul)
 {
-    if (m_soul != soul)
-    {
+    if(m_soul != soul) {
         double oldSoul = m_soul;
         m_soul = soul;
 
@@ -494,8 +462,7 @@ void LocalPlayer::setSoul(double soul)
 
 void LocalPlayer::setStamina(double stamina)
 {
-    if (m_stamina != stamina)
-    {
+    if(m_stamina != stamina) {
         double oldStamina = m_stamina;
         m_stamina = stamina;
 
@@ -503,16 +470,14 @@ void LocalPlayer::setStamina(double stamina)
     }
 }
 
-void LocalPlayer::setInventoryItem(Otc::InventorySlot inventory, const ItemPtr &item)
+void LocalPlayer::setInventoryItem(Otc::InventorySlot inventory, const ItemPtr& item)
 {
-    if (inventory >= Otc::LastInventorySlot)
-    {
+    if(inventory >= Otc::LastInventorySlot) {
         g_logger.traceError("invalid slot");
         return;
     }
 
-    if (m_inventoryItems[inventory] != item)
-    {
+    if(m_inventoryItems[inventory] != item) {
         ItemPtr oldItem = m_inventoryItems[inventory];
         m_inventoryItems[inventory] = item;
 
@@ -522,8 +487,7 @@ void LocalPlayer::setInventoryItem(Otc::InventorySlot inventory, const ItemPtr &
 
 void LocalPlayer::setVocation(int vocation)
 {
-    if (m_vocation != vocation)
-    {
+    if(m_vocation != vocation) {
         int oldVocation = m_vocation;
         m_vocation = vocation;
 
@@ -533,8 +497,7 @@ void LocalPlayer::setVocation(int vocation)
 
 void LocalPlayer::setPremium(bool premium)
 {
-    if (m_premium != premium)
-    {
+    if(m_premium != premium) {
         m_premium = premium;
 
         callLuaField("onPremiumChange", premium);
@@ -543,8 +506,7 @@ void LocalPlayer::setPremium(bool premium)
 
 void LocalPlayer::setRegenerationTime(double regenerationTime)
 {
-    if (m_regenerationTime != regenerationTime)
-    {
+    if(m_regenerationTime != regenerationTime) {
         double oldRegenerationTime = m_regenerationTime;
         m_regenerationTime = regenerationTime;
 
@@ -554,8 +516,7 @@ void LocalPlayer::setRegenerationTime(double regenerationTime)
 
 void LocalPlayer::setOfflineTrainingTime(double offlineTrainingTime)
 {
-    if (m_offlineTrainingTime != offlineTrainingTime)
-    {
+    if(m_offlineTrainingTime != offlineTrainingTime) {
         double oldOfflineTrainingTime = m_offlineTrainingTime;
         m_offlineTrainingTime = offlineTrainingTime;
 
@@ -563,10 +524,9 @@ void LocalPlayer::setOfflineTrainingTime(double offlineTrainingTime)
     }
 }
 
-void LocalPlayer::setSpells(const std::vector<int> &spells)
+void LocalPlayer::setSpells(const std::vector<int>& spells)
 {
-    if (m_spells != spells)
-    {
+    if(m_spells != spells) {
         std::vector<int> oldSpells = m_spells;
         m_spells = spells;
 
@@ -576,8 +536,7 @@ void LocalPlayer::setSpells(const std::vector<int> &spells)
 
 void LocalPlayer::setBlessings(int blessings)
 {
-    if (blessings != m_blessings)
-    {
+    if(blessings != m_blessings) {
         int oldBlessings = m_blessings;
         m_blessings = blessings;
 
@@ -585,7 +544,7 @@ void LocalPlayer::setBlessings(int blessings)
     }
 }
 
-bool LocalPlayer::hasSight(const Position &pos)
+bool LocalPlayer::hasSight(const Position& pos)
 {
     return m_position.isInRange(pos, g_map.getAwareRange().left - 1, g_map.getAwareRange().top - 1);
 }

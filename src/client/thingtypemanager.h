@@ -37,31 +37,31 @@ public:
 
     bool loadDat(std::string file);
     bool loadOtml(std::string file);
-    void loadOtb(const std::string &file);
-    void loadXml(const std::string &file);
+    void loadOtb(const std::string& file);
+    void loadXml(const std::string& file);
     void parseItemType(uint16 id, TiXmlElement *elem);
 
     void saveDat(std::string fileName);
 
-    void addItemType(const ItemTypePtr &itemType);
-    const ItemTypePtr &findItemTypeByClientId(uint16 id);
-    const ItemTypePtr &findItemTypeByName(std::string name);
+    void addItemType(const ItemTypePtr& itemType);
+    const ItemTypePtr& findItemTypeByClientId(uint16 id);
+    const ItemTypePtr& findItemTypeByName(std::string name);
     ItemTypeList findItemTypesByName(std::string name);
     ItemTypeList findItemTypesByString(std::string name);
 
-    const ThingTypePtr &getNullThingType() { return m_nullThingType; }
-    const ItemTypePtr &getNullItemType() { return m_nullItemType; }
+    const ThingTypePtr& getNullThingType() { return m_nullThingType; }
+    const ItemTypePtr& getNullItemType() { return m_nullItemType; }
 
-    const ThingTypePtr &getThingType(uint16 id, ThingCategory category);
-    const ItemTypePtr &getItemType(uint16 id);
-    ThingType *rawGetThingType(uint16 id, ThingCategory category) { return m_thingTypes[category][id].get(); }
-    ItemType *rawGetItemType(uint16 id) { return m_itemTypes[id].get(); }
+    const ThingTypePtr& getThingType(uint16 id, ThingCategory category);
+    const ItemTypePtr& getItemType(uint16 id);
+    ThingType* rawGetThingType(uint16 id, ThingCategory category) { return m_thingTypes[category][id].get(); }
+    ItemType* rawGetItemType(uint16 id) { return m_itemTypes[id].get(); }
 
     ThingTypeList findThingTypeByAttr(ThingAttr attr, ThingCategory category);
     ItemTypeList findItemTypeByCategory(ItemCategory category);
 
-    const ThingTypeList &getThingTypes(ThingCategory category);
-    const ItemTypeList &getItemTypes() { return m_itemTypes; }
+    const ThingTypeList& getThingTypes(ThingCategory category);
+    const ItemTypeList& getItemTypes() { return m_itemTypes; }
 
     uint32 getDatSignature() { return m_datSignature; }
     uint32 getOtbMajorVersion() { return m_otbMajorVersion; }

@@ -31,8 +31,8 @@
 class ThingsType
 {
 public:
-    enum Categories
-    {
+
+    enum Categories {
         Item = 0,
         Creature,
         Effect,
@@ -40,10 +40,10 @@ public:
         LastCategory
     };
 
-    bool load(const std::string &file);
+    bool load(const std::string& file);
     void unload();
 
-    bool parseThingType(const FileStreamPtr &fin, ThingType &thingType);
+    bool parseThingType(const FileStreamPtr& fin, ThingType& thingType);
 
     ThingType *getEmptyThingType() { return &m_emptyThingType; }
     ThingType *getThingType(uint16 id, Categories category);

@@ -20,6 +20,7 @@
  * THE SOFTWARE.
  */
 
+
 #ifndef GRAPHICALAPPLICATION_H
 #define GRAPHICALAPPLICATION_H
 
@@ -29,13 +30,12 @@
 
 class GraphicalApplication : public Application
 {
-    enum
-    {
+    enum {
         POLL_CYCLE_DELAY = 10
     };
 
 public:
-    void init(std::vector<std::string> &args);
+    void init(std::vector<std::string>& args);
     void deinit();
     void terminate();
     void run();
@@ -56,8 +56,8 @@ public:
     bool isOnInputEvent() { return m_onInputEvent; }
 
 protected:
-    void resize(const Size &size);
-    void inputEvent(const InputEvent &event);
+    void resize(const Size& size);
+    void inputEvent(const InputEvent& event);
 
 private:
     stdext::boolean<false> m_onInputEvent;

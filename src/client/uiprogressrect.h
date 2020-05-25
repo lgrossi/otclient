@@ -37,7 +37,7 @@ public:
     float getPercent() { return m_percent; }
 
 protected:
-    void onStyleApply(const std::string &styleName, const OTMLNodePtr &styleNode);
+    void onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode);
 
     float m_percent;
 };

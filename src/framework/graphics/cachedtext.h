@@ -31,24 +31,12 @@ class CachedText
 public:
     CachedText();
 
-    void draw(const Rect &rect);
+    void draw(const Rect& rect);
 
     void wrapText(int maxWidth);
-    void setFont(const BitmapFontPtr &font)
-    {
-        m_font = font;
-        update();
-    }
-    void setText(const std::string &text)
-    {
-        m_text = text;
-        update();
-    }
-    void setAlign(Fw::AlignmentFlag align)
-    {
-        m_align = align;
-        update();
-    }
+    void setFont(const BitmapFontPtr& font) { m_font = font; update(); }
+    void setText(const std::string& text) { m_text = text; update(); }
+    void setAlign(Fw::AlignmentFlag align) { m_align = align; update(); }
 
     Size getTextSize() { return m_textSize; }
     std::string getText() const { return m_text; }

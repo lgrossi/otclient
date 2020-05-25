@@ -43,7 +43,7 @@ typedef int8_t int8;
 typedef int64 ticks_t;
 typedef uint_fast32_t refcount_t;
 
-using std::ptrdiff_t;
 using std::size_t;
+using std::ptrdiff_t;
 
 #endif

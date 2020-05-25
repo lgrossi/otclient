@@ -29,11 +29,10 @@ EventDispatcher g_dispatcher;
 
 void EventDispatcher::shutdown()
 {
-    while (!m_eventList.empty())
+    while(!m_eventList.empty())
         poll();
 
-    while (!m_scheduledEventList.empty())
-    {
+    while(!m_scheduledEventList.empty()) {
         ScheduledEventPtr scheduledEvent = m_scheduledEventList.top();
         scheduledEvent->cancel();
         m_scheduledEventList.pop();
@@ -44,15 +43,14 @@ void EventDispatcher::shutdown()
 void EventDispatcher::poll()
 {
     int loops = 0;
-    for (int count = 0, max = m_scheduledEventList.size(); count < max && !m_scheduledEventList.empty(); ++count)
-    {
+    for(int count = 0, max = m_scheduledEventList.size(); count < max && !m_scheduledEventList.empty(); ++count) {
         ScheduledEventPtr scheduledEvent = m_scheduledEventList.top();
-        if (scheduledEvent->remainingTicks() > 0)
+        if(scheduledEvent->remainingTicks() > 0)
             break;
         m_scheduledEventList.pop();
         scheduledEvent->execute();
 
-        if (scheduledEvent->nextCycle())
+        if(scheduledEvent->nextCycle())
             m_scheduledEventList.push(scheduledEvent);
     }
 
@@ -60,34 +58,30 @@ void EventDispatcher::poll()
     // change the UIWidgets layout, in this case we must execute these new events before we continue rendering,
     m_pollEventsSize = m_eventList.size();
     loops = 0;
-    while (m_pollEventsSize > 0)
-    {
-        if (loops > 50)
-        {
+    while(m_pollEventsSize > 0) {
+        if(loops > 50) {
             static Timer reportTimer;
-            if (reportTimer.running() && reportTimer.ticksElapsed() > 100)
-            {
+            if(reportTimer.running() && reportTimer.ticksElapsed() > 100) {
                 g_logger.error("ATTENTION the event list is not getting empty, this could be caused by some bad code");
                 reportTimer.restart();
             }
             break;
         }
 
-        for (int i = 0; i < m_pollEventsSize; ++i)
-        {
+        for(int i=0;i<m_pollEventsSize;++i) {
             EventPtr event = m_eventList.front();
             m_eventList.pop_front();
             event->execute();
         }
         m_pollEventsSize = m_eventList.size();
-
+        
         loops++;
     }
 }
 
-ScheduledEventPtr EventDispatcher::scheduleEvent(const std::function<void()> &callback, int delay)
+ScheduledEventPtr EventDispatcher::scheduleEvent(const std::function<void()>& callback, int delay)
 {
-    if (m_disabled)
+    if(m_disabled)
         return ScheduledEventPtr(new ScheduledEvent(nullptr, delay, 1));
 
     assert(delay >= 0);
@@ -96,9 +90,9 @@ ScheduledEventPtr EventDispatcher::scheduleEvent(const std::function<void()> &ca
     return scheduledEvent;
 }
 
-ScheduledEventPtr EventDispatcher::cycleEvent(const std::function<void()> &callback, int delay)
+ScheduledEventPtr EventDispatcher::cycleEvent(const std::function<void()>& callback, int delay)
 {
-    if (m_disabled)
+    if(m_disabled)
         return ScheduledEventPtr(new ScheduledEvent(nullptr, delay, 0));
 
     assert(delay > 0);
@@ -107,20 +101,19 @@ ScheduledEventPtr EventDispatcher::cycleEvent(const std::function<void()> &callb
     return scheduledEvent;
 }
 
-EventPtr EventDispatcher::addEvent(const std::function<void()> &callback, bool pushFront)
+EventPtr EventDispatcher::addEvent(const std::function<void()>& callback, bool pushFront)
 {
-    if (m_disabled)
+    if(m_disabled)
         return EventPtr(new Event(nullptr));
 
     EventPtr event(new Event(callback));
     // front pushing is a way to execute an event before others
-    if (pushFront)
-    {
+    if(pushFront) {
         m_eventList.push_front(event);
         // the poll event list only grows when pushing into front
         m_pollEventsSize++;
-    }
-    else
+    } else
         m_eventList.push_back(event);
     return event;
 }
+
