@@ -2275,6 +2275,7 @@ CreaturePtr ProtocolGame::getCreature(const InputMessagePtr& msg, int type)
         int8 creatureType = -1;
         int8 icon = -1;
         bool unpass = true;
+        bool isBoss = false;
         uint8 mark;
 
         if(g_game.getFeature(Otc::GameCreatureEmblems) && !known)
@@ -2302,6 +2303,10 @@ CreaturePtr ProtocolGame::getCreature(const InputMessagePtr& msg, int type)
 
         if(g_game.getClientVersion() >= 854)
             unpass = msg->getU8();
+
+        #ifdef FEATURE_SHOW_BOSSES
+            isBoss = msg->getU8();
+        #endif
 
         if(creature) {
             creature->setHealthPercent(healthPercent);

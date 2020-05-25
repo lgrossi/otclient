@@ -511,4 +511,7 @@ namespace Otc
     };
 }
 
+// Custom Features Definition
+#define FEATURE_SHOW_BOSSES
+
 #endif
