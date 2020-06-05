@@ -41,16 +41,16 @@ public:
     bool setZoom(int zoom);
     bool zoomIn();
     bool zoomOut();
-    void followCreature(const CreaturePtr& creature) { m_mapView->followCreature(creature); }
+    void followCreature(const CreaturePtr &creature) { m_mapView->followCreature(creature); }
 
-    void setCameraPosition(const Position& pos) { m_mapView->setCameraPosition(pos); }
+    void setCameraPosition(const Position &pos) { m_mapView->setCameraPosition(pos); }
     void setMaxZoomIn(int maxZoomIn) { m_maxZoomIn = maxZoomIn; }
     void setMaxZoomOut(int maxZoomOut) { m_maxZoomOut = maxZoomOut; }
     void setMultifloor(bool enable) { m_mapView->setMultifloor(enable); }
     void lockVisibleFloor(int floor) { m_mapView->lockFirstVisibleFloor(floor); }
     void unlockVisibleFloor() { m_mapView->unlockFirstVisibleFloor(); }
-    void setVisibleDimension(const Size& visibleDimension);
-    void setViewMode(MapView::ViewMode viewMode)  { m_mapView->setViewMode(viewMode); }
+    void setVisibleDimension(const Size &visibleDimension);
+    void setViewMode(MapView::ViewMode viewMode) { m_mapView->setViewMode(viewMode); }
     void setAutoViewMode(bool enable) { m_mapView->setAutoViewMode(enable); }
     void setDrawFlags(Otc::DrawFlags drawFlags) { m_mapView->setDrawFlags(drawFlags); }
     void setDrawTexts(bool enable) { m_mapView->setDrawTexts(enable); }
@@ -60,9 +60,13 @@ public:
     void setDrawManaBar(bool enable) { m_mapView->setDrawManaBar(enable); }
     void setAnimated(bool enable) { m_mapView->setAnimated(enable); }
     void setKeepAspectRatio(bool enable);
-    void setMapShader(const PainterShaderProgramPtr& shader, float fadeout, float fadein) { m_mapView->setShader(shader, fadein, fadeout); }
+    void setMapShader(const PainterShaderProgramPtr &shader, float fadeout, float fadein) { m_mapView->setShader(shader, fadein, fadeout); }
     void setMinimumAmbientLight(float intensity) { m_mapView->setMinimumAmbientLight(intensity); }
-    void setLimitVisibleRange(bool limitVisibleRange) { m_limitVisibleRange = limitVisibleRange; updateVisibleDimension(); }
+    void setLimitVisibleRange(bool limitVisibleRange)
+    {
+        m_limitVisibleRange = limitVisibleRange;
+        updateVisibleDimension();
+    }
     void setAddLightMethod(bool add) { m_mapView->setAddLightMethod(add); }
 
     bool isMultifloor() { return m_mapView->isMultifloor(); }
@@ -81,8 +85,8 @@ public:
     CreaturePtr getFollowingCreature() { return m_mapView->getFollowingCreature(); }
     Otc::DrawFlags getDrawFlags() { return m_mapView->getDrawFlags(); }
     Position getCameraPosition() { return m_mapView->getCameraPosition(); }
-    Position getPosition(const Point& mousePos);
-    TilePtr getTile(const Point& mousePos);
+    Position getPosition(const Point &mousePos);
+    TilePtr getTile(const Point &mousePos);
     int getMaxZoomIn() { return m_maxZoomIn; }
     int getMaxZoomOut() { return m_maxZoomOut; }
     int getZoom() { return m_zoom; }
@@ -90,8 +94,9 @@ public:
     float getMinimumAmbientLight() { return m_mapView->getMinimumAmbientLight(); }
 
 protected:
-    virtual void onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode);
-    virtual void onGeometryChange(const Rect& oldRect, const Rect& newRect);
+    virtual void onStyleApply(const std::string &styleName, const OTMLNodePtr &styleNode);
+    virtual void onGeometryChange(const Rect &oldRect, const Rect &newRect);
+    virtual bool onMouseMove(const Point &mousePos, const Point &mouseMoved);
 
 private:
     void updateVisibleDimension();
@@ -105,6 +110,7 @@ private:
     bool m_limitVisibleRange;
     int m_maxZoomIn;
     int m_maxZoomOut;
+    std::mutex m_zoomLock;
 };
 
 #endif

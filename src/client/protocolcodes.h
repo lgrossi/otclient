@@ -67,6 +67,9 @@ namespace Proto {
         // 51 - 99
         GameServerChangeMapAwareRange       = 0x33,
 
+        // Camera update
+        GameServerFullCameraView            = 0x40,
+
         // original tibia ONLY
         GameServerFullMap                   = 0x64,
         GameServerMapTopRow                 = 0x65,
@@ -209,6 +212,9 @@ namespace Proto {
 
         // NOTE: add any custom opcodes in this range
         // 51 - 99
+
+        // Camera update
+        ClientMoveCamera                    = 0x40,
 
         // original tibia ONLY
         ClientAutoWalk                      = 0x64,

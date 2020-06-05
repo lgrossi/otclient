@@ -713,35 +713,39 @@ void Game::forceWalk(Otc::Direction direction)
     if(!canPerformGameAction())
         return;
 
-    switch(direction) {
-    case Otc::North:
-        m_protocolGame->sendWalkNorth();
-        break;
-    case Otc::East:
-        m_protocolGame->sendWalkEast();
-        break;
-    case Otc::South:
-        m_protocolGame->sendWalkSouth();
-        break;
-    case Otc::West:
-        m_protocolGame->sendWalkWest();
-        break;
-    case Otc::NorthEast:
-        m_protocolGame->sendWalkNorthEast();
-        break;
-    case Otc::SouthEast:
-        m_protocolGame->sendWalkSouthEast();
-        break;
-    case Otc::SouthWest:
-        m_protocolGame->sendWalkSouthWest();
-        break;
-    case Otc::NorthWest:
-        m_protocolGame->sendWalkNorthWest();
-        break;
-    default:
-        break;
+    if (m_localPlayer && g_map.getCentralPosition() != m_localPlayer->getPosition()) {
+        g_map.resetAwareRange();
+        processWalkCancel(direction);
+    } else {
+        switch(direction) {
+        case Otc::North:
+            m_protocolGame->sendWalkNorth();
+            break;
+        case Otc::East:
+            m_protocolGame->sendWalkEast();
+            break;
+        case Otc::South:
+            m_protocolGame->sendWalkSouth();
+            break;
+        case Otc::West:
+            m_protocolGame->sendWalkWest();
+            break;
+        case Otc::NorthEast:
+            m_protocolGame->sendWalkNorthEast();
+            break;
+        case Otc::SouthEast:
+            m_protocolGame->sendWalkSouthEast();
+            break;
+        case Otc::SouthWest:
+            m_protocolGame->sendWalkSouthWest();
+            break;
+        case Otc::NorthWest:
+            m_protocolGame->sendWalkNorthWest();
+            break;
+        default:
+            break;
+        }
     }
-
     g_lua.callGlobalField("g_game", "onForceWalk", direction);
 }
 
@@ -1459,8 +1463,13 @@ void Game::ping()
 void Game::changeMapAwareRange(int xrange, int yrange)
 {
     if(!canPerformGameAction())
-        return;
+        return; 
+
     m_protocolGame->sendChangeMapAwareRange(xrange, yrange);
+}
+
+void Game::updateCamera(Position& pos) {
+    m_protocolGame->sendCameraUpdate(pos);
 }
 
 bool Game::checkBotProtection()
@@ -1682,6 +1691,11 @@ void Game::setClientVersion(int version)
         enableFeature(Otc::GameAdditionalSkills);
     }
 
+    if(version >= 1098) {
+        enableFeature(Otc::GameChangeMapAwareRange);
+        enableFeature(Otc::GameMapMovePosition);
+    }
+
     m_clientVersion = version;
 
     g_lua.callGlobalField("g_game", "onClientVersionChange", version);
@@ -1737,9 +1751,9 @@ int Game::getOs()
         return m_clientCustomOs;
 
     if(g_app.getOs() == "windows")
-        return 10;
+        return 20;
     else if(g_app.getOs() == "mac")
-        return 12;
+        return 22;
     else // linux
-        return 11;
+        return 21;
 }

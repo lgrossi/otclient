@@ -229,8 +229,13 @@ public:
     bool isAwareOfPosition(const Position& pos);
 
     void setAwareRange(const AwareRange& range);
+    void setMapAwareRange(int xrange, int yrange, bool skipSync);
     void resetAwareRange();
     AwareRange getAwareRange() { return m_awareRange; }
+
+    void updateCamera();
+    Point getMousePos();
+    void setMousePos(const Point& mPos);
 
     Light getLight() { return m_light; }
     Position getCentralPosition() { return m_centralPosition; }
@@ -267,6 +272,9 @@ private:
     stdext::packed_storage<uint8> m_attribs;
     AwareRange m_awareRange;
     static TilePtr m_nulltile;
+
+    Point m_mousePos;
+    std::mutex m_cameraLock;
 };
 
 extern Map g_map;

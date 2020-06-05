@@ -463,6 +463,8 @@ void ProtocolGame::parseMessage(const InputMessagePtr &msg)
                 break;
             case Proto::GameServerSendTibiaTime:
                 parseTibiaTime(msg);
+            case Proto::GameServerFullCameraView:
+                parseUpdatedCamera(msg);
                 break;
             default:
                 stdext::throw_exception(stdext::format("unhandled opcode %d", (int)opcode));
@@ -822,20 +824,11 @@ void ProtocolGame::parseDeath(const InputMessagePtr &msg)
 void ProtocolGame::parseMapDescription(const InputMessagePtr &msg)
 {
     Position pos = getPosition(msg);
-
-    if (!m_mapKnown)
-        m_localPlayer->setPosition(pos);
-
+    m_localPlayer->setPosition(pos);
     g_map.setCentralPosition(pos);
 
     AwareRange range = g_map.getAwareRange();
     setMapDescription(msg, pos.x - range.left, pos.y - range.top, pos.z, range.horizontal(), range.vertical());
-
-    if (!m_mapKnown)
-    {
-        g_dispatcher.addEvent([] { g_lua.callGlobalField("g_game", "onMapKnown"); });
-        m_mapKnown = true;
-    }
 
     g_dispatcher.addEvent([] { g_lua.callGlobalField("g_game", "onMapDescription"); });
 }
@@ -847,11 +840,11 @@ void ProtocolGame::parseMapMoveNorth(const InputMessagePtr &msg)
         pos = getPosition(msg);
     else
         pos = g_map.getCentralPosition();
-    pos.y--;
+
+    g_map.setCentralPosition(pos);
 
     AwareRange range = g_map.getAwareRange();
     setMapDescription(msg, pos.x - range.left, pos.y - range.top, pos.z, range.horizontal(), 1);
-    g_map.setCentralPosition(pos);
 }
 
 void ProtocolGame::parseMapMoveEast(const InputMessagePtr &msg)
@@ -861,11 +854,11 @@ void ProtocolGame::parseMapMoveEast(const InputMessagePtr &msg)
         pos = getPosition(msg);
     else
         pos = g_map.getCentralPosition();
-    pos.x++;
+
+    g_map.setCentralPosition(pos);
 
     AwareRange range = g_map.getAwareRange();
     setMapDescription(msg, pos.x + range.right, pos.y - range.top, pos.z, 1, range.vertical());
-    g_map.setCentralPosition(pos);
 }
 
 void ProtocolGame::parseMapMoveSouth(const InputMessagePtr &msg)
@@ -875,11 +868,11 @@ void ProtocolGame::parseMapMoveSouth(const InputMessagePtr &msg)
         pos = getPosition(msg);
     else
         pos = g_map.getCentralPosition();
-    pos.y++;
 
+    g_map.setCentralPosition(pos);
+    
     AwareRange range = g_map.getAwareRange();
     setMapDescription(msg, pos.x - range.left, pos.y + range.bottom, pos.z, range.horizontal(), 1);
-    g_map.setCentralPosition(pos);
 }
 
 void ProtocolGame::parseMapMoveWest(const InputMessagePtr &msg)
@@ -889,11 +882,11 @@ void ProtocolGame::parseMapMoveWest(const InputMessagePtr &msg)
         pos = getPosition(msg);
     else
         pos = g_map.getCentralPosition();
-    pos.x--;
 
+    g_map.setCentralPosition(pos);
+    
     AwareRange range = g_map.getAwareRange();
     setMapDescription(msg, pos.x - range.left, pos.y - range.top, pos.z, 1, range.vertical());
-    g_map.setCentralPosition(pos);
 }
 
 void ProtocolGame::parseUpdateTile(const InputMessagePtr &msg)
@@ -1801,9 +1794,8 @@ void ProtocolGame::parseFloorChangeUp(const InputMessagePtr &msg)
         pos = getPosition(msg);
     else
         pos = g_map.getCentralPosition();
+    
     AwareRange range = g_map.getAwareRange();
-    pos.z--;
-
     int skip = 0;
     if (pos.z == Otc::SEA_FLOOR)
         for (int i = Otc::SEA_FLOOR - Otc::AWARE_UNDEGROUND_FLOOR_RANGE; i >= 0; i--)
@@ -1813,6 +1805,7 @@ void ProtocolGame::parseFloorChangeUp(const InputMessagePtr &msg)
 
     pos.x++;
     pos.y++;
+
     g_map.setCentralPosition(pos);
 }
 
@@ -1823,9 +1816,8 @@ void ProtocolGame::parseFloorChangeDown(const InputMessagePtr &msg)
         pos = getPosition(msg);
     else
         pos = g_map.getCentralPosition();
-    AwareRange range = g_map.getAwareRange();
-    pos.z++;
 
+    AwareRange range = g_map.getAwareRange();
     int skip = 0;
     if (pos.z == Otc::UNDERGROUND_FLOOR)
     {
@@ -1838,6 +1830,7 @@ void ProtocolGame::parseFloorChangeDown(const InputMessagePtr &msg)
 
     pos.x--;
     pos.y--;
+
     g_map.setCentralPosition(pos);
 }
 
@@ -2076,13 +2069,7 @@ void ProtocolGame::parseChangeMapAwareRange(const InputMessagePtr &msg)
     int xrange = msg->getU8();
     int yrange = msg->getU8();
 
-    AwareRange range;
-    range.left = xrange / 2 - ((xrange + 1) % 2);
-    range.right = xrange / 2;
-    range.top = yrange / 2 - ((yrange + 1) % 2);
-    range.bottom = yrange / 2;
-
-    g_map.setAwareRange(range);
+    g_map.setMapAwareRange(xrange, yrange, true);
     g_lua.callGlobalField("g_game", "onMapChangeAwareRange", xrange, yrange);
 }
 
@@ -2140,7 +2127,18 @@ void ProtocolGame::parseCreatureType(const InputMessagePtr &msg)
         g_logger.traceError("could not get creature");
 }
 
-void ProtocolGame::setMapDescription(const InputMessagePtr &msg, int x, int y, int z, int width, int height)
+void ProtocolGame::parseUpdatedCamera(const InputMessagePtr& msg)
+{
+    Position pos = getPosition(msg);
+
+    g_map.setCentralPosition(pos);
+
+    AwareRange range = g_map.getAwareRange();
+    setMapDescription(msg, pos.x - range.left, pos.y - range.top, pos.z, range.horizontal(), range.vertical());
+}
+
+
+void ProtocolGame::setMapDescription(const InputMessagePtr& msg, int x, int y, int z, int width, int height)
 {
     int startz, endz, zstep;
 
@@ -2201,6 +2199,7 @@ int ProtocolGame::setTileDescription(const InputMessagePtr &msg, Position positi
             g_logger.traceError(stdext::format("too many things, pos=%s, stackpos=%d", stdext::to_string(position), stackPos));
 
         ThingPtr thing = getThing(msg);
+
         g_map.addThing(thing, position, stackPos);
     }
 
@@ -2401,16 +2400,16 @@ CreaturePtr ProtocolGame::getCreature(const InputMessagePtr &msg, int type)
         msg->getU8(); // inspection byte
         bool unpass = msg->getU8();
 
-        if (creature)
-        {
+        #ifdef FEATURE_SHOW_BOSSES
+            bool isBoss = msg->getU8();
+        #endif
+
+        if(creature) {
             if (mark == 0xff)
                 creature->hideStaticSquare();
             else
                 creature->showStaticSquare(Color::from8bit(mark));
-        }
 
-        if (creature)
-        {
             creature->setHealthPercent(healthPercent);
             creature->setDirection(direction);
             creature->setOutfit(outfit);

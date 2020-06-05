@@ -155,6 +155,8 @@ namespace Otc
         LifeLeechAmount,
         ManaLeechChance,
         ManaLeechAmount,
+        MagicCriticalChance,
+        MagicCriticalAmount,
         LastSkill
     };
 
@@ -517,5 +519,8 @@ namespace Otc
         PREY_STATE_SELECTION_CHANGE_MONSTER = 4,
     };
 }
+
+// Custom Features Definition
+#define FEATURE_SHOW_BOSSES
 
 #endif

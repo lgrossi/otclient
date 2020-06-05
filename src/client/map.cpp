@@ -32,6 +32,7 @@
 
 #include <framework/core/eventdispatcher.h>
 #include <framework/core/application.h>
+#include <framework/platform/platformwindow.h>
 
 Map g_map;
 TilePtr Map::m_nulltile;
@@ -540,30 +541,15 @@ void Map::setCentralPosition(const Position& centralPosition)
 
     removeUnawareThings();
 
-    // this fixes local player position when the local player is removed from the map,
-    // the local player is removed from the map when there are too many creatures on his tile,
-    // so there is no enough stackpos to the server send him
-    g_dispatcher.addEvent([this] {
-        LocalPlayerPtr localPlayer = g_game.getLocalPlayer();
-        if(!localPlayer || localPlayer->getPosition() == m_centralPosition)
-            return;
-        TilePtr tile = localPlayer->getTile();
-        if(tile && tile->hasThing(localPlayer))
-            return;
-
-        Position oldPos = localPlayer->getPosition();
-        Position pos = m_centralPosition;
-        if(oldPos != pos) {
-            if(!localPlayer->isRemoved())
-                localPlayer->onDisappear();
-            localPlayer->setPosition(pos);
-            localPlayer->onAppear();
-            g_logger.debug("forced player position update");
+    LocalPlayerPtr localPlayer = g_game.getLocalPlayer();
+    if(!localPlayer) return;
+    for(const MapViewPtr& mapView : m_mapViews){
+        if(localPlayer->getPosition() == m_centralPosition){
+            mapView->followCreature(localPlayer);
+        } else {
+            mapView->setCameraPosition(m_centralPosition);
         }
-    });
-
-    for(const MapViewPtr& mapView : m_mapViews)
-        mapView->onMapCenterChange(centralPosition);
+    }
 }
 
 std::vector<CreaturePtr> Map::getSightSpectators(const Position& centerPos, bool multiFloor)
@@ -686,14 +672,27 @@ void Map::setAwareRange(const AwareRange& range)
     removeUnawareThings();
 }
 
+void Map::setMapAwareRange(int xrange, int yrange, bool skipSync)
+{
+    AwareRange range;
+    range.right = xrange / 2;
+    range.bottom = yrange / 2;
+    range.left = range.right - 1;
+    range.top = range.bottom - 1;
+    setAwareRange(range);
+    if (!skipSync) {
+        g_game.changeMapAwareRange(xrange, yrange);
+    }
+}
+
 void Map::resetAwareRange()
 {
     AwareRange range;
-    range.left = 8;
-    range.top = 6;
-    range.bottom = 7;
-    range.right = 9;
-    setAwareRange(range);
+    range.left = 21;
+    range.top = 12;
+    range.right = range.left + 1;
+    range.bottom = range.top + 1;
+    setMapAwareRange(44, 26, false);
 }
 
 int Map::getFirstAwareFloor()
@@ -882,4 +881,55 @@ std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> Map::findPath(const
         delete it.second;
 
     return ret;
+}
+
+Point Map::getMousePos()
+{
+    return m_mousePos;
+}
+
+void Map::setMousePos(const Point& mPos)
+{
+    m_mousePos = mPos;
+    updateCamera();
+}
+
+void Map::updateCamera()
+{   
+    float factor = 0.25;
+    float scrollRatio = 0.02;
+    uint16_t width = g_window.getWidth();
+    uint16_t height = g_window.getHeight();
+
+    Position pos = m_centralPosition;
+    if (m_mousePos.y <= height * scrollRatio) {
+        pos.y -= m_awareRange.top * factor;
+    }
+
+    if (m_mousePos.y >= height * (1 - scrollRatio)) {
+        pos.y += m_awareRange.top * factor;
+    }
+
+    if (m_mousePos.x <= width * scrollRatio) {
+        pos.x -= m_awareRange.left * factor;
+    }
+
+    if (m_mousePos.x >= width * (1 - scrollRatio)) {
+        pos.x += m_awareRange.left * factor;
+    }
+
+    if (!m_cameraLock.try_lock()) return;
+
+    if (m_centralPosition == pos) {
+        m_cameraLock.unlock();
+        return;
+    }
+
+    uint8_t mapScrollDelay = 250; 
+    g_dispatcher.scheduleEvent([this] {
+        m_cameraLock.unlock();
+        updateCamera();
+    }, mapScrollDelay);
+
+    g_game.updateCamera(pos);
 }

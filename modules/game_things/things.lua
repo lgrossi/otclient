@@ -27,12 +27,17 @@ function load()
     sprPath = resolvepath('/things/1231/Tibia.spr')
   end
 
+  local otmlPath = '/things/things'
+
   local errorMessage = ''
   if not g_things.loadDat(datPath) then
     errorMessage = errorMessage .. tr("Unable to load dat file, please place a valid dat in '%s'", datPath) .. '\n'
   end
   if not g_sprites.loadSpr(sprPath) then
     errorMessage = errorMessage .. tr("Unable to load spr file, please place a valid spr in '%s'", sprPath)
+  end
+  if not g_things.loadOtml(otmlPath) then
+    errorMessage = errorMessage .. tr("Unable to load otml file, please place a valid otml in '%s'", otmlPath)
   end
 
   loaded = (errorMessage:len() == 0)
@@ -46,4 +51,6 @@ function load()
     g_game.setProtocolVersion(0)
     connect(g_game, { onClientVersionChange = load })
   end
+
+  
 end
