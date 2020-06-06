@@ -463,6 +463,7 @@ void ProtocolGame::parseMessage(const InputMessagePtr &msg)
                 break;
             case Proto::GameServerSendTibiaTime:
                 parseTibiaTime(msg);
+                break;
             case Proto::GameServerFullCameraView:
                 parseUpdatedCamera(msg);
                 break;
