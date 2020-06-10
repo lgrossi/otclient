@@ -33,8 +33,15 @@
 #define LUA_LIB
 
 extern "C" {
+#if defined(_MSC_VER) || defined(ANDROID)
+#include <luajit/lua.h>
+#include <luajit/lualib.h>
+#include <luajit/lauxlib.h>
+#else
 #include <lua.h>
+#include <lualib.h>
 #include <lauxlib.h>
+#endif
 }
 
 /* ----- adapted from lua-5.2.0 luaconf.h: ----- */
@@ -122,7 +129,7 @@ union luai_Cast2 { double l_d; LUAI_INT32 l_p[2]; };
 #if !defined(lua_number2unsigned)       /* { */
 /* the following definition assures proper modulo behavior */
 #if defined(LUA_NUMBER_DOUBLE)
-#include <cmath>
+#include <math.h>
 #define SUPUNSIGNED     ((lua_Number)(~(lua_Unsigned)0) + 1)
 #define lua_number2unsigned(i,n)  \
         ((i)=(lua_Unsigned)((n) - floor((n)/SUPUNSIGNED)*SUPUNSIGNED))
@@ -174,11 +181,6 @@ static lua_Unsigned luaL_checkunsigned (lua_State *L, int arg) {
 
 #define lbitlib_c
 #define LUA_LIB
-
-#include "lua.h"
-
-#include "lauxlib.h"
-#include "lualib.h"
 
 
 /* number of bits to consider in a number */
@@ -365,7 +367,7 @@ static const luaL_Reg bitlib[] = {
   {"replace", b_replace},
   {"rrotate", b_rrot},
   {"rshift", b_rshift},
-  {nullptr, nullptr}
+  {NULL, NULL}
 };
 
 int luaopen_bit32 (lua_State *L) {

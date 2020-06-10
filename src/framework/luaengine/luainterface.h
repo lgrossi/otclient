@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,9 @@
 #define LUAINTERFACE_H
 
 #include "declarations.h"
+
+#include <framework/util/stats.h>
+
 
 struct lua_State;
 typedef int (*LuaCFunction) (lua_State *L);
@@ -88,7 +91,9 @@ public:
     template<class C, typename F>
     void bindSingletonFunction(const std::string& functionName, F C::*function, C *instance);
     template<class C, typename F>
-    void bindSingletonFunction(const std::string& className, const std::string& functionName, F C::*function, C *instance);
+    void bindSingletonFunction(const std::string& className, const std::string& functionName, F C::* function, C* instance);
+    template<typename F>
+    void bindSingletonFunction(const std::string& className, const std::string& functionName, const F& function);
 
     template<class C, typename F>
     void bindClassStaticFunction(const std::string& functionName, const F& function);
@@ -169,12 +174,15 @@ public:
     /// Searches for the source of the current running function
     std::string getCurrentSourcePath(int level = 0);
 
+    /// gets current function name
+    std::string getCurrentFunction(int level = 0);
+
     /// @brief Calls a function
     /// The function and arguments must be on top of the stack in order,
     /// results are pushed onto the stack.
     /// @exception LuaException is thrown on any lua error
     /// @return number of results
-    int safeCall(int numArgs = 0, int numRets = -1);
+    int safeCall(int numArgs = 0, int numRets = -1, const std::shared_ptr<std::string>& error = nullptr);
 
     /// Same as safeCall but catches exceptions and can also calls a table of functions,
     /// if any error occurs it will be reported to stdout and returns 0 results
@@ -223,6 +231,8 @@ public:
 
     void loadBuffer(const std::string& buffer, const std::string& source);
 
+    std::string generateByteCode(const std::string & buffer, std::string source);
+
     int pcall(int numArgs = 0, int numRets = 0, int errorFuncIndex = 0);
     void call(int numArgs = 0, int numRets = 0);
     void error();
@@ -234,12 +244,13 @@ public:
 
     const char* typeName(int index = -1);
     std::string functionSourcePath();
+    std::string functionSource();
 
     void insert(int index);
     void remove(int index);
     bool next(int index = -2);
 
-    void checkStack() { assert(getTop() <= 20); }
+    void checkStack() { VALIDATE(getTop() <= 20); }
     void getStackFunction(int level = 0);
 
     void getRef(int ref);
@@ -306,7 +317,7 @@ public:
     bool isTable(int index = -1);
     bool isFunction(int index = -1);
     bool isCFunction(int index = -1);
-    bool isLuaFunction(int index = -1)  { return (isFunction(index) && !isCFunction(index)); }
+    bool isLuaFunction(int index = -1)  { return (isFunction() && !isCFunction()); }
     bool isUserdata(int index = -1);
 
     bool toBoolean(int index = -1);
@@ -321,6 +332,8 @@ public:
     int stackSize() { return getTop(); }
     void clearStack() { pop(stackSize()); }
     bool hasIndex(int index) { return (stackSize() >= (index < 0 ? -index : index) && index != 0); }
+
+    std::string getSource(int level = 2);
 
     void loadFiles(std::string directory, bool recursive = false, std::string contains = "");
 
@@ -370,6 +383,12 @@ void LuaInterface::bindSingletonFunction(const std::string& functionName, F C::*
 template<class C, typename F>
 void LuaInterface::bindSingletonFunction(const std::string& className, const std::string& functionName, F C::*function, C *instance) {
     registerClassStaticFunction(className, functionName, luabinder::bind_singleton_mem_fun(function, instance));
+}
+
+template<typename F>
+void LuaInterface::bindSingletonFunction(const std::string& className, const std::string& functionName, const F& function)
+{
+    registerClassStaticFunction(className, functionName, luabinder::bind_fun(function));
 }
 
 template<class C, typename F>
@@ -432,13 +451,17 @@ T LuaInterface::castValue(int index) {
 
 template<typename... T>
 int LuaInterface::luaCallGlobalField(const std::string& global, const std::string& field, const T&... args) {
+    AutoStat s(STATS_LUA, std::string(global) + ":" + field);
+
     g_lua.getGlobalField(global, field);
+    int ret = 0;
+
     if(!g_lua.isNil()) {
         int numArgs = g_lua.polymorphicPush(args...);
-        return g_lua.signalCall(numArgs);
+        ret = g_lua.signalCall(numArgs);
     } else
         g_lua.pop(1);
-    return 0;
+    return ret;
 }
 
 template<typename... T>
@@ -453,7 +476,7 @@ R LuaInterface::callGlobalField(const std::string& global, const std::string& fi
     R result;
     int rets = luaCallGlobalField(global, field, args...);
     if(rets > 0) {
-        assert(rets == 1);
+        VALIDATE(rets == 1);
         result = g_lua.polymorphicPop<R>();
     } else
         result = R();

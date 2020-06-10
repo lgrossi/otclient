@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -142,6 +142,13 @@ int push_luavalue(const std::vector<T>& vec);
 template<typename T>
 bool luavalue_cast(int index, std::vector<T>& vec);
 
+// set
+template<typename T>
+int push_luavalue(const std::set<T>& vec);
+
+template<typename T>
+bool luavalue_cast(int index, std::set<T>& vec);
+
 // deque
 template<class T>
 int push_luavalue(const std::deque<T>& vec);
@@ -155,6 +162,10 @@ int push_luavalue(const std::map<K, V>& map);
 
 template<class K, class V>
 bool luavalue_cast(int index, std::map<K, V>& map);
+
+// pair
+template<class K, class V>
+bool luavalue_cast(int index, std::pair<K, V>& pair);
 
 // tuple
 template<typename... Args>
@@ -229,17 +240,17 @@ bool luavalue_cast(int index, std::function<void(Args...)>& func) {
             // note that we must catch exceptions, because this lambda can be called from anywhere
             // and most of them won't catch exceptions (e.g. dispatcher)
             g_lua.getWeakRef(funcWeakRef);
-            try {
-                if(g_lua.isFunction()) {
-                    int numArgs = g_lua.polymorphicPush(args...);
-                    int rets = g_lua.safeCall(numArgs);
-                    g_lua.pop(rets);
+            auto error = std::make_shared<std::string>();
+            if(g_lua.isFunction()) {
+                int numArgs = g_lua.polymorphicPush(args...);
+                int rets = g_lua.safeCall(numArgs, -1, error);
+                if (!error->empty()) {
+                    g_logger.error(stdext::format("lua function callback failed: %s", *error));
                 } else {
-                    throw LuaException("attempt to call an expired lua function from C++,"
-                                       "did you forget to hold a reference for that function?", 0);
+                    g_lua.pop(rets);
                 }
-            } catch(LuaException& e) {
-                g_logger.error(stdext::format("lua function callback failed: %s", e.what()));
+            } else {
+                g_logger.error("attempt to call an expired lua function from C++, did you forget to hold a reference for that function?");
             }
         };
         return true;
@@ -314,10 +325,11 @@ bool luavalue_cast(int index, std::list<T>& list)
 }
 
 template<typename T>
-int push_luavalue(const std::vector<T>& vec) {
+int push_luavalue(const std::vector<T>& vec)
+{
     g_lua.createTable(vec.size(), 0);
     int i = 1;
-    for(const T& v : vec) {
+    for (const T& v : vec) {
         push_internal_luavalue(v);
         g_lua.rawSeti(i);
         i++;
@@ -328,12 +340,41 @@ int push_luavalue(const std::vector<T>& vec) {
 template<typename T>
 bool luavalue_cast(int index, std::vector<T>& vec)
 {
-    if(g_lua.isTable(index)) {
+    if (g_lua.isTable(index)) {
         g_lua.pushNil();
-        while(g_lua.next(index < 0 ? index-1 : index)) {
+        while (g_lua.next(index < 0 ? index - 1 : index)) {
             T value;
-            if(luavalue_cast(-1, value))
+            if (luavalue_cast(-1, value))
                 vec.push_back(value);
+            g_lua.pop();
+        }
+        return true;
+    }
+    return false;
+}
+
+template<typename T>
+int push_luavalue(const std::set<T>& set)
+{
+    g_lua.createTable(set.size(), 0);
+    int i = 1;
+    for (const T& v : set) {
+        push_internal_luavalue(v);
+        g_lua.rawSeti(i);
+        i++;
+    }
+    return 1;
+}
+
+template<typename T>
+bool luavalue_cast(int index, std::set<T>& set)
+{
+    if (g_lua.isTable(index)) {
+        g_lua.pushNil();
+        while (g_lua.next(index < 0 ? index - 1 : index)) {
+            T value;
+            if (luavalue_cast(-1, value))
+                set.insert(value);
             g_lua.pop();
         }
         return true;
@@ -397,6 +438,34 @@ bool luavalue_cast(int index, std::map<K, V>& map)
     }
     return false;
 }
+
+template<class K, class V>
+bool luavalue_cast(int index, std::pair<K, V>& pair)
+{
+    if (g_lua.isTable(index)) {
+        g_lua.pushNil();
+        if (g_lua.next(index < 0 ? index - 1 : index)) {
+            K value;
+            if (!luavalue_cast(-1, value))
+                pair.first = value;
+            g_lua.pop();
+        } else {
+            return false;
+        }
+        if (g_lua.next(index < 0 ? index - 1 : index)) {
+            V value;
+            if (!luavalue_cast(-1, value))
+                pair.second = value;
+            g_lua.pop();
+        } else {
+            return false;
+        }
+
+        return true;
+    }
+    return false;
+}
+
 
 
 template<int N>
