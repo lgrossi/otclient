@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,16 +34,18 @@ public:
     void drawSelf(Fw::DrawPane drawPane);
 
     void setItemId(int id);
-    void setItemCount(int count) { if(m_item) m_item->setCount(count); }
-    void setItemSubType(int subType) { if(m_item) m_item->setSubType(subType); }
+    void setItemCount(int count);
+    void setItemSubType(int subType);
     void setItemVisible(bool visible) { m_itemVisible = visible; }
-    void setItem(const ItemPtr& item) { m_item = item; }
+    void setItem(const ItemPtr& item);
     void setVirtual(bool virt) { m_virtual = virt; }
     void clearItem() { setItemId(0); }
+    void setShowCount(bool value) { m_showCount = value; }
 
     int getItemId() { return m_item ? m_item->getId() : 0; }
     int getItemCount() { return m_item ? m_item->getCount() : 0; }
     int getItemSubType() { return m_item ? m_item->getSubType() : 0; }
+    int getItemCountOrSubType() { return m_item ? m_item->getCountOrSubType() : 0; }
     ItemPtr getItem() { return m_item; }
     bool isVirtual() { return m_virtual; }
     bool isItemVisible() { return m_itemVisible; }
@@ -55,6 +57,7 @@ protected:
     stdext::boolean<false> m_virtual;
     stdext::boolean<true> m_itemVisible;
     stdext::boolean<false> m_showId;
+    stdext::boolean<true> m_showCount;
 };
 
 #endif

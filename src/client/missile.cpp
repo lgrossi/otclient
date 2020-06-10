@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@
 #include <framework/core/clock.h>
 #include <framework/core/eventdispatcher.h>
 
-void Missile::draw(const Point& dest, float scaleFactor, bool animate, LightView *lightView)
+void Missile::draw(const Point& dest, bool animate, LightView* lightView)
 {
     if(m_id == 0 || !animate)
         return;
@@ -63,11 +63,14 @@ void Missile::draw(const Point& dest, float scaleFactor, bool animate, LightView
     }
 
     float fraction = m_animationTimer.ticksElapsed() / m_duration;
-    rawGetThingType()->draw(dest + m_delta * fraction * scaleFactor, scaleFactor, 0, xPattern, yPattern, 0, 0, lightView);
+    rawGetThingType()->draw(dest + m_delta * fraction, 0, xPattern, yPattern, 0, 0, Color::white, lightView);
 }
 
 void Missile::setPath(const Position& fromPosition, const Position& toPosition)
 {
+    m_source = fromPosition;
+    m_destination = toPosition;
+
     m_direction = fromPosition.getDirectionFromPosition(toPosition);
 
     m_position = fromPosition;

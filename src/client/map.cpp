@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,11 +30,14 @@
 #include "mapview.h"
 #include "minimap.h"
 
+#include <framework/core/asyncdispatcher.h>
 #include <framework/core/eventdispatcher.h>
 #include <framework/core/application.h>
+#include <framework/util/extras.h>
+#include <set>
 
 Map g_map;
-TilePtr Map::m_nulltile;
+TilePtr Map::m_nulltile = nullptr;
 
 void Map::init()
 {
@@ -59,14 +62,25 @@ void Map::removeMapView(const MapViewPtr& mapView)
         m_mapViews.erase(it);
 }
 
-void Map::notificateTileUpdate(const Position& pos)
+void Map::notificateTileUpdate(const Position& pos, bool updateMinimap)
 {
     if(!pos.isMapPosition())
         return;
 
     for(const MapViewPtr& mapView : m_mapViews)
         mapView->onTileUpdate(pos);
-    g_minimap.updateTile(pos, getTile(pos));
+
+    if (!updateMinimap)
+        return;
+
+    if (!g_game.getFeature(Otc::GameMinimapLimitedToSingleFloor) || (m_centralPosition.z == pos.z)) {
+        g_minimap.updateTile(pos, getTile(pos));
+    }
+}
+
+void Map::requestVisibleTilesCacheUpdate() {
+    for (const MapViewPtr& mapView : m_mapViews)
+        mapView->requestVisibleTilesCacheUpdate();
 }
 
 void Map::clean()
@@ -119,6 +133,7 @@ void Map::addThing(const ThingPtr& thing, const Position& pos, int stackPos)
         } else if(thing->isAnimatedText()) {
             // this code will stack animated texts of the same color
             AnimatedTextPtr animatedText = thing->static_self_cast<AnimatedText>();
+
             AnimatedTextPtr prevAnimatedText;
             bool merged = false;
             for(auto other : m_animatedTexts) {
@@ -131,24 +146,15 @@ void Map::addThing(const ThingPtr& thing, const Position& pos, int stackPos)
                 }
             }
             if(!merged) {
-                if(prevAnimatedText) {
-                    Point offset = prevAnimatedText->getOffset();
-                    float t = prevAnimatedText->getTimer().ticksElapsed();
-                    if(t < Otc::ANIMATED_TEXT_DURATION / 4.0) { // didnt move 12 pixels
-                        int y = 12 - 48 * t / (float)Otc::ANIMATED_TEXT_DURATION;
-                        offset += Point(0, y);
-                    }
-                    offset.y = std::min<int>(offset.y, 12);
-                    animatedText->setOffset(offset);
-                }
                 m_animatedTexts.push_back(animatedText);
             }
         } else if(thing->isStaticText()) {
             StaticTextPtr staticText = thing->static_self_cast<StaticText>();
+
             bool mustAdd = true;
             for(auto other : m_staticTexts) {
                 // try to combine messages
-                if(other->getPosition() == pos && other->addMessage(staticText->getName(), staticText->getMessageMode(), staticText->getFirstMessage())) {
+                if(other->getPosition() == pos && other->addColoredMessage(staticText->getName(), staticText->getMessageMode(), staticText->getFirstMessage())) {
                     mustAdd = false;
                     break;
                 }
@@ -162,9 +168,25 @@ void Map::addThing(const ThingPtr& thing, const Position& pos, int stackPos)
 
         thing->setPosition(pos);
         thing->onAppear();
-    }
 
-    notificateTileUpdate(pos);
+        if (thing->isMissile()) {
+            g_lua.callGlobalField("g_map", "onMissle", thing);
+        } else if (thing->isAnimatedText()) {
+            AnimatedTextPtr animatedText = thing->static_self_cast<AnimatedText>();
+            g_lua.callGlobalField("g_map", "onAnimatedText", thing, animatedText->getText());
+        } else if (thing->isStaticText()) {
+            StaticTextPtr staticText = thing->static_self_cast<StaticText>();
+            g_lua.callGlobalField("g_map", "onStaticText", thing, staticText->getText());
+        }
+    } 
+
+    notificateTileUpdate(pos, thing->isItem());
+}
+
+void Map::setTileSpeed(const Position& pos, uint16_t speed, uint8_t blocking) {
+    const TilePtr& tile = getOrCreateTile(pos);
+    if (tile)
+        tile->setSpeed(speed, blocking);
 }
 
 ThingPtr Map::getThing(const Position& pos, int stackPos)
@@ -205,7 +227,7 @@ bool Map::removeThing(const ThingPtr& thing)
     } else if(const TilePtr& tile = thing->getTile())
         ret = tile->removeThing(thing);
 
-    notificateTileUpdate(thing->getPosition());
+    notificateTileUpdate(thing->getPosition(), thing->isItem());
     return ret;
 }
 
@@ -225,10 +247,10 @@ void Map::colorizeThing(const ThingPtr& thing, const Color& color)
         thing->static_self_cast<Item>()->setColor(color);
     else if(thing->isCreature()) {
         const TilePtr& tile = thing->getTile();
-        assert(tile);
+        VALIDATE(tile);
 
         const ThingPtr& topThing = tile->getTopThing();
-        assert(topThing);
+        VALIDATE(topThing);
 
         topThing->static_self_cast<Item>()->setColor(color);
     }
@@ -243,10 +265,10 @@ void Map::removeThingColor(const ThingPtr& thing)
         thing->static_self_cast<Item>()->setColor(Color::alpha);
     else if(thing->isCreature()) {
         const TilePtr& tile = thing->getTile();
-        assert(tile);
+        VALIDATE(tile);
 
         const ThingPtr& topThing = tile->getTopThing();
-        assert(topThing);
+        VALIDATE(topThing);
 
         topThing->static_self_cast<Item>()->setColor(Color::alpha);
     }
@@ -359,15 +381,19 @@ void Map::cleanTile(const Position& pos)
             if(tile->canErase())
                 block.remove(pos);
 
-            notificateTileUpdate(pos);
+            notificateTileUpdate(pos, false);
         }
     }
-    for(auto itt = m_staticTexts.begin();itt != m_staticTexts.end();) {
-        const StaticTextPtr& staticText = *itt;
+    for(auto it = m_staticTexts.begin();it != m_staticTexts.end();) {
+        const StaticTextPtr& staticText = *it;
         if(staticText->getPosition() == pos && staticText->getMessageMode() == Otc::MessageNone)
-            itt = m_staticTexts.erase(itt);
+            it = m_staticTexts.erase(it);
         else
-            ++itt;
+            ++it;
+    }
+
+    if (!g_game.getFeature(Otc::GameMinimapLimitedToSingleFloor) || (m_centralPosition.z == pos.z)) {
+        g_minimap.updateTile(pos, getTile(pos));
     }
 }
 
@@ -427,16 +453,6 @@ void Map::setShowAnimations(bool show)
             m_animationFlags |= Animation_Show;
     } else
         m_animationFlags &= ~Animation_Show;
-}
-
-void Map::beginGhostMode(float opacity)
-{
-    g_painter->setOpacity(opacity);
-}
-
-void Map::endGhostMode()
-{
-    g_painter->resetOpacity();
 }
 
 std::map<Position, ItemPtr> Map::findItemsById(uint16 clientId, uint32 max)
@@ -504,10 +520,11 @@ void Map::removeUnawareThings()
             ++it;
     }
 
+    bool extended = g_game.getFeature(Otc::GameBiggerMapCache);
     if(!g_game.getFeature(Otc::GameKeepUnawareTiles)) {
         // remove tiles that we are not aware anymore
         for(int z = 0; z <= Otc::MAX_Z; ++z) {
-            std::unordered_map<uint, TileBlock>& tileBlocks = m_tileBlocks[z];
+            auto& tileBlocks = m_tileBlocks[z];
             for(auto it = tileBlocks.begin(); it != tileBlocks.end();) {
                 TileBlock& block = (*it).second;
                 bool blockEmpty = true;
@@ -516,7 +533,8 @@ void Map::removeUnawareThings()
                         continue;
 
                     const Position& pos = tile->getPosition();
-                    if(!isAwareOfPosition(pos))
+
+                    if(!isAwareOfPositionForClean(pos, extended))
                         block.remove(pos);
                     else
                         blockEmpty = false;
@@ -656,28 +674,64 @@ bool Map::isCompletelyCovered(const Position& pos, int firstFloor)
     return false;
 }
 
-bool Map::isAwareOfPosition(const Position& pos)
+bool Map::isAwareOfPosition(const Position& pos, bool extended)
 {
-    if(pos.z < getFirstAwareFloor() || pos.z > getLastAwareFloor())
+    if ((pos.z < getFirstAwareFloor() || pos.z > getLastAwareFloor()) && !extended)
         return false;
 
     Position groundedPos = pos;
-    while(groundedPos.z != m_centralPosition.z) {
-        if(groundedPos.z > m_centralPosition.z) {
-            if(groundedPos.x == 65535 || groundedPos.y == 65535) // When pos == 65535,65535,15 we cant go up to 65536,65536,14
+    while (groundedPos.z != m_centralPosition.z) {
+        if (groundedPos.z > m_centralPosition.z) {
+            if (groundedPos.x == 65535 || groundedPos.y == 65535) // When pos == 65535,65535,15 we cant go up to 65536,65536,14
                 break;
             groundedPos.coveredUp();
-        }
-        else {
-            if(groundedPos.x == 0 || groundedPos.y == 0) // When pos == 0,0,0 we cant go down to -1,-1,1
+        } else {
+            if (groundedPos.x == 0 || groundedPos.y == 0) // When pos == 0,0,0 we cant go down to -1,-1,1
                 break;
             groundedPos.coveredDown();
         }
     }
+
+    if (extended) {
+        return m_centralPosition.isInRange(groundedPos, m_awareRange.left * 2,
+                                           m_awareRange.right * 2,
+                                           m_awareRange.top * 2,
+                                           m_awareRange.bottom * 2);
+    }
     return m_centralPosition.isInRange(groundedPos, m_awareRange.left,
-                                                    m_awareRange.right,
-                                                    m_awareRange.top,
-                                                    m_awareRange.bottom);
+                                       m_awareRange.right,
+                                       m_awareRange.top,
+                                       m_awareRange.bottom);
+}
+
+bool Map::isAwareOfPositionForClean(const Position& pos, bool extended)
+{
+    if ((pos.z < getFirstAwareFloor() || pos.z > getLastAwareFloor()) && !extended)
+        return false;
+
+    Position groundedPos = pos;
+    while (groundedPos.z != m_centralPosition.z) {
+        if (groundedPos.z > m_centralPosition.z) {
+            if (groundedPos.x == 65535 || groundedPos.y == 65535) // When pos == 65535,65535,15 we cant go up to 65536,65536,14
+                break;
+            groundedPos.coveredUp();
+        } else {
+            if (groundedPos.x == 0 || groundedPos.y == 0) // When pos == 0,0,0 we cant go down to -1,-1,1
+                break;
+            groundedPos.coveredDown();
+        }
+    }
+
+    if (extended) {
+        return m_centralPosition.isInRange(groundedPos, m_awareRange.left * 4,
+                                           m_awareRange.right * 4,
+                                           m_awareRange.top * 4,
+                                           m_awareRange.bottom * 4);
+    }
+    return m_centralPosition.isInRange(groundedPos, m_awareRange.left + 1,
+                                       m_awareRange.right + 1,
+                                       m_awareRange.top + 1,
+                                       m_awareRange.bottom + 1);
 }
 
 void Map::setAwareRange(const AwareRange& range)
@@ -714,20 +768,20 @@ int Map::getLastAwareFloor()
 
 std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> Map::findPath(const Position& startPos, const Position& goalPos, int maxComplexity, int flags)
 {
-    // pathfinding using A* search algorithm
+    // pathfinding using A* search algorithm (otclientv8 note: it's dijkstra algorithm)
     // as described in http://en.wikipedia.org/wiki/A*_search_algorithm
 
-    struct Node {
-        Node(const Position& pos) : cost(0), totalCost(0), pos(pos), prev(nullptr), dir(Otc::InvalidDirection) { }
+    struct SNode {
+        SNode(const Position& pos) : cost(0), totalCost(0), pos(pos), prev(nullptr), dir(Otc::InvalidDirection) { }
         float cost;
         float totalCost;
         Position pos;
-        Node *prev;
+        SNode *prev;
         Otc::Direction dir;
     };
 
-    struct LessNode : std::binary_function<std::pair<Node*, float>, std::pair<Node*, float>, bool> {
-        bool operator()(std::pair<Node*, float> a, std::pair<Node*, float> b) const {
+    struct LessNode {
+        bool operator()(std::pair<SNode*, float> a, std::pair<SNode*, float> b) const {
             return b.second < a.second;
         }
     };
@@ -751,7 +805,7 @@ std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> Map::findPath(const
     // check the goal pos is walkable
     if(g_map.isAwareOfPosition(goalPos)) {
         const TilePtr goalTile = getTile(goalPos);
-        if(!goalTile || !goalTile->isWalkable()) {
+        if(!goalTile || (!goalTile->isWalkable(flags & Otc::PathFindIgnoreCreatures))) {
             return ret;
         }
     }
@@ -762,124 +816,154 @@ std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> Map::findPath(const
         }
     }
 
-    std::unordered_map<Position, Node*, PositionHasher> nodes;
-    std::priority_queue<std::pair<Node*, float>, std::vector<std::pair<Node*, float>>, LessNode> searchList;
+    std::unordered_map<Position, SNode*, PositionHasher> nodes;
+    std::priority_queue<std::pair<SNode*, float>, std::vector<std::pair<SNode*, float>>, LessNode> searchList;
 
-    Node *currentNode = new Node(startPos);
-    currentNode->pos = startPos;
-    nodes[startPos] = currentNode;
-    Node *foundNode = nullptr;
-    while(currentNode) {
-        if((int)nodes.size() > maxComplexity) {
-            result = Otc::PathFindResultTooFar;
-            break;
-        }
-
-        // path found
-        if(currentNode->pos == goalPos && (!foundNode || currentNode->cost < foundNode->cost))
-            foundNode = currentNode;
-
-        // cost too high
-        if(foundNode && currentNode->totalCost >= foundNode->cost)
-            break;
-
-        for(int i=-1;i<=1;++i) {
-            for(int j=-1;j<=1;++j) {
-                if(i == 0 && j == 0)
-                    continue;
-
-                bool wasSeen = false;
-                bool hasCreature = false;
-                bool isNotWalkable = true;
-                bool isNotPathable = true;
-                int speed = 100;
-
-                Position neighborPos = currentNode->pos.translated(i, j);
-                if(g_map.isAwareOfPosition(neighborPos)) {
-                    wasSeen = true;
-                    if(const TilePtr& tile = getTile(neighborPos)) {
-                        hasCreature = tile->hasCreature();
-                        isNotWalkable = !tile->isWalkable();
-                        isNotPathable = !tile->isPathable();
-                        speed = tile->getGroundSpeed();
-                    }
-                } else {
-                    const MinimapTile& mtile = g_minimap.getTile(neighborPos);
-                    wasSeen = mtile.hasFlag(MinimapTileWasSeen);
-                    isNotWalkable = mtile.hasFlag(MinimapTileNotWalkable);
-                    isNotPathable = mtile.hasFlag(MinimapTileNotPathable);
-                    if(isNotWalkable || isNotPathable)
-                        wasSeen = true;
-                    speed = mtile.getSpeed();
-                }
-
-                float walkFactor = 0;
-                if(neighborPos != goalPos) {
-                    if(!(flags & Otc::PathFindAllowNotSeenTiles) && !wasSeen)
-                        continue;
-                    if(wasSeen) {
-                        if(!(flags & Otc::PathFindAllowCreatures) && hasCreature)
-                            continue;
-                        if(!(flags & Otc::PathFindAllowNonPathable) && isNotPathable)
-                            continue;
-                        if(!(flags & Otc::PathFindAllowNonWalkable) && isNotWalkable)
-                            continue;
-                    }
-                } else {
-                    if(!(flags & Otc::PathFindAllowNotSeenTiles) && !wasSeen)
-                        continue;
-                    if(wasSeen) {
-                        if(!(flags & Otc::PathFindAllowNonWalkable) && isNotWalkable)
-                            continue;
-                    }
-                }
-
-                Otc::Direction walkDir = currentNode->pos.getDirectionFromPosition(neighborPos);
-                if(walkDir >= Otc::NorthEast)
-                    walkFactor += 3.0f;
-                else
-                    walkFactor += 1.0f;
-
-                float cost = currentNode->cost + (speed * walkFactor) / 100.0f;
-
-                Node *neighborNode;
-                if(nodes.find(neighborPos) == nodes.end()) {
-                    neighborNode = new Node(neighborPos);
-                    nodes[neighborPos] = neighborNode;
-                } else {
-                    neighborNode = nodes[neighborPos];
-                    if(neighborNode->cost <= cost)
-                        continue;
-                }
-
-                neighborNode->prev = currentNode;
-                neighborNode->cost = cost;
-                neighborNode->totalCost = neighborNode->cost + neighborPos.distance(goalPos);
-                neighborNode->dir = walkDir;
-                searchList.push(std::make_pair(neighborNode, neighborNode->totalCost));
-            }
-        }
-
-        if(!searchList.empty()) {
-            currentNode = searchList.top().first;
-            searchList.pop();
-        } else
-            currentNode = nullptr;
-    }
-
-    if(foundNode) {
-        currentNode = foundNode;
-        while(currentNode) {
-            dirs.push_back(currentNode->dir);
-            currentNode = currentNode->prev;
-        }
-        dirs.pop_back();
-        std::reverse(dirs.begin(), dirs.end());
-        result = Otc::PathFindResultOk;
-    }
-
+    // hidden code
+    
     for(auto it : nodes)
         delete it.second;
 
     return ret;
+}
+
+PathFindResult_ptr Map::newFindPath(const Position& start, const Position& goal, std::shared_ptr<std::list<Node*>> visibleNodes) {
+    auto ret = std::make_shared<PathFindResult>();
+    ret->start = start;
+    ret->destination = goal;
+
+    if (start == goal) {
+        ret->status = Otc::PathFindResultSamePosition;
+        return ret;
+    }
+    if (goal.z != start.z) {
+        return ret;
+    }
+
+    struct LessNode {
+        bool operator()(Node* a, Node* b) const {
+            return b->totalCost < a->totalCost;
+        }
+    };
+
+    std::unordered_map<Position, Node*, PositionHasher> nodes;
+    std::priority_queue<Node*, std::vector<Node*>, LessNode> searchList;
+
+    if (visibleNodes) {
+        for (auto& node : *visibleNodes)
+            nodes.emplace(node->pos, node);
+    }
+
+    Node* initNode = new Node{ 1, 0, start, nullptr, 0, 0 };
+    nodes[start] = initNode;
+    searchList.push(initNode);
+
+    int limit = 50000;
+    float distance = start.distance(goal);
+
+    // hidden code
+
+    return ret;
+}
+
+void Map::findPathAsync(const Position& start, const Position& goal, std::function<void(PathFindResult_ptr)> callback) {
+
+}
+
+std::map<std::string, std::tuple<int, int, int, std::string>> Map::findEveryPath(const Position& start, int maxDistance, const std::map<std::string, std::string>& params)
+{
+    // using Dijkstra's algorithm
+    struct LessNode {
+        bool operator()(Node* a, Node* b) const
+        {
+            return b->totalCost < a->totalCost;
+        }
+    };
+
+    if (g_extras.debugPathfinding) {
+        g_logger.info(stdext::format("findEveryPath: %i %i %i - %i", start.x, start.y, start.z, maxDistance));
+        for (auto& param : params) {
+            g_logger.info(stdext::format("%s - %s", param.first, param.second));
+        }
+    }
+
+    std::map<std::string, std::string>::const_iterator it;
+    it = params.find("ignoreLastCreature");
+    bool ignoreLastCreature = it != params.end() && it->second != "0" && it->second != "";
+    it = params.find("ignoreCreatures");
+    bool ignoreCreatures = it != params.end() && it->second != "0" && it->second != "";
+    it = params.find("ignoreNonPathable");
+    bool ignoreNonPathable = it != params.end() && it->second != "0" && it->second != "";
+    it = params.find("ignoreNonWalkable");
+    bool ignoreNonWalkable = it != params.end() && it->second != "0" && it->second != "";
+    it = params.find("ignoreStairs");
+    bool ignoreStairs = it != params.end() && it->second != "0" && it->second != "";
+    it = params.find("ignoreCost");
+    bool ignoreCost = it != params.end() && it->second != "0" && it->second != "";
+    it = params.find("allowUnseen");
+    bool allowUnseen = it != params.end() && it->second != "0" && it->second != "";
+    it = params.find("allowOnlyVisibleTiles");
+    bool allowOnlyVisibleTiles = it != params.end() && it->second != "0" && it->second != "";
+    it = params.find("marginMin");
+    bool hasMargin = it != params.end();
+    it = params.find("marginMax");
+    hasMargin = hasMargin || (it != params.end());
+    
+        
+    Position destPos;
+    it = params.find("destination");
+    if (it != params.end()) {
+        std::vector<int32> pos = stdext::split<int32>(it->second, ",");
+        if (pos.size() == 3) {
+            destPos = Position(pos[0], pos[1], pos[2]);
+        }
+    }
+
+    std::map<std::string, std::tuple<int, int, int, std::string>> ret;
+    std::unordered_map<Position, Node*, PositionHasher> nodes;
+    std::priority_queue<Node*, std::vector<Node*>, LessNode> searchList;
+
+    Node* initNode = new Node{ 1, 0, start, nullptr, 0, 0 };
+    nodes[start] = initNode;
+    searchList.push(initNode);
+
+    // hidden code
+    
+    for (auto& node : nodes) {
+        if (node.second)
+            delete node.second;
+    }
+
+    return ret;
+}
+
+int Map::getMinimapColor(const Position& pos)
+{
+    int color = 0;
+    if (const TilePtr& tile = getTile(pos)) {
+        color = tile->getMinimapColorByte();
+    }
+    if (color == 0) {
+        const MinimapTile& mtile = g_minimap.getTile(pos);
+        color = mtile.color;
+    }
+    return color;
+}
+
+bool Map::isPatchable(const Position& pos)
+{
+    if (const TilePtr& tile = getTile(pos)) {
+        return tile->isPathable();
+    }
+    const MinimapTile& mtile = g_minimap.getTile(pos);
+    return !mtile.hasFlag(MinimapTileNotPathable);
+}
+
+bool Map::isWalkable(const Position& pos, bool ignoreCreatures)
+{
+    if (const TilePtr& tile = getTile(pos)) {
+        return tile->isWalkable(ignoreCreatures);
+    }
+    const MinimapTile& mtile = g_minimap.getTile(pos);
+    return !mtile.hasFlag(MinimapTileNotPathable);
 }

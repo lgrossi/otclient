@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,7 @@
 
 #include <framework/global.h>
 #include <framework/core/declarations.h>
+#include <framework/core/eventdispatcher.h>
 
 #include "thingtype.h"
 #include "itemtype.h"
@@ -34,6 +35,7 @@ class ThingTypeManager
 public:
     void init();
     void terminate();
+    void check();
 
     bool loadDat(std::string file);
     bool loadOtml(std::string file);
@@ -41,21 +43,36 @@ public:
     void loadXml(const std::string& file);
     void parseItemType(uint16 id, TiXmlElement *elem);
 
+#ifdef WITH_ENCRYPTION
     void saveDat(std::string fileName);
+    void dumpTextures(std::string dir);
+    void replaceTextures(std::string dir);
+#endif
 
     void addItemType(const ItemTypePtr& itemType);
     const ItemTypePtr& findItemTypeByClientId(uint16 id);
     const ItemTypePtr& findItemTypeByName(std::string name);
     ItemTypeList findItemTypesByName(std::string name);
-    ItemTypeList findItemTypesByString(std::string name);
+    ItemTypeList findItemTypesByString(std::string str);
+
+    std::set<int> getMarketCategories()
+    {
+        return m_marketCategories;
+    }
 
     const ThingTypePtr& getNullThingType() { return m_nullThingType; }
     const ItemTypePtr& getNullItemType() { return m_nullItemType; }
 
     const ThingTypePtr& getThingType(uint16 id, ThingCategory category);
     const ItemTypePtr& getItemType(uint16 id);
-    ThingType* rawGetThingType(uint16 id, ThingCategory category) { return m_thingTypes[category][id].get(); }
-    ItemType* rawGetItemType(uint16 id) { return m_itemTypes[id].get(); }
+    ThingType* rawGetThingType(uint16 id, ThingCategory category) { 
+        VALIDATE(id < m_thingTypes[category].size());
+        return m_thingTypes[category][id].get(); 
+    }
+    ItemType* rawGetItemType(uint16 id) { 
+        VALIDATE(id < m_itemTypes.size());
+        return m_itemTypes[id].get();
+    }
 
     ThingTypeList findThingTypeByAttr(ThingAttr attr, ThingCategory category);
     ItemTypeList findItemTypeByCategory(ItemCategory category);
@@ -79,6 +96,7 @@ private:
     ThingTypeList m_thingTypes[ThingLastCategory];
     ItemTypeList m_reverseItemTypes;
     ItemTypeList m_itemTypes;
+    std::set<int> m_marketCategories;
 
     ThingTypePtr m_nullThingType;
     ItemTypePtr m_nullItemType;
@@ -91,6 +109,9 @@ private:
     uint32 m_otbMajorVersion;
     uint32 m_datSignature;
     uint16 m_contentRevision;
+
+    ScheduledEventPtr m_checkEvent;
+    size_t m_checkIndex[ThingLastCategory];
 };
 
 extern ThingTypeManager g_things;

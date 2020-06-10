@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -49,6 +49,7 @@ public:
 
     AnimatedTextPtr asAnimatedText() { return static_self_cast<AnimatedText>(); }
     bool isAnimatedText() { return true; }
+    std::string getText() { return m_cachedText.getText(); }
 
 protected:
     virtual void onAppear();

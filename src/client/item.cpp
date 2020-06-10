@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -37,6 +37,8 @@
 #include <framework/core/filestream.h>
 #include <framework/core/binarytree.h>
 
+#include <framework/util/stats.h>
+
 Item::Item() :
     m_clientId(0),
     m_serverId(0),
@@ -48,10 +50,11 @@ Item::Item() :
 {
 }
 
-ItemPtr Item::create(int id)
+ItemPtr Item::create(int id, int countOrSubtype)
 {
     ItemPtr item(new Item);
     item->setId(id);
+    item->setCountOrSubType(countOrSubtype);
     return item;
 }
 
@@ -67,9 +70,9 @@ std::string Item::getName()
     return g_things.findItemTypeByClientId(m_clientId)->getName();
 }
 
-void Item::draw(const Point& dest, float scaleFactor, bool animate, LightView *lightView)
+void Item::draw(const Point& dest, bool animate, LightView* lightView)
 {
-    if(m_clientId == 0)
+    if (m_clientId == 0)
         return;
 
     // determine animation phase
@@ -79,15 +82,33 @@ void Item::draw(const Point& dest, float scaleFactor, bool animate, LightView *l
     int xPattern = 0, yPattern = 0, zPattern = 0;
     calculatePatterns(xPattern, yPattern, zPattern);
 
-    if(m_color != Color::alpha)
-        g_painter->setColor(m_color);
-    rawGetThingType()->draw(dest, scaleFactor, 0, xPattern, yPattern, zPattern, animationPhase, lightView);
+    Color color(Color::white);
+    if (m_color != Color::alpha)
+        color = m_color;
+    size_t drawQueueSize = g_drawQueue->size();
+    rawGetThingType()->draw(dest, 0, xPattern, yPattern, zPattern, animationPhase, color, lightView);
+    if (m_marked) {
+        g_drawQueue->setMark(drawQueueSize, updatedMarkedColor());
+    }
+}
 
-    /// Sanity check
-    /// This is just to ensure that we don't overwrite some color and
-    /// screw up the whole rendering.
-    if(m_color != Color::alpha)
-        g_painter->resetColor();
+void Item::draw(const Rect& dest, bool animate)
+{
+    if (m_clientId == 0)
+        return;
+
+    // determine animation phase
+    int animationPhase = calculateAnimationPhase(animate);
+
+    // determine x,y,z patterns
+    int xPattern = 0, yPattern = 0, zPattern = 0;
+    calculatePatterns(xPattern, yPattern, zPattern);
+
+    Color color(Color::white);
+    if (m_color != Color::alpha)
+        color = m_color;
+
+    rawGetThingType()->draw(dest, 0, xPattern, yPattern, zPattern, animationPhase, color);
 }
 
 void Item::setId(uint32 id)
@@ -241,7 +262,7 @@ int Item::getSubType()
 {
     if(isSplash() || isFluidContainer())
         return m_countOrSubType;
-    if(g_game.getClientVersion() > 862)
+    if(g_game.getClientVersion() >= 860)
         return 0;
     return 1;
 }
@@ -372,9 +393,9 @@ void Item::calculatePatterns(int& xPattern, int& yPattern, int& zPattern)
         xPattern = (color % 4) % getNumPatternX();
         yPattern = (color / 4) % getNumPatternY();
     } else {
-        xPattern = m_position.x % getNumPatternX();
-        yPattern = m_position.y % getNumPatternY();
-        zPattern = m_position.z % getNumPatternZ();
+        xPattern = m_position.x % std::max<int>(1, getNumPatternX());
+        yPattern = m_position.y % std::max<int>(1, getNumPatternY());
+        zPattern = m_position.z % std::max<int>(1, getNumPatternZ());
     }
 }
 
@@ -386,9 +407,9 @@ int Item::calculateAnimationPhase(bool animate)
                 return getAnimator()->getPhase();
 
             if(m_async)
-                return (g_clock.millis() % (Otc::ITEM_TICKS_PER_FRAME * getAnimationPhases())) / Otc::ITEM_TICKS_PER_FRAME;
+                return (g_clock.millis() % ((g_game.getFeature(Otc::GameEnhancedAnimations) ? Otc::ITEM_TICKS_PER_FRAME_FAST : Otc::ITEM_TICKS_PER_FRAME) * getAnimationPhases())) / Otc::ITEM_TICKS_PER_FRAME;
             else {
-                if(g_clock.millis() - m_lastPhase >= Otc::ITEM_TICKS_PER_FRAME) {
+                if(g_clock.millis() - m_lastPhase >= (g_game.getFeature(Otc::GameEnhancedAnimations) ? Otc::ITEM_TICKS_PER_FRAME_FAST : Otc::ITEM_TICKS_PER_FRAME)) {
                     m_phase = (m_phase + 1) % getAnimationPhases();
                     m_lastPhase = g_clock.millis();
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,17 +24,17 @@
 #include "map.h"
 #include "game.h"
 #include <framework/core/eventdispatcher.h>
+#include <framework/util/extras.h>
 
-void Effect::drawEffect(const Point& dest, float scaleFactor, bool animate, int offsetX, int offsetY, LightView *lightView)
+void Effect::draw(const Point& dest, int offsetX, int offsetY, bool animate, LightView* lightView)
 {
     if(m_id == 0)
         return;
 
-    int animationPhase = 0;
     if(animate) {
         if(g_game.getFeature(Otc::GameEnhancedAnimations)) {
             // This requires a separate getPhaseAt method as using getPhase would make all magic effects use the same phase regardless of their appearance time
-            animationPhase = rawGetThingType()->getAnimator()->getPhaseAt(m_animationTimer.ticksElapsed());
+            m_animationPhase = rawGetThingType()->getAnimator()->getPhaseAt(m_animationTimer, m_animationPhase);
         } else {
             // hack to fix some animation phases duration, currently there is no better solution
             int ticks = EFFECT_TICKS_PER_FRAME;
@@ -42,7 +42,7 @@ void Effect::drawEffect(const Point& dest, float scaleFactor, bool animate, int 
                 ticks <<= 2;
             }
 
-            animationPhase = std::min<int>((int)(m_animationTimer.ticksElapsed() / ticks), getAnimationPhases() - 1);
+            m_animationPhase = std::min<int>((int)(m_animationTimer.ticksElapsed() / ticks), getAnimationPhases() - 1);
         }
     }
 
@@ -54,7 +54,7 @@ void Effect::drawEffect(const Point& dest, float scaleFactor, bool animate, int 
     if(yPattern < 0)
         yPattern += getNumPatternY();
 
-    rawGetThingType()->draw(dest, scaleFactor, 0, xPattern, yPattern, 0, animationPhase, lightView);
+    rawGetThingType()->draw(dest, 0, xPattern, yPattern, 0, m_animationPhase, Color::white, lightView);
 }
 
 void Effect::onAppear()
@@ -63,7 +63,7 @@ void Effect::onAppear()
 
     int duration = 0;
     if(g_game.getFeature(Otc::GameEnhancedAnimations)) {
-        duration = getThingType()->getAnimator()->getTotalDuration();
+        duration = getThingType()->getAnimator() ? getThingType()->getAnimator()->getTotalDuration() : 1000;
     } else {
         duration = EFFECT_TICKS_PER_FRAME;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,11 @@
  */
 
 #include "outfit.h"
+#include "game.h"
+#include "spritemanager.h"
+
+#include <framework/graphics/painter.h>
+#include <framework/graphics/drawqueue.h>
 
 Outfit::Outfit()
 {
@@ -30,95 +35,100 @@ Outfit::Outfit()
     resetClothes();
 }
 
-Color Outfit::getColor(int color)
+void Outfit::draw(Point dest, Otc::Direction direction, uint walkAnimationPhase, bool animate, LightView* lightView)
 {
-    if(color >= HSI_H_STEPS * HSI_SI_VALUES)
-        color = 0;
+    // direction correction
+    if (m_category != ThingCategoryCreature)
+        direction = Otc::North;
+    else if (direction == Otc::NorthEast || direction == Otc::SouthEast)
+        direction = Otc::East;
+    else if (direction == Otc::NorthWest || direction == Otc::SouthWest)
+        direction = Otc::West;
 
-    float loc1 = 0, loc2 = 0, loc3 = 0;
-    if(color % HSI_H_STEPS != 0) {
-        loc1 = color % HSI_H_STEPS * 1.0/18.0;
-        loc2 = 1;
-        loc3 = 1;
+    auto type = g_things.rawGetThingType(m_category == ThingCategoryCreature ? m_id : m_auxId, m_category);
 
-        switch(int(color / HSI_H_STEPS)) {
-        case 0:
-            loc2 = 0.25;
-            loc3 = 1.00;
-            break;
-        case 1:
-            loc2 = 0.25;
-            loc3 = 0.75;
-            break;
-        case 2:
-            loc2 = 0.50;
-            loc3 = 0.75;
-            break;
-        case 3:
-            loc2 = 0.667;
-            loc3 = 0.75;
-            break;
-        case 4:
-            loc2 = 1.00;
-            loc3 = 1.00;
-            break;
-        case 5:
-            loc2 = 1.00;
-            loc3 = 0.75;
-            break;
-        case 6:
-            loc2 = 1.00;
-            loc3 = 0.50;
-            break;
+    int animationPhase = walkAnimationPhase;
+    if (animate && m_category == ThingCategoryCreature) {
+        auto idleAnimator = type->getIdleAnimator();
+        if (idleAnimator) {
+            if (walkAnimationPhase > 0) {
+                animationPhase += idleAnimator->getAnimationPhases() - 1;;
+            } else {
+                animationPhase = idleAnimator->getPhase();
+            }
+        } else if (type->isAnimateAlways()) {
+            int phases = type->getAnimator() ? type->getAnimator()->getAnimationPhases() : type->getAnimationPhases();
+            int ticksPerFrame = 1000 / phases;
+            animationPhase = (g_clock.millis() % (ticksPerFrame * phases)) / ticksPerFrame;
         }
-    }
-    else {
-        loc1 = 0;
-        loc2 = 0;
-        loc3 =  1 - (float)color / HSI_H_STEPS / (float)HSI_SI_VALUES;
+    } else if(animate) {
+        int animationPhases = type->getAnimationPhases();
+        int animateTicks = g_game.getFeature(Otc::GameEnhancedAnimations) ? Otc::ITEM_TICKS_PER_FRAME_FAST : Otc::ITEM_TICKS_PER_FRAME;
+
+        if (m_category == ThingCategoryEffect) {
+            animationPhases = std::max<int>(1, animationPhases - 2);
+            animateTicks = g_game.getFeature(Otc::GameEnhancedAnimations) ? Otc::INVISIBLE_TICKS_PER_FRAME_FAST : Otc::INVISIBLE_TICKS_PER_FRAME;
+        }
+
+        if (animationPhases > 1)
+            animationPhase = (g_clock.millis() % (animateTicks * animationPhases)) / animateTicks;
+        if (m_category == ThingCategoryEffect)
+            animationPhase = std::min<int>(animationPhase + 1, animationPhases);
     }
 
-    if(loc3 == 0)
-        return Color(0, 0, 0);
+    int zPattern = m_mount > 0 ? std::min<int>(1, type->getNumPatternZ() - 1) : 0;
+    if (zPattern > 0) {
+        int mountAnimationPhase = walkAnimationPhase;
+        auto mountType = g_things.rawGetThingType(m_mount, ThingCategoryCreature);
+        auto idleAnimator = mountType->getIdleAnimator();
+        if (idleAnimator && animate) {
+            if (walkAnimationPhase > 0) {
+                mountAnimationPhase += idleAnimator->getAnimationPhases() - 1;
+            } else {
+                mountAnimationPhase = idleAnimator->getPhase();
+            }
+        }
 
-    if(loc2 == 0) {
-        int loc7 = int(loc3 * 255);
-        return Color(loc7, loc7, loc7);
+        dest -= mountType->getDisplacement();
+        mountType->draw(dest, 0, direction, 0, 0, mountAnimationPhase, Color::white, lightView);
+        dest += type->getDisplacement();
     }
 
-    float red = 0, green = 0, blue = 0;
+    if (m_aura) {
+        auto auraType = g_things.rawGetThingType(m_aura, ThingCategoryCreature);
+        auraType->draw(dest, 0, direction, 0, 0, 0, Color::white, lightView);
+    }
 
-    if(loc1 < 1.0/6.0) {
-        red = loc3;
-        blue = loc3 * (1 - loc2);
-        green = blue + (loc3 - blue) * 6 * loc1;
+    if (m_wings && (direction == Otc::South || direction == Otc::West)) {
+        auto wingsType = g_things.rawGetThingType(m_wings, ThingCategoryCreature);
+        wingsType->draw(dest, 0, direction, 0, 0, animationPhase, Color::white, lightView);
     }
-    else if(loc1 < 2.0/6.0) {
-        green = loc3;
-        blue = loc3 * (1 - loc2);
-        red = green - (loc3 - blue) * (6 * loc1 - 1);
+
+    for (int yPattern = 0; yPattern < type->getNumPatternY(); yPattern++) {
+        if (yPattern > 0 && !(getAddons() & (1 << (yPattern - 1)))) {
+            continue;
+        }
+
+        if (type->getLayers() <= 1) {
+            type->draw(dest, 0, direction, yPattern, zPattern, animationPhase, Color::white, lightView);
+            continue;
+        }
+
+        uint32_t colors = m_head + (m_body << 8) + (m_legs << 16) + (m_feet << 24);
+        type->drawOutfit(dest, direction, yPattern, zPattern, animationPhase, colors, Color::white, lightView);
     }
-    else if(loc1 < 3.0/6.0) {
-        green = loc3;
-        red = loc3 * (1 - loc2);
-        blue = red + (loc3 - red) * (6 * loc1 - 2);
+
+    if (m_wings && (direction == Otc::North || direction == Otc::East)) {
+        auto wingsType = g_things.rawGetThingType(m_wings, ThingCategoryCreature);
+        wingsType->draw(dest, 0, direction, 0, 0, animationPhase, Color::white, lightView);
     }
-    else if(loc1 < 4.0/6.0) {
-        blue = loc3;
-        red = loc3 * (1 - loc2);
-        green = blue - (loc3 - red) * (6 * loc1 - 3);
-    }
-    else if(loc1 < 5.0/6.0) {
-        blue = loc3;
-        green = loc3 * (1 - loc2);
-        red = green + (loc3 - green) * (6 * loc1 - 4);
-    }
-    else {
-        red = loc3;
-        green = loc3 * (1 - loc2);
-        blue = red - (loc3 - green) * (6 * loc1 - 5);
-    }
-    return Color(int(red * 255), int(green * 255), int(blue * 255));
+}
+
+void Outfit::draw(const Rect& dest, Otc::Direction direction, uint animationPhase, bool animate)
+{
+    int size = g_drawQueue->size();
+    draw(Point(0, 0), direction, animationPhase, animate);
+    g_drawQueue->correctOutfit(dest, size);
 }
 
 void Outfit::resetClothes()

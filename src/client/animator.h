@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+* Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@
 #include "declarations.h"
 
 #include <framework/core/declarations.h>
+#include <framework/core/timer.h>
 
 enum AnimationPhase : int16
 {
@@ -50,7 +51,7 @@ public:
 
     void setPhase(int phase);
     int getPhase();
-    int getPhaseAt(ticks_t time);
+    int getPhaseAt(Timer& timer, int lastPhase = 0);
 
     int getStartPhase();
     int getAnimationPhases() { return m_animationPhases; }
@@ -71,7 +72,7 @@ private:
     int m_startPhase;
     int m_loopCount;
     bool m_async;
-    std::vector< std::tuple<int, int> > m_phaseDurations;
+    std::vector< std::pair<int, int> > m_phaseDurations;
 
     int m_currentDuration;
     AnimationDirection m_currentDirection;

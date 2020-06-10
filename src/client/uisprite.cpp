@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,7 +33,7 @@ UISprite::UISprite() :
 
 void UISprite::drawSelf(Fw::DrawPane drawPane)
 {
-    if((drawPane & Fw::ForegroundPane) == 0)
+    if(drawPane != Fw::ForegroundPane)
         return;
 
     // draw style components in order
@@ -46,8 +46,7 @@ void UISprite::drawSelf(Fw::DrawPane drawPane)
     drawImage(m_rect);
 
     if(m_spriteVisible && m_sprite) {
-        g_painter->setColor(m_spriteColor);
-        g_painter->drawTexturedRect(getPaddingRect(), m_sprite);
+        g_drawQueue->addTexturedRect(getPaddingRect(), m_sprite, Rect(Point(0, 0), m_sprite->getSize()), m_spriteColor);
     }
 
     drawBorder(m_rect);

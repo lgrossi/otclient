@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,10 +27,17 @@
 #include "map.h"
 #include "tile.h"
 #include "game.h"
+#include <framework/util/stats.h>
 
 Thing::Thing() :
     m_datId(0)
 {
+    g_stats.addThing();
+}
+
+Thing::~Thing()
+{
+    g_stats.removeThing();
 }
 
 void Thing::setPosition(const Position& position)
@@ -45,6 +52,10 @@ void Thing::setPosition(const Position& position)
 
 int Thing::getStackPriority()
 {
+    // bug fix for old versions
+    if (g_game.getClientVersion() <= 800 && isSplash()) {
+        return 1;
+    }
     if(isGround())
         return 0;
     else if(isGroundBorder())
@@ -93,4 +104,11 @@ const ThingTypePtr& Thing::getThingType()
 ThingType* Thing::rawGetThingType()
 {
     return g_things.getNullThingType().get();
+}
+
+Color Thing::updatedMarkedColor() {
+    if (!m_marked)
+        return Color::white;
+    m_markedColor.setAlpha(0.1f + std::abs(500 - g_clock.millis() % 1000) / 1000.0f); // 0.1-0.6
+    return m_markedColor;
 }

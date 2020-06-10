@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -87,13 +87,15 @@ void buildMessageModesMap(int version) {
     } else if(version >= 900) {
         for(int i = Otc::MessageNone; i <= Otc::MessageBeyondLast; ++i)
             messageModesMap[i] = i;
+        messageModesMap[Otc::MessageNpcFromStartBlock] = 10;
+        messageModesMap[Otc::MessageNpcFrom] = 11;
     } else if(version >= 861) {
         messageModesMap[Otc::MessageNone]                    = 0;
         messageModesMap[Otc::MessageSay]                     = 1;
         messageModesMap[Otc::MessageWhisper]                 = 2;
         messageModesMap[Otc::MessageYell]                    = 3;
         messageModesMap[Otc::MessageNpcTo]                   = 4;
-        messageModesMap[Otc::MessageNpcFrom]                 = 5;
+        messageModesMap[Otc::MessageNpcFromStartBlock]       = 5;
         messageModesMap[Otc::MessagePrivateFrom]             = 6;
         messageModesMap[Otc::MessagePrivateTo]               = 6;
         messageModesMap[Otc::MessageChannel]                 = 7;

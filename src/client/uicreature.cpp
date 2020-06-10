@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,19 +22,47 @@
 
 #include "uicreature.h"
 #include <framework/otml/otml.h>
-#include <framework/graphics/graphics.h>
+#include <framework/graphics/drawqueue.h>
 
 void UICreature::drawSelf(Fw::DrawPane drawPane)
 {
-    if((drawPane & Fw::ForegroundPane) == 0)
+    if(drawPane != Fw::ForegroundPane)
         return;
 
     UIWidget::drawSelf(drawPane);
 
     if(m_creature) {
-        Rect drawRect = getPaddingRect();
-        g_painter->setColor(m_imageColor);
-        m_creature->drawOutfit(drawRect, !m_fixedCreatureSize);
+        if (m_autoRotating) {
+            auto ticks = (g_clock.millis() % 4000) / 4;
+            Otc::Direction new_dir;
+            if (ticks < 250) 
+            {
+                new_dir = Otc::South;
+            }
+            else if (ticks < 500) 
+            {
+                new_dir = Otc::East;
+            }
+            else if (ticks < 750) 
+            {
+                new_dir = Otc::North;
+            }
+            else 
+            {
+                new_dir = Otc::West;
+            }
+            if (new_dir != m_direction) {
+                m_direction = new_dir;
+                m_redraw = true;
+            }
+        }
+
+        if (m_creature->getOutfitNumber() != m_outfitNumber) {
+            m_outfitNumber = m_creature->getOutfitNumber();
+            m_redraw = true;
+        }
+
+        m_creature->drawOutfit(getPaddingRect(), m_direction, m_imageColor);
     }
 }
 
@@ -42,8 +70,9 @@ void UICreature::setOutfit(const Outfit& outfit)
 {
     if(!m_creature)
         m_creature = CreaturePtr(new Creature);
-    m_creature->setDirection(Otc::South);
+    m_direction = Otc::South;
     m_creature->setOutfit(outfit);
+    m_redraw = true;
 }
 
 void UICreature::onStyleApply(const std::string& styleName, const OTMLNodePtr& styleNode)
@@ -78,5 +107,17 @@ void UICreature::onStyleApply(const std::string& styleName, const OTMLNodePtr& s
             outfit.setFeet(node->value<int>());
             setOutfit(outfit);
         }
+        else if (node->tag() == "scale") {
+            setScale(node->value<float>());
+        }
+        else if (node->tag() == "optimized") {
+            setOptimized(node->value<bool>());
+        }
     }
+}
+
+void UICreature::onGeometryChange(const Rect& oldRect, const Rect& newRect)
+{
+    UIWidget::onGeometryChange(oldRect, newRect);
+    m_redraw = true;
 }

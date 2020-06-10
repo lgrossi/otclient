@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+* Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,8 @@
 
 #include <framework/core/clock.h>
 #include <framework/core/filestream.h>
+#include <framework/util/extras.h>
+#include <framework/stdext/fastrand.h>
 
 Animator::Animator()
 {
@@ -50,13 +52,13 @@ void Animator::unserialize(int animationPhases, const FileStreamPtr& fin)
     for(int i = 0; i < m_animationPhases; ++i) {
         int minimum = fin->getU32();
         int maximum = fin->getU32();
-        m_phaseDurations.emplace_back(minimum, maximum);
+        m_phaseDurations.push_back(std::make_pair(minimum, std::max(0, maximum - minimum)));
     }
 
     m_phase = getStartPhase();
 
-    assert(m_animationPhases == (int)m_phaseDurations.size());
-    assert(m_startPhase >= -1 && m_startPhase < m_animationPhases);
+    VALIDATE(m_animationPhases == (int)m_phaseDurations.size());
+    VALIDATE(m_startPhase >= -1 && m_startPhase < m_animationPhases);
 }
 
 void Animator::serialize(const FileStreamPtr& fin)
@@ -65,9 +67,9 @@ void Animator::serialize(const FileStreamPtr& fin)
     fin->add32(m_loopCount);
     fin->add8(m_startPhase);
 
-    for(std::tuple<int, int> phase : m_phaseDurations) {
-        fin->addU32(std::get<0>(phase));
-        fin->addU32(std::get<1>(phase));
+    for(auto& phase : m_phaseDurations) {
+        fin->addU32(phase.first);
+        fin->addU32(phase.first + phase.second);
     }
 }
 
@@ -123,12 +125,26 @@ int Animator::getPhase()
     return m_phase;
 }
 
-int Animator::getPhaseAt(ticks_t time)
+int Animator::getPhaseAt(Timer& timer, int lastPhase)
 {
-    int index = 0;
+    static int rand_val = 6;
+    ticks_t time = timer.ticksElapsed();
+    for (int i = lastPhase; i < m_animationPhases; ++i) {
+        int phaseDuration = m_phaseDurations[i].second == 0 ? 
+            m_phaseDurations[i].first : m_phaseDurations[i].first + rand_val % (m_phaseDurations[i].second);
+        rand_val = rand_val * 7 + 11;
+        if (time < phaseDuration) {
+            timer.restart();
+            timer.adjust(-time);
+            return i;
+        }
+        time -= phaseDuration;
+    }
+    return -1;
+    /*
     ticks_t total = 0;
 
-    for(const auto &pair: m_phaseDurations) {
+    for (const auto &pair : m_phaseDurations) {
         total += std::get<1>(pair);
 
         if (time < total) {
@@ -139,6 +155,7 @@ int Animator::getPhaseAt(ticks_t time)
     }
 
     return std::min<int>(index, m_animationPhases - 1);
+    */
 }
 
 int Animator::getStartPhase()
@@ -186,12 +203,12 @@ int Animator::getLoopPhase()
 
 int Animator::getPhaseDuration(int phase)
 {
-    assert(phase < (int)m_phaseDurations.size());
+    VALIDATE(phase < (int)m_phaseDurations.size());
 
-    std::tuple<int, int> data = m_phaseDurations.at(phase);
-    int min = std::get<0>(data);
-    int max = std::get<1>(data);
-    if(min == max) return min;
+    auto& data = m_phaseDurations.at(phase);
+    if (data.second == 0) return data.first;
+    int min = data.first;
+    int max = min + data.second;
     return (int)stdext::random_range((long)min, (long)max);
 }
 
@@ -220,7 +237,7 @@ ticks_t Animator::getTotalDuration()
 {
     ticks_t time = 0;
     for (const auto &pair: m_phaseDurations) {
-        time += std::get<1>(pair);
+        time += pair.first + pair.second;
     }
 
     return time;

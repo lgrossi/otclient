@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,9 +30,11 @@
 #include <framework/core/eventdispatcher.h>
 #include <framework/ui/uimanager.h>
 #include <framework/core/application.h>
-#include "luavaluecasts.h"
+#include "luavaluecasts_client.h"
 #include "protocolgame.h"
 #include "protocolcodes.h"
+
+#include <framework/util/extras.h>
 
 Game g_game;
 
@@ -48,6 +50,7 @@ Game::Game()
     m_seq = 0;
     m_ping = -1;
     m_pingDelay = 1000;
+    m_newPingDelay = 250;
     m_canReportBugs = false;
     m_fightMode = Otc::FightBalanced;
     m_chaseMode = Otc::DontChase;
@@ -84,6 +87,11 @@ void Game::resetGameStates()
     m_localPlayer = nullptr;
     m_pingSent = 0;
     m_pingReceived = 0;
+    m_walkId = 0;
+    m_walkPrediction = 0;
+    m_coins = 0;
+    m_transferableCoins = 0;
+    m_newPingIds.clear();
     m_unjustifiedPoints = UnjustifiedPoints();
 
     for(auto& it : m_containers) {
@@ -97,9 +105,9 @@ void Game::resetGameStates()
         m_pingEvent = nullptr;
     }
 
-    if(m_walkEvent) {
-        m_walkEvent->cancel();
-        m_walkEvent = nullptr;
+    if (m_newPingEvent) {
+        m_newPingEvent->cancel();
+        m_newPingEvent = nullptr;
     }
 
     if(m_checkConnectionEvent) {
@@ -191,8 +199,13 @@ void Game::processGameStart()
     g_lua.callGlobalField("g_game", "onGameStart");
     disableBotCall();
 
-    if(g_game.getFeature(Otc::GameClientPing) || g_game.getFeature(Otc::GameExtendedClientPing)) {
-        m_pingEvent = g_dispatcher.scheduleEvent([this] {
+    if (g_game.getFeature(Otc::GameExtendedClientPing)) {
+        m_newPingEvent = g_dispatcher.scheduleEvent([] {
+            g_game.newPing();
+        }, m_newPingDelay);
+    }
+    if(g_game.getFeature(Otc::GameClientPing)) {
+        m_pingEvent = g_dispatcher.scheduleEvent([] {
             g_game.ping();
         }, m_pingDelay);
     }
@@ -242,6 +255,11 @@ void Game::processGMActions(const std::vector<uint8>& actions)
     g_lua.callGlobalField("g_game", "onGMActions", actions);
 }
 
+void Game::processPlayerHelpers(int helpers)
+{
+    g_lua.callGlobalField("g_game", "onPlayerHelpersUpdate", helpers);
+}
+
 void Game::processPlayerModes(Otc::FightModes fightMode, Otc::ChaseModes chaseMode, bool safeMode, Otc::PVPModes pvpMode)
 {
     m_fightMode = fightMode;
@@ -267,16 +285,27 @@ void Game::processPingBack()
 {
     m_pingReceived++;
 
-    if(m_pingReceived == m_pingSent)
-        m_ping = m_pingTimer.elapsed_millis();
-    else
-        g_logger.error("got an invalid ping from server");
+    if (!g_game.getFeature(Otc::GameExtendedClientPing)) {
+        if (m_pingReceived == m_pingSent)
+            m_ping = m_pingTimer.elapsed_millis();
 
-    g_lua.callGlobalField("g_game", "onPingBack", m_ping);
+        g_lua.callGlobalField("g_game", "onPingBack", m_ping);
+    }
 
-    m_pingEvent = g_dispatcher.scheduleEvent([this] {
+    m_pingEvent = g_dispatcher.scheduleEvent([] {
         g_game.ping();
     }, m_pingDelay);
+}
+
+void Game::processNewPing(uint32_t pingId)
+{
+    auto it = m_newPingIds.find(pingId);
+
+    if (it == m_newPingIds.end())
+        return;
+
+    m_ping = it->second.elapsed_millis();
+    g_lua.callGlobalField("g_game", "onPingBack", m_ping);
 }
 
 void Game::processTextMessage(Otc::MessageMode mode, const std::string& text)
@@ -407,6 +436,7 @@ void Game::processVipAdd(uint id, const std::string& name, uint status, const st
 
 void Game::processVipStateChange(uint id, uint status)
 {
+    if (m_vips.find(id) == m_vips.end()) return;
     std::get<1>(m_vips[id]) = status;
     g_lua.callGlobalField("g_game", "onVipStateChange", id, status);
 }
@@ -457,12 +487,12 @@ void Game::processOpenOutfitWindow(const Outfit& currentOutfit, const std::vecto
     g_lua.callGlobalField("g_game", "onOpenOutfitWindow", virtualOutfitCreature, outfitList, virtualMountCreature, mountList);
 }
 
-void Game::processOpenNpcTrade(const std::vector<std::tuple<ItemPtr, std::string, int, int, int> >& items)
+void Game::processOpenNpcTrade(const std::vector<std::tuple<ItemPtr, std::string, int, int64_t, int64_t> >& items)
 {
     g_lua.callGlobalField("g_game", "onOpenNpcTrade", items);
 }
 
-void Game::processPlayerGoods(int money, const std::vector<std::tuple<ItemPtr, int> >& goods)
+void Game::processPlayerGoods(uint64_t money, const std::vector<std::tuple<ItemPtr, int> >& goods)
 {
     g_lua.callGlobalField("g_game", "onPlayerGoods", money, goods);
 }
@@ -514,13 +544,32 @@ void Game::processModalDialog(uint32 id, std::string title, std::string message,
 
 void Game::processAttackCancel(uint seq)
 {
-    if(isAttacking() && (seq == 0 || m_seq == seq))
+    if(seq == 0 || m_seq == seq)
         cancelAttack();
 }
 
 void Game::processWalkCancel(Otc::Direction direction)
 {
     m_localPlayer->cancelWalk(direction);
+}
+
+void Game::processNewWalkCancel(Otc::Direction dir) 
+{
+    m_walkId += 1;
+    m_localPlayer->cancelNewWalk(dir);
+}
+
+void Game::processPredictiveWalkCancel(const Position& pos, Otc::Direction dir)
+{
+    m_walkPrediction += 1;
+    if (m_localPlayer->predictiveCancelWalk(pos, m_walkPrediction, dir)) {
+        m_walkId += 1;
+    }
+}
+
+void Game::processWalkId(uint32_t walkId)
+{
+    m_walkId = std::max(m_walkId, walkId); // fixes desync
 }
 
 void Game::loginWorld(const std::string& account, const std::string& password, const std::string& worldName, const std::string& worldHost, int worldPort, const std::string& characterName, const std::string& authenticatorToken, const std::string& sessionKey)
@@ -549,6 +598,7 @@ void Game::cancelLogin()
     if(m_protocolGame)
         m_protocolGame->sendLogout();
 
+    g_lua.callGlobalField("g_game", "onLogout");
     processDisconnect();
 }
 
@@ -557,6 +607,7 @@ void Game::forceLogout()
     if(!isOnline())
         return;
 
+    g_lua.callGlobalField("g_game", "onLogout");
     m_protocolGame->sendLogout();
     processDisconnect();
 }
@@ -566,152 +617,70 @@ void Game::safeLogout()
     if(!isOnline())
         return;
 
+    g_lua.callGlobalField("g_game", "onLogout");
     m_protocolGame->sendLogout();
 }
 
-bool Game::walk(Otc::Direction direction, bool dash)
-{
-    if(!canPerformGameAction())
-        return false;
-
-    // must cancel follow before any new walk
-    if(isFollowing())
-        cancelFollow();
-
-    // must cancel auto walking, and wait next try
-    if(m_localPlayer->isAutoWalking() || m_localPlayer->isServerWalking()) {
-        m_protocolGame->sendStop();
-        if(m_localPlayer->isAutoWalking())
-            m_localPlayer->stopAutoWalk();
-        return false;
-    }
-
-    if(dash) {
-        if(m_localPlayer->isWalking() && m_dashTimer.ticksElapsed() < std::max<int>(m_localPlayer->getStepDuration(false, direction) - m_ping, 30))
-            return false;
-    }
-    else {
-        // check we can walk and add new walk event if false
-        if(!m_localPlayer->canWalk(direction)) {
-            if(m_lastWalkDir != direction) {
-                // must add a new walk event
-                float ticks = m_localPlayer->getStepTicksLeft();
-                if(ticks <= 0) { ticks = 1; }
-
-                if(m_walkEvent) {
-                    m_walkEvent->cancel();
-                    m_walkEvent = nullptr;
-                }
-                m_walkEvent = g_dispatcher.scheduleEvent([=] { walk(direction, false); }, ticks);
-            }
-            return false;
-        }
-    }
-
-    Position toPos = m_localPlayer->getPosition().translatedToDirection(direction);
-    TilePtr toTile = g_map.getTile(toPos);
-    // only do prewalks to walkable tiles (like grounds and not walls)
-    if(toTile && toTile->isWalkable()) {
-        m_localPlayer->preWalk(direction);
-    // check walk to another floor (e.g: when above 3 parcels)
-    } else {
-        // check if can walk to a lower floor
-        auto canChangeFloorDown = [&]() -> bool {
-            Position pos = toPos;
-            if(!pos.down())
-                return false;
-            TilePtr toTile = g_map.getTile(pos);
-            if(toTile && toTile->hasElevation(3))
-                return true;
-            return false;
-        };
-
-        // check if can walk to a higher floor
-        auto canChangeFloorUp = [&]() -> bool {
-            TilePtr fromTile = m_localPlayer->getTile();
-            if(!fromTile || !fromTile->hasElevation(3))
-                return false;
-            Position pos = toPos;
-            if(!pos.up())
-                return false;
-            TilePtr toTile = g_map.getTile(pos);
-            if(!toTile || !toTile->isWalkable())
-                return false;
-            return true;
-        };
-
-        if(canChangeFloorDown() || canChangeFloorUp() ||
-            (!toTile || toTile->isEmpty())) {
-            m_localPlayer->lockWalk();
-        } else
-            return false;
-    }
-
-    m_localPlayer->stopAutoWalk();
-
-    if(getClientVersion() <= 740) {
-        const TilePtr& fromTile = g_map.getTile(m_localPlayer->getPosition());
-        if (fromTile && toTile && (toTile->getElevation() - 1 > fromTile->getElevation()))
-            return false;
-    }
-
-    g_lua.callGlobalField("g_game", "onWalk", direction, dash);
-
-    forceWalk(direction);
-    if(dash)
-      m_dashTimer.restart();
-
-    m_lastWalkDir = direction;
-    return true;
-}
-
-bool Game::dashWalk(Otc::Direction direction)
-{
-    return walk(direction, true);
-}
-
-void Game::autoWalk(std::vector<Otc::Direction> dirs)
+void Game::autoWalk(const std::vector<Otc::Direction>& dirs, Position startPos)
 {
     if(!canPerformGameAction())
         return;
 
-    // protocol limits walk path up to 255 directions
-    if(dirs.size() > 127) {
-        g_logger.error("Auto walk path too great, the maximum number of directions is 127");
+    if (dirs.size() == 0)
+        return;
+
+    // protocol limits walk path
+    if((!g_game.getFeature(Otc::GameNewWalking) || dirs.size() > 4097) && dirs.size() > 127) {
+        g_logger.error("Auto walk path too great");
         return;
     }
 
-    if(dirs.empty())
-        return;
+    if (g_extras.debugWalking) {
+        g_logger.info(stdext::format("[%i] Game::autoWalk", (int)g_clock.millis()));
+    }
 
     // must cancel follow before any new walk
-    if(isFollowing())
+    if (isFollowing()) {
         cancelFollow();
+    }
 
     auto it = dirs.begin();
     Otc::Direction direction = *it;
-    if(!m_localPlayer->canWalk(direction))
-        return;
 
-    TilePtr toTile = g_map.getTile(m_localPlayer->getPosition().translatedToDirection(direction));
-    if(toTile && toTile->isWalkable() && !m_localPlayer->isServerWalking()) {
+    uint8_t flags = 0x04; // auto walk flag
+
+    TilePtr toTile = g_map.getTile(startPos.translatedToDirection(direction));
+    if(startPos == m_localPlayer->getPrewalkingPosition() && toTile && toTile->isWalkable() && !m_localPlayer->isWalking() && m_localPlayer->canWalk(direction, true)) {
         m_localPlayer->preWalk(direction);
-
-        if(getFeature(Otc::GameForceFirstAutoWalkStep)) {
-            forceWalk(direction);
-            dirs.erase(it);
-        }
+        m_localPlayer->startServerWalking();
+        flags |= 0x01; // prewalk flag
     }
 
     g_lua.callGlobalField("g_game", "onAutoWalk", dirs);
 
-    m_protocolGame->sendAutoWalk(dirs);
+    if (g_game.getFeature(Otc::GameNewWalking))
+        m_protocolGame->sendNewWalk(m_walkId, m_walkPrediction, startPos, flags, dirs);
+    else
+        m_protocolGame->sendAutoWalk(dirs);
 }
 
-void Game::forceWalk(Otc::Direction direction)
+void Game::walk(Otc::Direction direction, bool withPreWalk)
 {
-    if(!canPerformGameAction())
+    m_denyBotCall = false;
+    if (!canPerformGameAction()) {
+        m_denyBotCall = true;
         return;
+    }
+    if (g_extras.debugWalking) {
+        g_logger.info(stdext::format("[%i] Game::walk", (int)g_clock.millis()));
+    }
+
+    g_lua.callGlobalField("g_game", "onWalk", direction, withPreWalk);
+
+    if (g_game.getFeature(Otc::GameNewWalking)) {
+        //hidden
+        return;
+    }
 
     switch(direction) {
     case Otc::North:
@@ -741,14 +710,20 @@ void Game::forceWalk(Otc::Direction direction)
     default:
         break;
     }
-
-    g_lua.callGlobalField("g_game", "onForceWalk", direction);
+    m_denyBotCall = true;
 }
 
 void Game::turn(Otc::Direction direction)
 {
-    if(!canPerformGameAction())
+    m_denyBotCall = false;
+    if (!canPerformGameAction()) {
+        m_denyBotCall = true;
         return;
+    }
+
+    if (g_game.getFeature(Otc::GameNewWalking)) {
+        m_localPlayer->setDirection(direction);
+    }
 
     switch(direction) {
     case Otc::North:
@@ -766,17 +741,27 @@ void Game::turn(Otc::Direction direction)
     default:
         break;
     }
+    m_denyBotCall = true;
 }
 
 void Game::stop()
 {
-    if(!canPerformGameAction())
+    if (g_extras.debugWalking) {
+        g_logger.info(stdext::format("[%i] Game::stop", (int)g_clock.millis()));
+    }
+
+    m_denyBotCall = false;
+    if (!canPerformGameAction()) {
+        m_denyBotCall = true;
         return;
+    }
 
     if(isFollowing())
-        cancelFollow();
+        cancelFollow(); // can change m_denyBotCall
+    m_denyBotCall = false;
 
     m_protocolGame->sendStop();
+    m_denyBotCall = true;
 }
 
 void Game::look(const ThingPtr& thing, bool isBattleList)
@@ -792,19 +777,27 @@ void Game::look(const ThingPtr& thing, bool isBattleList)
 
 void Game::move(const ThingPtr& thing, const Position& toPos, int count)
 {
-    if(count <= 0)
+    if (count <= 0)
         count = 1;
 
-    if(!canPerformGameAction() || !thing || thing->getPosition() == toPos)
+    if (!canPerformGameAction() || !thing || thing->getPosition() == toPos)
         return;
 
     uint id = thing->getId();
-    if(thing->isCreature()) {
+    if (thing->isCreature()) {
         CreaturePtr creature = thing->static_self_cast<Creature>();
         id = Proto::Creature;
     }
 
     m_protocolGame->sendMove(thing->getPosition(), id, thing->getStackPos(), toPos, count);
+}
+
+void Game::moveRaw(const Position& pos, int id, int stackpos, const Position& toPos, int count)
+{
+    if (!canPerformGameAction())
+        return;
+
+    m_protocolGame->sendMove(pos, id, stackpos, toPos, count);
 }
 
 void Game::moveToParentContainer(const ThingPtr& thing, int count)
@@ -824,6 +817,14 @@ void Game::rotate(const ThingPtr& thing)
     m_protocolGame->sendRotateItem(thing->getPosition(), thing->getId(), thing->getStackPos());
 }
 
+void Game::wrap(const ThingPtr& thing)
+{
+    if (!canPerformGameAction() || !thing)
+        return;
+
+    m_protocolGame->sendWrapableItem(thing->getPosition(), thing->getId(), thing->getStackPos());
+}
+
 void Game::use(const ThingPtr& thing)
 {
     if(!canPerformGameAction() || !thing)
@@ -836,19 +837,23 @@ void Game::use(const ThingPtr& thing)
     // some items, e.g. parcel, are not set as containers but they are.
     // always try to use these items in free container slots.
     m_protocolGame->sendUseItem(pos, thing->getId(), thing->getStackPos(), findEmptyContainerId());
+
+    g_lua.callGlobalField("g_game", "onUse", pos, thing->getId(), thing->getStackPos(), 0);
 }
 
-void Game::useInventoryItem(int itemId)
+void Game::useInventoryItem(int itemId, int subType)
 {
     if(!canPerformGameAction() || !g_things.isValidDatId(itemId, ThingCategoryItem))
         return;
 
     Position pos = Position(0xFFFF, 0, 0); // means that is a item in inventory
 
-    m_protocolGame->sendUseItem(pos, itemId, 0, 0);
+    m_protocolGame->sendUseItem(pos, itemId, 0, subType);
+
+    g_lua.callGlobalField("g_game", "onUse", pos, itemId, 0, subType);
 }
 
-void Game::useWith(const ItemPtr& item, const ThingPtr& toThing)
+void Game::useWith(const ItemPtr& item, const ThingPtr& toThing, int subType)
 {
     if(!canPerformGameAction() || !item || !toThing)
         return;
@@ -857,13 +862,15 @@ void Game::useWith(const ItemPtr& item, const ThingPtr& toThing)
     if(!pos.isValid()) // virtual item
         pos = Position(0xFFFF, 0, 0); // means that is an item in inventory
 
-    if(toThing->isCreature())
-        m_protocolGame->sendUseOnCreature(pos, item->getId(), item->getStackPos(), toThing->getId());
+    if(toThing->isCreature() && g_game.getProtocolVersion() >= 780)
+        m_protocolGame->sendUseOnCreature(pos, item->getId(), subType ? subType : item->getStackPos(), toThing->getId());
     else
-        m_protocolGame->sendUseItemWith(pos, item->getId(), item->getStackPos(), toThing->getPosition(), toThing->getId(), toThing->getStackPos());
+        m_protocolGame->sendUseItemWith(pos, item->getId(), subType ? subType : item->getStackPos(), toThing->getPosition(), toThing->getId(), toThing->getStackPos());
+
+    g_lua.callGlobalField("g_game", "onUseWith", pos, item->getId(), toThing, subType);
 }
 
-void Game::useInventoryItemWith(int itemId, const ThingPtr& toThing)
+void Game::useInventoryItemWith(int itemId, const ThingPtr& toThing, int subType)
 {
     if(!canPerformGameAction() || !toThing)
         return;
@@ -871,9 +878,11 @@ void Game::useInventoryItemWith(int itemId, const ThingPtr& toThing)
     Position pos = Position(0xFFFF, 0, 0); // means that is a item in inventory
 
     if(toThing->isCreature())
-        m_protocolGame->sendUseOnCreature(pos, itemId, 0, toThing->getId());
+        m_protocolGame->sendUseOnCreature(pos, itemId, subType, toThing->getId());
     else
-        m_protocolGame->sendUseItemWith(pos, itemId, 0, toThing->getPosition(), toThing->getId(), toThing->getStackPos());
+        m_protocolGame->sendUseItemWith(pos, itemId, subType, toThing->getPosition(), toThing->getId(), toThing->getStackPos());
+
+    g_lua.callGlobalField("g_game", "onUseWith", pos, itemId, toThing, subType);
 }
 
 ItemPtr Game::findItemInContainers(uint itemId, int subType)
@@ -928,7 +937,7 @@ void Game::refreshContainer(const ContainerPtr& container)
     m_protocolGame->sendRefreshContainer(container->getId());
 }
 
-void Game::attack(CreaturePtr creature)
+void Game::attack(CreaturePtr creature, bool cancel)
 {
     if(!canPerformGameAction() || creature == m_localPlayer)
         return;
@@ -949,13 +958,17 @@ void Game::attack(CreaturePtr creature)
     } else
         m_seq++;
 
-    m_protocolGame->sendAttack(creature ? creature->getId() : 0, m_seq);
+    if(!cancel)
+        m_protocolGame->sendAttack(creature ? creature->getId() : 0, m_seq);
 }
 
 void Game::follow(CreaturePtr creature)
 {
-    if(!canPerformGameAction() || creature == m_localPlayer)
+    m_denyBotCall = false;
+    if (!canPerformGameAction() || creature == m_localPlayer) {
+        m_denyBotCall = true;
         return;
+    }
 
     // cancel when following again
     if(creature && creature == m_followingCreature)
@@ -974,6 +987,7 @@ void Game::follow(CreaturePtr creature)
         m_seq++;
 
     m_protocolGame->sendFollow(creature ? creature->getId() : 0, m_seq);
+    m_denyBotCall = true;
 }
 
 void Game::cancelAttackAndFollow()
@@ -997,6 +1011,7 @@ void Game::talk(const std::string& message)
 {
     if(!canPerformGameAction() || message.empty())
         return;
+
     talkChannel(Otc::MessageSay, 0, message);
 }
 
@@ -1004,14 +1019,15 @@ void Game::talkChannel(Otc::MessageMode mode, int channelId, const std::string& 
 {
     if(!canPerformGameAction() || message.empty())
         return;
-    m_protocolGame->sendTalk(mode, channelId, "", message);
+        
+    m_protocolGame->sendTalk(mode, channelId, "", message, m_localPlayer->getPosition(), m_localPlayer->getDirection());
 }
 
 void Game::talkPrivate(Otc::MessageMode mode, const std::string& receiver, const std::string& message)
 {
     if(!canPerformGameAction() || receiver.empty() || message.empty())
         return;
-    m_protocolGame->sendTalk(mode, 0, receiver, message);
+    m_protocolGame->sendTalk(mode, 0, receiver, message, m_localPlayer->getPosition(), m_localPlayer->getDirection());
 }
 
 void Game::openPrivateChannel(const std::string& receiver)
@@ -1251,7 +1267,7 @@ void Game::sellItem(const ItemPtr& item, int amount, bool ignoreEquipped)
 {
     if(!canPerformGameAction() || !item)
         return;
-    m_protocolGame->sendSellItem(item->getId(), item->getSubType(), amount, ignoreEquipped);
+    m_protocolGame->sendSellItem(item->getId(), item->getCountOrSubType(), amount, ignoreEquipped);
 }
 
 void Game::closeNpcTrade()
@@ -1420,11 +1436,11 @@ void Game::requestStoreOffers(const std::string& categoryName, int serviceType)
     m_protocolGame->sendRequestStoreOffers(categoryName, serviceType);
 }
 
-void Game::openStore(int serviceType, const std::string& category)
+void Game::openStore(int serviceType)
 {
     if(!canPerformGameAction())
         return;
-    m_protocolGame->sendOpenStore(serviceType, category);
+    m_protocolGame->sendOpenStore(serviceType);
 }
 
 void Game::transferCoins(const std::string& recipient, int amount)
@@ -1439,6 +1455,42 @@ void Game::openTransactionHistory(int entriesPerPage)
     if(!canPerformGameAction())
         return;
     m_protocolGame->sendOpenTransactionHistory(entriesPerPage);
+}
+
+void Game::preyAction(int slot, int actionType, int index)
+{
+    if (!canPerformGameAction())
+        return;
+    m_protocolGame->sendPreyAction(slot, actionType, index);
+}
+
+void Game::preyRequest()
+{
+    if (!canPerformGameAction())
+        return;
+    m_protocolGame->sendPreyRequest();
+}
+
+
+void Game::applyImbuement(uint8_t slot, uint32_t imbuementId, bool protectionCharm)
+{
+    if (!canPerformGameAction())
+        return;
+    m_protocolGame->sendApplyImbuement(slot, imbuementId, protectionCharm);
+}
+
+void Game::clearImbuement(uint8_t slot)
+{
+    if (!canPerformGameAction())
+        return;
+    m_protocolGame->sendClearImbuement(slot);
+}
+
+void Game::closeImbuingWindow()
+{
+    if (!canPerformGameAction())
+        return;
+    m_protocolGame->sendCloseImbuingWindow();
 }
 
 void Game::ping()
@@ -1456,6 +1508,21 @@ void Game::ping()
     m_pingTimer.restart();
 }
 
+void Game::newPing()
+{
+    if(!m_protocolGame || !m_protocolGame->isConnected())
+        return;
+
+    static uint32_t pingId = 1;
+    pingId += 1;
+    m_newPingIds[pingId] = stdext::timer();
+
+    m_protocolGame->sendNewPing(pingId, (int16_t)m_ping, (int16_t)g_app.getFps());
+    m_newPingEvent = g_dispatcher.scheduleEvent([] {
+        g_game.newPing();
+    }, m_newPingDelay);
+}
+
 void Game::changeMapAwareRange(int xrange, int yrange)
 {
     if(!canPerformGameAction())
@@ -1465,14 +1532,15 @@ void Game::changeMapAwareRange(int xrange, int yrange)
 
 bool Game::checkBotProtection()
 {
-#ifdef BOT_PROTECTION
-    // accepts calls comming from a stacktrace containing only C++ functions,
-    // if the stacktrace contains a lua function, then only accept if the engine is processing an input event
-    if(m_denyBotCall && g_lua.isInCppCallback() && !g_app.isOnInputEvent()) {
-        g_logger.error(g_lua.traceback("caught a lua call to a bot protected game function, the call was cancelled"));
-        return false;
+    if (getFeature(Otc::GameBotProtection)) {
+        // accepts calls comming from a stacktrace containing only C++ functions,
+        // if the stacktrace contains a lua function, then only accept if the engine is processing an input event
+        if (m_denyBotCall && g_lua.isInCppCallback() && !g_app.isOnInputEvent() && !g_dispatcher.isBotSafe()) {
+            g_logger.error(g_lua.traceback("caught a lua call to a bot protected game function, the call was cancelled"));
+            return false;
+        }
     }
-#endif
+
     return true;
 }
 
@@ -1496,9 +1564,6 @@ void Game::setProtocolVersion(int version)
     if(isOnline())
         stdext::throw_exception("Unable to change protocol version while online");
 
-    if(version != 0 && (version < 740 || version > 1099))
-        stdext::throw_exception(stdext::format("Protocol version %d not supported", version));
-
     m_protocolVersion = version;
 
     Proto::buildMessageModesMap(version);
@@ -1508,182 +1573,10 @@ void Game::setProtocolVersion(int version)
 
 void Game::setClientVersion(int version)
 {
-    if(m_clientVersion == version)
-        return;
-
     if(isOnline())
         stdext::throw_exception("Unable to change client version while online");
 
-    if(version != 0 && (version < 740 || version > 1099))
-        stdext::throw_exception(stdext::format("Client version %d not supported", version));
-
-    m_features.reset();
-    enableFeature(Otc::GameFormatCreatureName);
-
-    if(version >= 770) {
-        enableFeature(Otc::GameLooktypeU16);
-        enableFeature(Otc::GameMessageStatements);
-        enableFeature(Otc::GameLoginPacketEncryption);
-    }
-
-    if(version >= 780) {
-        enableFeature(Otc::GamePlayerAddons);
-        enableFeature(Otc::GamePlayerStamina);
-        enableFeature(Otc::GameNewFluids);
-        enableFeature(Otc::GameMessageLevel);
-        enableFeature(Otc::GamePlayerStateU16);
-        enableFeature(Otc::GameNewOutfitProtocol);
-    }
-
-    if(version >= 790) {
-        enableFeature(Otc::GameWritableDate);
-    }
-
-    if(version >= 840) {
-        enableFeature(Otc::GameProtocolChecksum);
-        enableFeature(Otc::GameAccountNames);
-        enableFeature(Otc::GameDoubleFreeCapacity);
-    }
-
-    if(version >= 841) {
-        enableFeature(Otc::GameChallengeOnLogin);
-        enableFeature(Otc::GameMessageSizeCheck);
-    }
-
-    if(version >= 854) {
-        enableFeature(Otc::GameCreatureEmblems);
-    }
-
-    if(version >= 860) {
-        enableFeature(Otc::GameAttackSeq);
-    }
-
-    if(version >= 862) {
-        enableFeature(Otc::GamePenalityOnDeath);
-    }
-
-    if(version >= 870) {
-        enableFeature(Otc::GameDoubleExperience);
-        enableFeature(Otc::GamePlayerMounts);
-        enableFeature(Otc::GameSpellList);
-    }
-
-    if(version >= 910) {
-        enableFeature(Otc::GameNameOnNpcTrade);
-        enableFeature(Otc::GameTotalCapacity);
-        enableFeature(Otc::GameSkillsBase);
-        enableFeature(Otc::GamePlayerRegenerationTime);
-        enableFeature(Otc::GameChannelPlayerList);
-        enableFeature(Otc::GameEnvironmentEffect);
-        enableFeature(Otc::GameItemAnimationPhase);
-    }
-
-    if(version >= 940) {
-        enableFeature(Otc::GamePlayerMarket);
-    }
-
-    if(version >= 953) {
-        enableFeature(Otc::GamePurseSlot);
-        enableFeature(Otc::GameClientPing);
-    }
-
-    if(version >= 960) {
-        enableFeature(Otc::GameSpritesU32);
-        enableFeature(Otc::GameOfflineTrainingTime);
-    }
-
-    if(version >= 963) {
-        enableFeature(Otc::GameAdditionalVipInfo);
-    }
-
-    if(version >= 980) {
-        enableFeature(Otc::GamePreviewState);
-        enableFeature(Otc::GameClientVersion);
-    }
-
-    if(version >= 981) {
-        enableFeature(Otc::GameLoginPending);
-        enableFeature(Otc::GameNewSpeedLaw);
-    }
-
-    if(version >= 984) {
-        enableFeature(Otc::GameContainerPagination);
-        enableFeature(Otc::GameBrowseField);
-    }
-
-    if(version >= 1000) {
-        enableFeature(Otc::GameThingMarks);
-        enableFeature(Otc::GamePVPMode);
-    }
-
-    if(version >= 1035) {
-        enableFeature(Otc::GameDoubleSkills);
-        enableFeature(Otc::GameBaseSkillU16);
-    }
-
-    if(version >= 1036) {
-        enableFeature(Otc::GameCreatureIcons);
-        enableFeature(Otc::GameHideNpcNames);
-    }
-
-    if(version >= 1038) {
-        enableFeature(Otc::GamePremiumExpiration);
-    }
-
-    if(version >= 1050) {
-        enableFeature(Otc::GameEnhancedAnimations);
-    }
-
-    if(version >= 1053) {
-        enableFeature(Otc::GameUnjustifiedPoints);
-    }
-
-    if(version >= 1054) {
-        enableFeature(Otc::GameExperienceBonus);
-    }
-
-    if(version >= 1055) {
-        enableFeature(Otc::GameDeathType);
-    }
-
-    if(version >= 1057) {
-        enableFeature(Otc::GameIdleAnimations);
-    }
-
-    if(version >= 1061) {
-        enableFeature(Otc::GameOGLInformation);
-    }
-
-    if(version >= 1071) {
-        enableFeature(Otc::GameContentRevision);
-    }
-
-    if(version >= 1072) {
-        enableFeature(Otc::GameAuthenticator);
-    }
-
-    if(version >= 1074) {
-        enableFeature(Otc::GameSessionKey);
-    }
-
-    if(version >= 1080) {
-        enableFeature(Otc::GameIngameStore);
-    }
-
-    if(version >= 1092) {
-        enableFeature(Otc::GameIngameStoreServiceType);
-    }
-
-    if(version >= 1093) {
-        enableFeature(Otc::GameIngameStoreHighlights);
-    }
-
-    if(version >= 1094) {
-        enableFeature(Otc::GameAdditionalSkills);
-    }
-
     m_clientVersion = version;
-
     g_lua.callGlobalField("g_game", "onClientVersionChange", version);
 }
 
@@ -1710,10 +1603,10 @@ std::string Game::formatCreatureName(const std::string& name)
     std::string formatedName = name;
     if(getFeature(Otc::GameFormatCreatureName) && name.length() > 0) {
         bool upnext = true;
-        for(char &i: formatedName) {
-            char ch = i;
+        for(uint i=0;i<formatedName.length();++i) {
+            char ch = formatedName[i];
             if(upnext) {
-                i = stdext::upchar(ch);
+                formatedName[i] = stdext::upchar(ch);
                 upnext = false;
             }
             if(ch == ' ')
@@ -1737,9 +1630,12 @@ int Game::getOs()
         return m_clientCustomOs;
 
     if(g_app.getOs() == "windows")
-        return 10;
-    else if(g_app.getOs() == "mac")
-        return 12;
-    else // linux
-        return 11;
+        return 20;
+    if(g_app.getOs() == "mac")
+        return 22;
+    if (g_app.getOs() == "android")
+        return 23;
+    if (g_app.getOs() == "ios")
+        return 24;
+    return 21; // linux
 }

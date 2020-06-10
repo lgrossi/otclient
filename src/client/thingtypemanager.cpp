@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@
 #include <framework/core/binarytree.h>
 #include <framework/xml/tinyxml.h>
 #include <framework/otml/otml.h>
+#include <framework/util/stats.h>
 
 ThingTypeManager g_things;
 
@@ -48,21 +49,51 @@ void ThingTypeManager::init()
     m_datLoaded = false;
     m_xmlLoaded = false;
     m_otbLoaded = false;
-    for(auto &m_thingType: m_thingTypes)
-        m_thingType.resize(1, m_nullThingType);
+    for (int i = 0; i < ThingLastCategory; ++i) {
+        m_thingTypes[i].resize(1, m_nullThingType);
+        m_checkIndex[i] = 0;
+    }
     m_itemTypes.resize(1, m_nullItemType);
+
+    check();
 }
 
 void ThingTypeManager::terminate()
 {
-    for(auto &m_thingType: m_thingTypes)
-        m_thingType.clear();
+    for(int i = 0; i < ThingLastCategory; ++i)
+        m_thingTypes[i].clear();
     m_itemTypes.clear();
     m_reverseItemTypes.clear();
+    m_marketCategories.clear();
     m_nullThingType = nullptr;
     m_nullItemType = nullptr;
+
+    if (m_checkEvent) {
+        m_checkEvent->cancel();
+        m_checkEvent = nullptr;
+    }
 }
 
+void ThingTypeManager::check()
+{    
+    // removes unused textures from memory after 60s, 500 checks / s
+    m_checkEvent = g_dispatcher.scheduleEvent(std::bind(&ThingTypeManager::check, &g_things), 1000);
+
+    for (size_t i = 0; i < ThingLastCategory; ++i) {
+        size_t limit = std::min<size_t>(m_checkIndex[i] + 100, m_thingTypes[i].size());
+        for (size_t j = m_checkIndex[i]; j < limit; ++j) {
+            if (m_thingTypes[i][j]->isLoaded() && m_thingTypes[i][j]->getLastUsage() + 60 < g_clock.seconds()) {
+                m_thingTypes[i][j]->unload();
+            }
+        }
+        m_checkIndex[i] = limit;
+        if (m_checkIndex[i] >= m_thingTypes[i].size()) {
+            m_checkIndex[i] = 0;
+        }
+    }
+}
+
+#ifdef WITH_ENCRYPTION
 void ThingTypeManager::saveDat(std::string fileName)
 {
     if(!m_datLoaded)
@@ -73,12 +104,10 @@ void ThingTypeManager::saveDat(std::string fileName)
         if(!fin)
             stdext::throw_exception(stdext::format("failed to open file '%s' for write", fileName));
 
-        fin->cache();
-
         fin->addU32(m_datSignature);
 
-        for(auto &m_thingType: m_thingTypes)
-            fin->addU16(m_thingType.size() - 1);
+        for(int category = 0; category < ThingLastCategory; ++category)
+            fin->addU16(m_thingTypes[category].size() - 1);
 
         for(int category = 0; category < ThingLastCategory; ++category) {
             uint16 firstId = 1;
@@ -97,6 +126,47 @@ void ThingTypeManager::saveDat(std::string fileName)
     }
 }
 
+void ThingTypeManager::dumpTextures(std::string dir) 
+{
+    if (dir.empty()) {
+        g_logger.error("Empty dir for sprites dump");
+        return;
+    }
+    g_resources.makeDir(dir);
+    for (int category = 0; category < ThingLastCategory; ++category) {
+        g_resources.makeDir(dir + "/" + std::to_string((int)category));
+
+        uint16 firstId = 1;
+        if (category == ThingCategoryItem)
+            firstId = 100;
+
+        for (uint16 id = firstId; id < m_thingTypes[category].size(); ++id)
+            m_thingTypes[category][id]->exportImage(dir + "/" + std::to_string((int)category) + "/" + std::to_string(id) + ".png");
+    }
+}
+
+void ThingTypeManager::replaceTextures(std::string dir) {
+    if (dir.empty()) {
+        g_logger.error("Empty dir for sprites dump");
+        return;
+    }
+
+    std::map<uint32_t, ImagePtr> replacements;
+    for (int category = 0; category < ThingLastCategory; ++category) {
+        uint16 firstId = 1;
+        if (category == ThingCategoryItem)
+            firstId = 100;
+
+        for (uint16 id = firstId; id < m_thingTypes[category].size(); ++id) {
+            std::string fileName = dir + "/" + std::to_string((int)category) + "/" + std::to_string(id) + "_[][x2.000000].png";
+            m_thingTypes[category][id]->replaceSprites(replacements, fileName);
+        }
+    }
+    //g_sprites.saveReplacedSpr(dir + "/sprites.spr", replacements);
+}
+
+#endif
+
 bool ThingTypeManager::loadDat(std::string file)
 {
     m_datLoaded = false;
@@ -110,12 +180,13 @@ bool ThingTypeManager::loadDat(std::string file)
         m_datSignature = fin->getU32();
         m_contentRevision = static_cast<uint16_t>(m_datSignature);
 
-        for(auto &m_thingType: m_thingTypes) {
+        for(int category = 0; category < ThingLastCategory; ++category) {
             int count = fin->getU16() + 1;
-            m_thingType.clear();
-            m_thingType.resize(count, m_nullThingType);
+            m_thingTypes[category].clear();
+            m_thingTypes[category].resize(count, m_nullThingType);
         }
 
+        m_marketCategories.clear();
         for(int category = 0; category < ThingLastCategory; ++category) {
             uint16 firstId = 1;
             if(category == ThingCategoryItem)
@@ -124,6 +195,10 @@ bool ThingTypeManager::loadDat(std::string file)
                 ThingTypePtr type(new ThingType);
                 type->unserialize(id, (ThingCategory)category, fin);
                 m_thingTypes[category][id] = type;
+                if (type->isMarketable()) {
+                    auto marketData = type->getMarketData();
+                    m_marketCategories.insert(marketData.category);
+                }
             }
         }
 
@@ -177,20 +252,20 @@ void ThingTypeManager::loadOtb(const std::string& file)
         FileStreamPtr fin = g_resources.openFile(file);
 
         uint signature = fin->getU32();
-        if(signature != 0)
+        if (signature != 0)
             stdext::throw_exception("invalid otb file");
 
         BinaryTreePtr root = fin->getBinaryTree();
         root->skip(1); // otb first byte is always 0
 
         signature = root->getU32();
-        if(signature != 0)
+        if (signature != 0)
             stdext::throw_exception("invalid otb file");
 
         uint8 rootAttr = root->getU8();
-        if(rootAttr == 0x01) { // OTB_ROOT_ATTR_VERSION
+        if (rootAttr == 0x01) { // OTB_ROOT_ATTR_VERSION
             uint16 size = root->getU16();
-            if(size != 4 + 4 + 4 + 128)
+            if (size != 4 + 4 + 4 + 128)
                 stdext::throw_exception("invalid otb root attr version size");
 
             m_otbMajorVersion = root->getU32();
@@ -204,23 +279,24 @@ void ThingTypeManager::loadOtb(const std::string& file)
         m_itemTypes.resize(children.size() + 1, m_nullItemType);
         m_reverseItemTypes.resize(children.size() + 1, m_nullItemType);
 
-        for(const BinaryTreePtr& node : children) {
+        for (const BinaryTreePtr& node : children) {
             ItemTypePtr itemType(new ItemType);
             itemType->unserialize(node);
             addItemType(itemType);
 
             uint16 clientId = itemType->getClientId();
-            if(unlikely(clientId >= m_reverseItemTypes.size()))
+            if (unlikely(clientId >= m_reverseItemTypes.size()))
                 m_reverseItemTypes.resize(clientId + 1);
             m_reverseItemTypes[clientId] = itemType;
         }
 
         m_otbLoaded = true;
         g_lua.callGlobalField("g_things", "onLoadOtb", file);
-    } catch(std::exception& e) {
+    } catch (std::exception& e) {
         g_logger.error(stdext::format("Failed to load '%s' (OTB file): %s", file, e.what()));
     }
 }
+
 
 void ThingTypeManager::loadXml(const std::string& file)
 {

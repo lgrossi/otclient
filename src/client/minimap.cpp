@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,6 +33,8 @@
 #include <framework/core/filestream.h>
 #include <zlib.h>
 
+#include <framework/util/stats.h>
+
 Minimap g_minimap;
 
 void MinimapBlock::clean()
@@ -53,22 +55,17 @@ void MinimapBlock::update()
     for(int x=0;x<MMBLOCK_SIZE;++x) {
         for(int y=0;y<MMBLOCK_SIZE;++y) {
             uint8 c = getTile(x, y).color;
-            uint32 col;
+            Color col = Color::alpha;
             if(c != 255) {
-                col = Color::from8bit(c).rgba();
+                col = Color::from8bit(c);
                 shouldDraw = true;
-            } else
-                col = Color::alpha.rgba();
+            }
             image->setPixel(x, y, col);
         }
     }
 
     if(shouldDraw) {
-        if(!m_texture) {
-            m_texture = TexturePtr(new Texture(image, true));
-        } else {
-            m_texture->uploadPixels(image, true);
-        }
+        m_texture = TexturePtr(new Texture(image));
     } else
         m_texture.reset();
 
@@ -94,6 +91,7 @@ void Minimap::terminate()
 
 void Minimap::clean()
 {
+    std::lock_guard<std::mutex> lock(m_lock);
     for(int i=0;i<=Otc::MAX_Z;++i)
         m_tileBlocks[i].clear();
 }
@@ -104,17 +102,13 @@ void Minimap::draw(const Rect& screenRect, const Position& mapCenter, float scal
         return;
 
     Rect mapRect = calcMapRect(screenRect, mapCenter, scale);
-    g_painter->saveState();
-    g_painter->setColor(color);
-    g_painter->drawFilledRect(screenRect);
-    g_painter->resetColor();
-    g_painter->setClipRect(screenRect);
+    g_drawQueue->addFilledRect(screenRect, color);
 
     if(MMBLOCK_SIZE*scale <= 1 || !mapCenter.isMapPosition()) {
-        g_painter->restoreSavedState();
         return;
     }
 
+    size_t drawQueueStart = g_drawQueue->size();
     Point blockOff = getBlockOffset(mapRect.topLeft());
     Point off = Point((mapRect.size() * scale).toPoint() - screenRect.size().toPoint())/2;
     Point start = screenRect.topLeft() -(mapRect.topLeft() - blockOff)*scale - off;
@@ -137,16 +131,14 @@ void Minimap::draw(const Rect& screenRect, const Position& mapCenter, float scal
             const TexturePtr& tex = block.getTexture();
             if(tex) {
                 Rect src(0, 0, MMBLOCK_SIZE, MMBLOCK_SIZE);
-                Rect dest(Point(xs,ys), src.size() * scale);
+                Rect dest(xs, ys, MMBLOCK_SIZE * scale, MMBLOCK_SIZE * scale);
 
-                tex->setSmooth(scale < 1.0f);
-                g_painter->drawTexturedRect(dest, tex, src);
+                g_drawQueue->addTexturedRect(dest, tex, src);
             }
-            //g_painter->drawBoundingRect(Rect(xs,ys, MMBLOCK_SIZE * scale, MMBLOCK_SIZE * scale));
         }
     }
 
-    g_painter->restoreSavedState();
+    g_drawQueue->setClip(drawQueueStart, screenRect);
 }
 
 Point Minimap::getTilePoint(const Position& pos, const Rect& screenRect, const Position& mapCenter, float scale)
@@ -201,6 +193,10 @@ void Minimap::updateTile(const Position& pos, const TilePtr& tile)
         if(!tile->isPathable())
             minimapTile.flags |= MinimapTileNotPathable;
         minimapTile.speed = std::min<int>((int)std::ceil(tile->getGroundSpeed() / 10.0f), 255);
+    } else {
+        minimapTile.color = 255;
+        minimapTile.flags |= MinimapTileEmpty;
+        minimapTile.speed = 1;
     }
 
     if(minimapTile != MinimapTile()) {
@@ -220,6 +216,20 @@ const MinimapTile& Minimap::getTile(const Position& pos)
         return block.getTile(pos.x - offsetPos.x, pos.y - offsetPos.y);
     }
     return nulltile;
+}
+
+std::pair<MinimapBlock_ptr, MinimapTile> Minimap::threadGetTile(const Position& pos) {
+    std::lock_guard<std::mutex> lock(m_lock);
+    static MinimapTile nulltile;
+    
+    if (pos.z <= Otc::MAX_Z && hasBlock(pos)) {
+        MinimapBlock_ptr block = m_tileBlocks[pos.z][getBlockIndex(pos)];
+        if (block) {
+            Point offsetPos = getBlockOffset(Point(pos.x, pos.y));
+            return std::make_pair(block, block->getTile(pos.x - offsetPos.x, pos.y - offsetPos.y));
+        }
+    }
+    return std::make_pair(nullptr, nulltile);
 }
 
 bool Minimap::loadImage(const std::string& fileName, const Position& topLeft, float colorFactor)
@@ -310,8 +320,6 @@ bool Minimap::loadOtmm(const std::string& fileName)
         if(!fin)
             stdext::throw_exception("unable to open file");
 
-        fin->cache();
-
         uint32 signature = fin->getU32();
         if(signature != OTMM_SIGNATURE)
             stdext::throw_exception("invalid OTMM file");
@@ -372,7 +380,6 @@ void Minimap::saveOtmm(const std::string& fileName)
         stdext::timer saveTimer;
 
         FileStreamPtr fin = g_resources.createFile(fileName);
-        fin->cache();
 
         //TODO: compression flag with zlib
         uint32 flags = 0;
@@ -399,7 +406,7 @@ void Minimap::saveOtmm(const std::string& fileName)
         for(uint8_t z = 0; z <= Otc::MAX_Z; ++z) {
             for(auto& it : m_tileBlocks[z]) {
                 int index = it.first;
-                MinimapBlock& block = it.second;
+                MinimapBlock& block = *it.second;
                 if(!block.wasSeen())
                     continue;
 
@@ -410,7 +417,7 @@ void Minimap::saveOtmm(const std::string& fileName)
 
                 ulong len = blockSize;
                 int ret = compress2(compressBuffer.data(), &len, (uchar*)&block.getTiles(), blockSize, COMPRESS_LEVEL);
-                assert(ret == Z_OK);
+                VALIDATE(ret == Z_OK);
                 fin->addU16(len);
                 fin->write(compressBuffer.data(), len);
             }

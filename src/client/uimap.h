@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +35,8 @@ public:
     UIMap();
     ~UIMap();
 
+    bool onMouseMove(const Point& mousePos, const Point& mouseMoved);
+
     void drawSelf(Fw::DrawPane drawPane);
 
     void movePixels(int x, int y);
@@ -50,26 +52,25 @@ public:
     void lockVisibleFloor(int floor) { m_mapView->lockFirstVisibleFloor(floor); }
     void unlockVisibleFloor() { m_mapView->unlockFirstVisibleFloor(); }
     void setVisibleDimension(const Size& visibleDimension);
-    void setViewMode(MapView::ViewMode viewMode)  { m_mapView->setViewMode(viewMode); }
-    void setAutoViewMode(bool enable) { m_mapView->setAutoViewMode(enable); }
     void setDrawFlags(Otc::DrawFlags drawFlags) { m_mapView->setDrawFlags(drawFlags); }
     void setDrawTexts(bool enable) { m_mapView->setDrawTexts(enable); }
     void setDrawNames(bool enable) { m_mapView->setDrawNames(enable); }
     void setDrawHealthBars(bool enable) { m_mapView->setDrawHealthBars(enable); }
+    void setDrawHealthBarsOnTop(bool enable) { m_mapView->setDrawHealthBarsOnTop(enable); }
     void setDrawLights(bool enable) { m_mapView->setDrawLights(enable); }
     void setDrawManaBar(bool enable) { m_mapView->setDrawManaBar(enable); }
+    void setDrawPlayerBars(bool enable) { m_mapView->setDrawPlayerBars(enable); }
     void setAnimated(bool enable) { m_mapView->setAnimated(enable); }
     void setKeepAspectRatio(bool enable);
-    void setMapShader(const PainterShaderProgramPtr& shader, float fadeout, float fadein) { m_mapView->setShader(shader, fadein, fadeout); }
     void setMinimumAmbientLight(float intensity) { m_mapView->setMinimumAmbientLight(intensity); }
     void setLimitVisibleRange(bool limitVisibleRange) { m_limitVisibleRange = limitVisibleRange; updateVisibleDimension(); }
-    void setAddLightMethod(bool add) { m_mapView->setAddLightMethod(add); }
-
+    void setFloorFading(int value) { m_mapView->setFloorFading(value); }
+    void setCrosshair(const std::string& type) { m_mapView->setCrosshair(type); }
     bool isMultifloor() { return m_mapView->isMultifloor(); }
-    bool isAutoViewModeEnabled() { return m_mapView->isAutoViewModeEnabled(); }
     bool isDrawingTexts() { return m_mapView->isDrawingTexts(); }
     bool isDrawingNames() { return m_mapView->isDrawingNames(); }
     bool isDrawingHealthBars() { return m_mapView->isDrawingHealthBars(); }
+    bool isDrawingHealthBarsOnTop() { return m_mapView->isDrawingHealthBarsOnTop(); }
     bool isDrawingLights() { return m_mapView->isDrawingLights(); }
     bool isDrawingManaBar() { return m_mapView->isDrawingManaBar(); }
     bool isAnimating() { return m_mapView->isAnimating(); }
@@ -77,16 +78,15 @@ public:
     bool isLimitVisibleRangeEnabled() { return m_limitVisibleRange; }
 
     Size getVisibleDimension() { return m_mapView->getVisibleDimension(); }
-    MapView::ViewMode getViewMode() { return m_mapView->getViewMode(); }
     CreaturePtr getFollowingCreature() { return m_mapView->getFollowingCreature(); }
     Otc::DrawFlags getDrawFlags() { return m_mapView->getDrawFlags(); }
     Position getCameraPosition() { return m_mapView->getCameraPosition(); }
     Position getPosition(const Point& mousePos);
+    Point getPositionOffset(const Point& mousePos);
     TilePtr getTile(const Point& mousePos);
     int getMaxZoomIn() { return m_maxZoomIn; }
     int getMaxZoomOut() { return m_maxZoomOut; }
     int getZoom() { return m_zoom; }
-    PainterShaderProgramPtr getMapShader() { return m_mapView->getShader(); }
     float getMinimumAmbientLight() { return m_mapView->getMinimumAmbientLight(); }
 
 protected:
@@ -100,6 +100,7 @@ private:
     int m_zoom;
     MapViewPtr m_mapView;
     Rect m_mapRect;
+    Point m_mousePosition;
     float m_aspectRatio;
     bool m_keepAspectRatio;
     bool m_limitVisibleRange;

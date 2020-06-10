@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,39 +24,43 @@
 #define LIGHTVIEW_H
 
 #include "declarations.h"
-#include <framework/graphics/declarations.h>
-#include <framework/graphics/painter.h>
 #include "thingtype.h"
+#include <framework/graphics/declarations.h>
+#include <framework/graphics/drawqueue.h>
+#include <set>
 
-struct LightSource {
-    Color color;
-    Point center;
-    int radius;
+struct TileLight {
+    size_t start;
+    uint8_t color;
 };
 
-class LightView : public LuaObject
+class LightView : public DrawQueueItem
 {
 public:
-    LightView();
+    LightView(TexturePtr& lightTexture, const Size& mapSize, const Rect& dest, const Rect& src, uint8_t color, uint8_t intensity) :
+        DrawQueueItem(nullptr), m_lightTexture(lightTexture), m_mapSize(mapSize), m_dest(dest), m_src(src) {
+        m_globalLight = Color::from8bit(color) * ((float)intensity / 255.f);
+        m_tiles.resize(m_mapSize.area(), TileLight{ 0, 0 });
+    }
 
-    void reset();
-    void setGlobalLight(const Light& light);
-    void addLightSource(const Point& center, float scaleFactor, const Light& light);
-    void resize(const Size& size);
-    void draw(const Rect& dest, const Rect& src);
+    inline void addLight(const Point& pos, const Light& light)
+    {
+        return addLight(pos, light.color, light.intensity);
+    }
+    void addLight(const Point& pos, uint8_t color, uint8_t intensity);
+    void setFieldBrightness(const Point& pos, size_t start, uint8_t color);
+    size_t size() { return m_lights.size(); }
 
-    void setBlendEquation(Painter::BlendEquation blendEquation) { m_blendEquation = blendEquation; }
+    void draw() override;
 
 private:
-    void drawGlobalLight(const Light& light);
-    void drawLightSource(const Point& center, const Color& color, int radius);
-    TexturePtr generateLightBubble(float centerFactor);
-
-    Painter::BlendEquation m_blendEquation;
     TexturePtr m_lightTexture;
-    FrameBufferPtr m_lightbuffer;
-    Light m_globalLight;
-    std::vector<LightSource> m_lightMap;
+    Size m_mapSize;
+    Rect m_dest, m_src;
+    Color m_globalLight;
+    std::vector<Light> m_lights;
+    std::vector<TileLight> m_tiles;
 };
 
 #endif
+

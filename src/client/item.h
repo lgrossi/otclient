@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -79,10 +79,11 @@ public:
     Item();
     virtual ~Item() { }
 
-    static ItemPtr create(int id);
+    static ItemPtr create(int id, int countOrSubtype = 1);
     static ItemPtr createFromOtb(int id);
 
-    void draw(const Point& dest, float scaleFactor, bool animate, LightView *lightView = nullptr);
+    void draw(const Point& dest, bool animate = true, LightView* lightView = nullptr);
+    void draw(const Rect& dest, bool animate = true);
 
     void setId(uint32 id);
     void setOtbId(uint16 id);
@@ -90,6 +91,7 @@ public:
     void setCount(int count) { m_countOrSubType = count; }
     void setSubType(int subType) { m_countOrSubType = subType; }
     void setColor(const Color& c) { m_color = c; }
+    void setTooltip(const std::string& str) { m_tooltip = str; }
 
     int getCountOrSubType() { return m_countOrSubType; }
     int getSubType();
@@ -99,6 +101,7 @@ public:
     uint16 getServerId() { return m_serverId; }
     std::string getName();
     bool isValid();
+    std::string getTooltip() { return m_tooltip; }
 
     void unserializeItem(const BinaryTreePtr& in);
     void serializeItem(const OutputBinaryTreePtr& out);
@@ -153,11 +156,12 @@ public:
 private:
     uint16 m_clientId;
     uint16 m_serverId;
-    uint8 m_countOrSubType;
+    uint16 m_countOrSubType;
     stdext::packed_storage<uint8> m_attribs;
     ItemVector m_containerItems;
     Color m_color;
     bool m_async;
+    std::string m_tooltip;
 
     uint8 m_phase;
     ticks_t m_lastPhase;

@@ -1,12 +1,11 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
@@ -44,6 +43,9 @@ void ProtocolGame::onConnect()
 
     m_localPlayer = g_game.getLocalPlayer();
 
+    if (g_game.getFeature(Otc::GamePacketSizeU32))
+        enableBigPackets();
+
     if(g_game.getFeature(Otc::GameProtocolChecksum))
         enableChecksum();
 
@@ -55,11 +57,13 @@ void ProtocolGame::onConnect()
 
 void ProtocolGame::onRecv(const InputMessagePtr& inputMessage)
 {
+    m_recivedPackeds += 1;
+    m_recivedPackedsSize += inputMessage->getMessageSize();
     if(m_firstRecv) {
         m_firstRecv = false;
 
         if(g_game.getFeature(Otc::GameMessageSizeCheck)) {
-            int size = inputMessage->getU16();
+            int size = g_game.getFeature(Otc::GamePacketSizeU32) ? inputMessage->getU32() : inputMessage->getU16();
             if(size != inputMessage->getUnreadSize()) {
                 g_logger.traceError("invalid message size");
                 return;

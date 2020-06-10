@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -52,7 +52,7 @@ int UIPositionAnchor::getHookedPoint(const UIWidgetPtr& hookedWidget, const UIWi
                 break;
             default:
                 // must never happens
-                assert(false);
+                VALIDATE(false);
                 break;
         }
     }
@@ -64,7 +64,7 @@ void UIMapAnchorLayout::addPositionAnchor(const UIWidgetPtr& anchoredWidget, Fw:
     if(!anchoredWidget)
         return;
 
-    assert(anchoredWidget != getParentWidget());
+    VALIDATE(anchoredWidget != getParentWidget());
 
     UIPositionAnchorPtr anchor(new UIPositionAnchor(anchoredEdge, hookedPosition, hookedEdge));
     UIAnchorGroupPtr& anchorGroup = m_anchorsGroups[anchoredWidget];

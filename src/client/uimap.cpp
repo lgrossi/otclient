@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@
 #include "mapview.h"
 #include <framework/otml/otml.h>
 #include <framework/graphics/graphics.h>
+#include <framework/util/extras.h>
 #include "localplayer.h"
 
 UIMap::UIMap()
@@ -47,26 +48,23 @@ UIMap::~UIMap()
     g_map.removeMapView(m_mapView);
 }
 
+bool UIMap::onMouseMove(const Point& mousePos, const Point& mouseMoved) 
+{
+    m_mousePosition = mousePos;
+    return UIWidget::onMouseMove(mousePos, mouseMoved);
+}
+
 void UIMap::drawSelf(Fw::DrawPane drawPane)
 {
     UIWidget::drawSelf(drawPane);
 
-    if(drawPane & Fw::ForegroundPane) {
-        // draw map border
-        g_painter->setColor(Color::black);
-        g_painter->drawBoundingRect(m_mapRect.expanded(1));
-
-        if(drawPane != Fw::BothPanes) {
-            glDisable(GL_BLEND);
-            g_painter->setColor(Color::alpha);
-            g_painter->drawFilledRect(m_mapRect);
-            glEnable(GL_BLEND);
-        }
-    }
-
-    if(drawPane & Fw::BackgroundPane) {
-        g_painter->setColor(Color::white);
-        m_mapView->draw(m_mapRect);
+    if(drawPane == Fw::ForegroundPane) {
+        g_drawQueue->addBoundingRect(m_mapRect.expanded(1), 1, Color::black);
+        g_drawQueue->markMapPosition();
+    } else if(drawPane == Fw::MapBackgroundPane) {
+        m_mapView->drawBackground(m_mapRect, getTile(m_mousePosition));
+    } else if (drawPane == Fw::MapForegroundPane) {
+        m_mapView->drawForeground(m_mapRect);
     }
 }
 
@@ -129,11 +127,20 @@ void UIMap::setKeepAspectRatio(bool enable)
 
 Position UIMap::getPosition(const Point& mousePos)
 {
-    if(!m_mapRect.contains(mousePos))
+    if (!m_mapRect.contains(mousePos))
         return Position();
 
     Point relativeMousePos = mousePos - m_mapRect.topLeft();
     return m_mapView->getPosition(relativeMousePos, m_mapRect.size());
+}
+
+Point UIMap::getPositionOffset(const Point& mousePos)
+{
+    if (!m_mapRect.contains(mousePos))
+        return Point(0, 0);
+
+    Point relativeMousePos = mousePos - m_mapRect.topLeft();
+    return m_mapView->getPositionOffset(relativeMousePos, m_mapRect.size());
 }
 
 TilePtr UIMap::getTile(const Point& mousePos)
@@ -164,8 +171,6 @@ void UIMap::onStyleApply(const std::string& styleName, const OTMLNodePtr& styleN
     for(const OTMLNodePtr& node : styleNode->children()) {
         if(node->tag() == "multifloor")
             setMultifloor(node->value<bool>());
-        else if(node->tag() == "auto-view-mode")
-            setAutoViewMode(node->value<bool>());
         else if(node->tag() == "draw-texts")
             setDrawTexts(node->value<bool>());
         else if(node->tag() == "draw-lights")
@@ -199,6 +204,8 @@ void UIMap::updateVisibleDimension()
 
     if(m_keepAspectRatio)
         updateMapSize();
+
+    callLuaField("onVisibleDimensionChange", dimensionWidth, dimensionHeight);
 }
 
 void UIMap::updateMapSize()

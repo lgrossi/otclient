@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,8 +32,9 @@
 #include <framework/core/timer.h>
 #include <framework/graphics/fontmanager.h>
 #include <framework/graphics/cachedtext.h>
+#include <framework/ui/uiwidget.h>
 
-// @bindclass
+ // @bindclass
 class Creature : public Thing
 {
 public:
@@ -43,15 +44,18 @@ public:
     };
 
     Creature();
+    virtual ~Creature();
 
-    virtual void draw(const Point& dest, float scaleFactor, bool animate, LightView *lightView = nullptr);
+    virtual void draw(const Point& dest, bool animate = true, LightView* lightView = nullptr);
+    virtual void drawOutfit(const Rect& destRect, Otc::Direction direction = Otc::InvalidDirection, const Color& color = Color::white);
 
-    void internalDrawOutfit(Point dest, float scaleFactor, bool animateWalk, bool animateIdle, Otc::Direction direction, LightView *lightView = nullptr);
-    void drawOutfit(const Rect& destRect, bool resize);
     void drawInformation(const Point& point, bool useGray, const Rect& parentRect, int drawFlags);
+
+    bool isInsideOffset(Point offset);
 
     void setId(uint32 id) { m_id = id; }
     void setName(const std::string& name);
+    void setManaPercent(int8 value) { m_manaPercent = value; }
     void setHealthPercent(uint8 healthPercent);
     void setDirection(Otc::Direction direction);
     void setOutfit(const Outfit& outfit);
@@ -78,11 +82,24 @@ public:
     void showStaticSquare(const Color& color) { m_showStaticSquare = true; m_staticSquareColor = color; }
     void hideStaticSquare() { m_showStaticSquare = false; }
 
+    void setInformationColor(const Color& color) { m_useCustomInformationColor = true; m_informationColor = color; }
+    void resetInformationColor() { m_useCustomInformationColor = false; }
+
+    Point getInformationOffset() { return m_informationOffset; }
+    void setInformationOffset(int x, int y) { m_informationOffset = Point(x, y); }
+
+    void setText(const std::string& text, const Color& color);
+    std::string getText();
+    void clearText() { setText("", Color::white); }
+
     uint32 getId() { return m_id; }
     std::string getName() { return m_name; }
     uint8 getHealthPercent() { return m_healthPercent; }
+    int8 getManaPercent() { return m_manaPercent; }
     Otc::Direction getDirection() { return m_direction; }
+    Otc::Direction getWalkDirection() { return m_walkDirection; }
     Outfit getOutfit() { return m_outfit; }
+    int getOutfitNumber() { return m_outfitNumber; }
     Light getLight() { return m_light; }
     uint16 getSpeed() { return m_speed; }
     double getBaseSpeed() { return m_baseSpeed; }
@@ -94,11 +111,11 @@ public:
     bool isPassable() { return m_passable; }
     Point getDrawOffset();
     int getStepDuration(bool ignoreDiagonal = false, Otc::Direction dir = Otc::InvalidDirection);
-    Point getWalkOffset() { return m_walkOffset; }
+    Point getWalkOffset(bool inNextFrame = false) { return inNextFrame ? m_walkOffsetInNextFrame : m_walkOffset; }
     Position getLastStepFromPosition() { return m_lastStepFromPosition; }
     Position getLastStepToPosition() { return m_lastStepToPosition; }
     float getStepProgress() { return m_walkTimer.ticksElapsed() / getStepDuration(); }
-    float getStepTicksLeft() { return getStepDuration() - m_walkTimer.ticksElapsed(); }
+    int getStepTicksLeft() { return getStepDuration() - m_walkTimer.ticksElapsed(); }
     ticks_t getWalkTicksElapsed() { return m_walkTimer.ticksElapsed(); }
     double getSpeedFormula(Otc::SpeedFormula formula) { return m_speedFormula[formula]; }
     bool hasSpeedFormula();
@@ -112,11 +129,12 @@ public:
     void updateShield();
 
     // walk related
-    void turn(Otc::Direction direction);
+    int getWalkAnimationPhases();
+    virtual void turn(Otc::Direction direction);
     void jump(int height, int duration);
     virtual void walk(const Position& oldPos, const Position& newPos);
     virtual void stopWalk();
-    void allowAppearWalk() { m_allowAppearWalk = true; }
+    void allowAppearWalk(uint16_t stepSpeed) { m_allowAppearWalk = true; m_stepDuration = stepSpeed; }
 
     bool isWalking() { return m_walking; }
     bool isRemoved() { return m_removed; }
@@ -134,9 +152,42 @@ public:
     virtual void onDisappear();
     virtual void onDeath();
 
+    virtual bool isPreWalking() { return false; }
+    virtual Position getPrewalkingPosition(bool beforePrewalk = false) { return m_position; }
+
+    TilePtr getWalkingTileOrTile() {
+        return m_walkingTile ? m_walkingTile : getTile();
+    }
+
+    virtual bool isServerWalking() { return true; }
+
+    void setElevation(uint8 elevation) {
+        m_elevation = elevation;
+    }
+    uint8 getElevation() {
+        return m_elevation;
+    }
+
+    // widgets
+    void addTopWidget(const UIWidgetPtr& widget);
+    void addBottomWidget(const UIWidgetPtr& widget);
+    void addDirectionalWidget(const UIWidgetPtr& widget);
+    void removeTopWidget(const UIWidgetPtr& widget);
+    void removeBottomWidget(const UIWidgetPtr& widget);
+    void removeDirectionalWidget(const UIWidgetPtr& widget);
+    std::list<UIWidgetPtr> getTopWidgets();
+    std::list<UIWidgetPtr> getBottomWidgets();
+    std::list<UIWidgetPtr> getDirectionalWdigets();
+    void clearWidgets();
+    void clearTopWidgets();
+    void clearBottomWidgets();
+    void clearDirectionalWidgets();
+    void drawTopWidgets(const Point& rect, const Otc::Direction direction);
+    void drawBottomWidgets(const Point& rect, const Otc::Direction direction);
+
 protected:
     virtual void updateWalkAnimation(int totalPixelsWalked);
-    virtual void updateWalkOffset(int totalPixelsWalked);
+    virtual void updateWalkOffset(int totalPixelsWalked, bool inNextFrame = false);
     void updateWalkingTile();
     virtual void nextWalkUpdate();
     virtual void updateWalk();
@@ -148,8 +199,11 @@ protected:
     uint32 m_id;
     std::string m_name;
     uint8 m_healthPercent;
+    int8 m_manaPercent;
     Otc::Direction m_direction;
+    Otc::Direction m_walkDirection;
     Outfit m_outfit;
+    int m_outfitNumber = 0;
     Light m_light;
     int m_speed;
     double m_baseSpeed;
@@ -168,42 +222,54 @@ protected:
     stdext::boolean<false> m_passable;
     Color m_timedSquareColor;
     Color m_staticSquareColor;
+    Color m_nameColor;
     stdext::boolean<false> m_showTimedSquare;
     stdext::boolean<false> m_showStaticSquare;
     stdext::boolean<true> m_removed;
     CachedText m_nameCache;
     Color m_informationColor;
+    bool m_useCustomInformationColor = false;
+    Point m_informationOffset;
     Color m_outfitColor;
     ScheduledEventPtr m_outfitColorUpdateEvent;
     Timer m_outfitColorTimer;
 
-    std::array<double, Otc::LastSpeedFormula> m_speedFormula;
+    static std::array<double, Otc::LastSpeedFormula> m_speedFormula;
 
     // walk related
     int m_walkAnimationPhase;
     int m_walkedPixels;
     uint m_footStep;
     Timer m_walkTimer;
-    Timer m_footTimer;
+    ticks_t m_footLastStep;
     TilePtr m_walkingTile;
     stdext::boolean<false> m_walking;
     stdext::boolean<false> m_allowAppearWalk;
-    stdext::boolean<false> m_footStepDrawn;
     ScheduledEventPtr m_walkUpdateEvent;
     ScheduledEventPtr m_walkFinishAnimEvent;
     EventPtr m_disappearEvent;
     Point m_walkOffset;
-    Otc::Direction m_walkTurnDirection;
+    Point m_walkOffsetInNextFrame;
     Otc::Direction m_lastStepDirection;
     Position m_lastStepFromPosition;
     Position m_lastStepToPosition;
     Position m_oldPosition;
+    uint8 m_elevation = 0;
+    uint16 m_stepDuration = 0;
 
     // jump related
-    float m_jumpHeight;
-    float m_jumpDuration;
+    float m_jumpHeight = 0;
+    float m_jumpDuration = 0;
     PointF m_jumpOffset;
     Timer m_jumpTimer;
+
+    // for bot
+    StaticTextPtr m_text;
+
+    // widgets
+    std::list<UIWidgetPtr> m_bottomWidgets;
+    std::list<UIWidgetPtr> m_directionalWidgets;
+    std::list<UIWidgetPtr> m_topWidgets;
 };
 
 // @bindclass

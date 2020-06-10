@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,8 +35,6 @@ class Position
 public:
     Position() : x(65535), y(65535), z(255) { }
     Position(uint16 x, uint16 y, uint8 z) : x(x), y(y), z(z) { }
-
-    Position(const Position &position) = default;
 
     Position translatedToDirection(Otc::Direction direction) {
         Position pos = *this;
@@ -197,7 +195,7 @@ public:
     Position& operator=(const Position& other) { x = other.x; y = other.y; z = other.z; return *this; }
     bool operator==(const Position& other) const { return other.x == x && other.y == y && other.z == z; }
     bool operator!=(const Position& other) const { return other.x!=x || other.y!=y || other.z!=z; }
-    bool isInRange(const Position& pos, int xRange, int yRange) const { return std::abs(x-pos.x) <= xRange && std::abs(y-pos.y) <= yRange && z == pos.z; }
+    bool isInRange(const Position& pos, int xRange, int yRange, int zRange = 0) const { return std::abs(x-pos.x) <= xRange && std::abs(y-pos.y) <= yRange && std::abs(z - pos.z) <= zRange; }
     bool isInRange(const Position& pos, int minXRange, int maxXRange, int minYRange, int maxYRange) const {
         return (pos.x >= x-minXRange && pos.x <= x+maxXRange && pos.y >= y-minYRange && pos.y <= y+maxYRange && pos.z == z);
     }
@@ -240,12 +238,17 @@ public:
         return false;
     }
 
+    std::string toString()
+    {
+        return std::to_string(x) + "," + std::to_string(y) + "," + std::to_string(z);
+    }
+
     int x;
     int y;
     short z;
 };
 
-struct PositionHasher : std::unary_function<Position, std::size_t> {
+struct PositionHasher {
     std::size_t operator()(const Position& pos) const {
         return (((pos.x * 8192) + pos.y) * 16) + pos.z;
     }

@@ -20,36 +20,43 @@
  * THE SOFTWARE.
  */
 
-#ifndef UIMAPANCHORLAYOUT_H
-#define UIMAPANCHORLAYOUT_H
+#ifndef CLIENT_LUAVALUECASTS_H
+#define CLIENT_LUAVALUECASTS_H
 
-#include "declarations.h"
-#include <framework/ui/uianchorlayout.h>
+#include "global.h"
+#include <framework/luaengine/declarations.h>
+#include "game.h"
+#include "outfit.h"
 
-class UIPositionAnchor : public UIAnchor
-{
-public:
-    UIPositionAnchor(Fw::AnchorEdge anchoredEdge, const Position& hookedPosition, Fw::AnchorEdge hookedEdge) :
-        UIAnchor(anchoredEdge, std::string(), hookedEdge), m_hookedPosition(hookedPosition) { }
+// outfit
+int push_luavalue(const Outfit& outfit);
+bool luavalue_cast(int index, Outfit& outfit);
 
-    UIWidgetPtr getHookedWidget(const UIWidgetPtr& widget, const UIWidgetPtr& parentWidget) { return parentWidget; }
-    int getHookedPoint(const UIWidgetPtr& hookedWidget, const UIWidgetPtr& parentWidget);
+// position
+int push_luavalue(const Position& pos);
+bool luavalue_cast(int index, Position& pos);
 
-private:
-    Position m_hookedPosition;
-};
+// market
+int push_luavalue(const MarketData& data);
+bool luavalue_cast(int index, MarketData& data);
 
-class UIMapAnchorLayout : public UIAnchorLayout
-{
-public:
-    UIMapAnchorLayout(UIWidgetPtr parentWidget) : UIAnchorLayout(parentWidget) { }
+// store category
+int push_luavalue(const StoreCategory& category);
+bool luavalue_cast(int index, StoreCategory& data);
 
-    void addPositionAnchor(const UIWidgetPtr& anchoredWidget, Fw::AnchorEdge anchoredEdge,
-                           const Position& hookedPosition, Fw::AnchorEdge hookedEdge);
-    void centerInPosition(const UIWidgetPtr& anchoredWidget, const Position& hookedPosition);
-    void fillPosition(const UIWidgetPtr& anchoredWidget, const Position& hookedPosition);
+// store offer
+int push_luavalue(const StoreOffer& offer);
+bool luavalue_cast(int index, StoreOffer& offer);
 
-protected:
-};
+// imbuement
+int push_luavalue(const Imbuement& offer);
+
+// light
+int push_luavalue(const Light& light);
+bool luavalue_cast(int index, Light& light);
+
+// unjustified points
+int push_luavalue(const UnjustifiedPoints& unjustifiedPoints);
+bool luavalue_cast(int index, UnjustifiedPoints& unjustifiedPoints);
 
 #endif

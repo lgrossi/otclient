@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -135,6 +135,25 @@ struct AwareRange
     int vertical() { return top + bottom + 1; }
 };
 
+struct PathFindResult     
+{
+    Otc::PathFindResult status = Otc::PathFindResultNoWay;
+    std::vector<Otc::Direction> path;
+    int complexity = 0;
+    Position start;
+    Position destination;
+};
+using PathFindResult_ptr = std::shared_ptr<PathFindResult>;
+
+struct Node {
+    float cost;
+    float totalCost;
+    Position pos;
+    Node *prev;
+    int distance;
+    int unseen;
+};
+
 //@bindsingleton g_map
 class Map
 {
@@ -144,7 +163,9 @@ public:
 
     void addMapView(const MapViewPtr& mapView);
     void removeMapView(const MapViewPtr& mapView);
-    void notificateTileUpdate(const Position& pos);
+    void notificateTileUpdate(const Position& pos, bool updateMinimap = false);
+
+    void requestVisibleTilesCacheUpdate();
 
     bool loadOtcm(const std::string& fileName);
     void saveOtcm(const std::string& fileName);
@@ -172,6 +193,7 @@ public:
 
     // thing related
     void addThing(const ThingPtr& thing, const Position& pos, int stackPos = -1);
+    void setTileSpeed(const Position & pos, uint16_t speed, uint8_t blocking);
     ThingPtr getThing(const Position& pos, int stackPos);
     bool removeThing(const ThingPtr& thing);
     bool removeThingByPos(const Position& pos, int stackPos);
@@ -192,7 +214,7 @@ public:
     // tile zone related
     void setShowZone(tileflags_t zone, bool show);
     void setShowZones(bool show);
-    void setZoneColor(tileflags_t zone, const Color& color);
+    void setZoneColor(tileflags_t flag, const Color& color);
     void setZoneOpacity(float opacity) { m_zoneOpacity = opacity; }
 
     float getZoneOpacity() { return m_zoneOpacity; }
@@ -205,9 +227,6 @@ public:
     bool isForcingAnimations();
     bool isShowingAnimations();
     void setShowAnimations(bool show);
-
-    void beginGhostMode(float opacity);
-    void endGhostMode();
 
     std::map<Position, ItemPtr> findItemsById(uint16 clientId, uint32 max);
 
@@ -226,11 +245,13 @@ public:
     bool isLookPossible(const Position& pos);
     bool isCovered(const Position& pos, int firstFloor = 0);
     bool isCompletelyCovered(const Position& pos, int firstFloor = 0);
-    bool isAwareOfPosition(const Position& pos);
+    bool isAwareOfPosition(const Position& pos, bool extended = false);
+    bool isAwareOfPositionForClean(const Position& pos, bool extended = false);
 
     void setAwareRange(const AwareRange& range);
     void resetAwareRange();
     AwareRange getAwareRange() { return m_awareRange; }
+    Size getAwareRangeAsSize() { return Size(m_awareRange.horizontal(), m_awareRange.vertical()); }
 
     Light getLight() { return m_light; }
     Position getCentralPosition() { return m_centralPosition; }
@@ -242,13 +263,22 @@ public:
     std::vector<StaticTextPtr> getStaticTexts() { return m_staticTexts; }
 
     std::tuple<std::vector<Otc::Direction>, Otc::PathFindResult> findPath(const Position& start, const Position& goal, int maxComplexity, int flags = 0);
+    PathFindResult_ptr newFindPath(const Position& start, const Position& goal, std::shared_ptr<std::list<Node*>> visibleNodes);
+    void findPathAsync(const Position & start, const Position & goal, std::function<void(PathFindResult_ptr)> callback);
+
+    // tuple = <cost, distance, prevPos>
+    std::map<std::string, std::tuple<int, int, int, std::string>> findEveryPath(const Position& start, int maxDistance, const std::map<std::string, std::string>& params);
+
+    int getMinimapColor(const Position& pos);
+    bool isPatchable(const Position& pos);
+    bool isWalkable(const Position& pos, bool ignoreCreatures);
 
 private:
     void removeUnawareThings();
     uint getBlockIndex(const Position& pos) { return ((pos.y / BLOCK_SIZE) * (65536 / BLOCK_SIZE)) + (pos.x / BLOCK_SIZE); }
 
-    std::unordered_map<uint, TileBlock> m_tileBlocks[Otc::MAX_Z+1];
-    std::unordered_map<uint32, CreaturePtr> m_knownCreatures;
+    std::map<uint, TileBlock> m_tileBlocks[Otc::MAX_Z+1];
+    std::map<uint32, CreaturePtr> m_knownCreatures;
     std::array<std::vector<MissilePtr>, Otc::MAX_Z+1> m_floorMissiles;
     std::vector<AnimatedTextPtr> m_animatedTexts;
     std::vector<StaticTextPtr> m_staticTexts;

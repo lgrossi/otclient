@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -42,7 +42,11 @@ public:
     bool loadSpr(std::string file);
     void unload();
 
+#ifdef WITH_ENCRYPTION
     void saveSpr(std::string fileName);
+    void encryptSprites(std::string fileName);
+    void dumpSprites(std::string dir);
+#endif
 
     uint32 getSignature() { return m_signature; }
     int getSpritesCount() { return m_spritesCount; }
@@ -50,12 +54,16 @@ public:
     ImagePtr getSpriteImage(int id);
     bool isLoaded() { return m_loaded; }
 
+    int spriteSize() { return m_spriteSize; }
+
 private:
     stdext::boolean<false> m_loaded;
     uint32 m_signature;
     int m_spritesCount;
     int m_spritesOffset;
+    int m_spriteSize = 32;
     FileStreamPtr m_spritesFile;
+    std::vector<std::vector<uint8_t>> m_sprites;
 };
 
 extern SpriteManager g_sprites;
