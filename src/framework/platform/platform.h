@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,11 +41,18 @@ public:
     bool fileExists(std::string file);
     bool removeFile(std::string file);
     ticks_t getFileModificationTime(std::string file);
-    void openUrl(std::string url);
+    bool openUrl(std::string url, bool now = false);
+    bool openDir(std::string path, bool now = false);
     std::string getCPUName();
     double getTotalSystemMemory();
+    double getMemoryUsage();
     std::string getOSName();
     std::string traceback(const std::string& where, int level = 1, int maxDepth = 32);
+    std::vector<std::string> getMacAddresses();
+    std::string getUserName();
+    std::vector<std::string> getDlls();
+    std::vector<std::string> getProcesses();
+    std::vector<std::string> getWindows();
 };
 
 extern Platform g_platform;

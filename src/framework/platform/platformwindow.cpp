@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,11 @@
 
 #include "platformwindow.h"
 
-#ifdef WIN32
+#if defined(WIN32)
 #include "win32window.h"
 WIN32Window window;
+#elif defined(ANDROID)
+#include "androidwindow.h"
 #else
 #include "x11window.h"
 #include <framework/core/clock.h>
@@ -32,9 +34,14 @@ X11Window window;
 #endif
 
 #include <framework/core/clock.h>
+#include <framework/core/eventdispatcher.h>
 #include <framework/graphics/image.h>
 
+#ifdef ANDROID
+PlatformWindow& g_window = g_androidWindow;
+#else
 PlatformWindow& g_window = window;
+#endif
 
 int PlatformWindow::loadMouseCursor(const std::string& file, const Point& hotSpot)
 {
@@ -68,6 +75,11 @@ void PlatformWindow::updateUnmaximizedCoords()
 
 void PlatformWindow::processKeyDown(Fw::Key keyCode)
 {
+    if (std::this_thread::get_id() != g_dispatcherThreadId) {
+        g_dispatcher.addEvent(std::bind(&PlatformWindow::processKeyDown, this, keyCode));
+        return;
+    }
+    
     if(keyCode == Fw::KeyUnknown)
         return;
 
@@ -105,6 +117,11 @@ void PlatformWindow::processKeyDown(Fw::Key keyCode)
 
 void PlatformWindow::processKeyUp(Fw::Key keyCode)
 {
+    if (std::this_thread::get_id() != g_dispatcherThreadId) {
+        g_dispatcher.addEvent(std::bind(&PlatformWindow::processKeyUp, this, keyCode));
+        return;
+    }
+    
     if(keyCode == Fw::KeyUnknown)
         return;
 
@@ -138,6 +155,11 @@ void PlatformWindow::processKeyUp(Fw::Key keyCode)
 
 void PlatformWindow::releaseAllKeys()
 {
+    if (std::this_thread::get_id() != g_dispatcherThreadId) {
+        g_dispatcher.addEvent(std::bind(&PlatformWindow::releaseAllKeys, this));
+        return;
+    }
+    
     for(auto it : m_keysState) {
         Fw::Key keyCode = it.first;
         bool pressed = it.second;
@@ -150,12 +172,17 @@ void PlatformWindow::releaseAllKeys()
 
     m_inputEvent.keyboardModifiers = 0;
 
-    for(auto &mouseButtonState: m_mouseButtonStates)
-        mouseButtonState = false;
+    for(int i=0;i<4;++i)
+        m_mouseButtonStates[i] = false;
 }
 
 void PlatformWindow::fireKeysPress()
 {
+    if (std::this_thread::get_id() != g_dispatcherThreadId) {
+        g_dispatcher.addEvent(std::bind(&PlatformWindow::fireKeysPress, this));
+        return;
+    }
+    
     // avoid massive checks
     if(m_keyPressTimer.ticksElapsed() < 10)
         return;

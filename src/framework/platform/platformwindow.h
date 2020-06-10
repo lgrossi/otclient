@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -64,6 +64,8 @@ public:
     virtual void setIcon(const std::string& iconFile) = 0;
     virtual void setClipboardText(const std::string& text) = 0;
 
+    bool hasVerticalSync() { return m_verticalSync; }
+
     virtual Size getDisplaySize() = 0;
     virtual std::string getClipboardText() = 0;
     virtual std::string getPlatformType() = 0;
@@ -94,6 +96,11 @@ public:
     void setOnResize(const OnResizeCallback& onResize) { m_onResize = onResize; }
     void setOnInputEvent(const OnInputEventCallback& onInputEvent) { m_onInputEvent = onInputEvent; }
 
+    virtual void showTextEditor(const std::string& title, const std::string& description, const std::string& text, int flags) {}
+    virtual void handleTextInput(std::string text) {} // for android
+
+    void setScaling(float scaling) { m_scaling = scaling; }
+
 protected:
     virtual int internalLoadMouseCursor(const ImagePtr& image, const Point& hotSpot) = 0;
 
@@ -123,6 +130,8 @@ protected:
     stdext::boolean<false> m_focused;
     stdext::boolean<false> m_fullscreen;
     stdext::boolean<false> m_maximized;
+    bool m_verticalSync = false;
+    float m_scaling = 1.0;
 
     std::function<void()> m_onClose;
     OnResizeCallback m_onResize;
