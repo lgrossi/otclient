@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+#ifdef FW_SOUND
 
 #ifndef OGGSOUNDFILE_H
 #define OGGSOUNDFILE_H
@@ -46,5 +48,7 @@ private:
 
     OggVorbis_File m_vorbisFile;
 };
+
+#endif
 
 #endif

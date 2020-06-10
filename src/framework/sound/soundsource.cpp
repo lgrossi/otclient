@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +20,8 @@
  * THE SOFTWARE.
  */
 
+#ifdef FW_SOUND
+
 #include "soundsource.h"
 #include "soundbuffer.h"
 
@@ -36,7 +38,7 @@ SoundSource::SoundSource()
     m_gain = 1.0f;
 
     alGenSources(1, &m_sourceId);
-    assert(alGetError() == AL_NO_ERROR);
+    VALIDATE(alGetError() == AL_NO_ERROR);
     setReferenceDistance(128);
 }
 
@@ -45,23 +47,23 @@ SoundSource::~SoundSource()
     if(m_sourceId != 0) {
         stop();
         alDeleteSources(1, &m_sourceId);
-        assert(alGetError() == AL_NO_ERROR);
+        VALIDATE(alGetError() == AL_NO_ERROR);
     }
 }
 
 void SoundSource::play()
 {
     alSourcePlay(m_sourceId);
-    assert(alGetError() == AL_NO_ERROR);
+    VALIDATE(alGetError() == AL_NO_ERROR);
 }
 
 void SoundSource::stop()
 {
     alSourceStop(m_sourceId);
-    assert(alGetError() == AL_NO_ERROR);
+    VALIDATE(alGetError() == AL_NO_ERROR);
     if(m_buffer) {
         alSourcei(m_sourceId, AL_BUFFER, AL_NONE);
-        assert(alGetError() == AL_NO_ERROR);
+        VALIDATE(alGetError() == AL_NO_ERROR);
         m_buffer = nullptr;
     }
 }
@@ -76,7 +78,7 @@ bool SoundSource::isBuffering()
 void SoundSource::setBuffer(const SoundBufferPtr& buffer)
 {
     alSourcei(m_sourceId, AL_BUFFER, buffer->getBufferId());
-    assert(alGetError() == AL_NO_ERROR);
+    VALIDATE(alGetError() == AL_NO_ERROR);
     m_buffer = buffer;
 }
 
@@ -159,3 +161,5 @@ void SoundSource::update()
         }
     }
 }
+
+#endif

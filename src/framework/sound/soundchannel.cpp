@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,6 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+#ifdef FW_SOUND
 
 #include "soundchannel.h"
 #include "streamsoundsource.h"
@@ -52,10 +54,13 @@ void SoundChannel::stop(float fadetime)
 
 void SoundChannel::enqueue(const std::string& filename, float fadetime, float gain)
 {
+    static std::random_device rd;
+    static std::mt19937 g(rd());
+    
     if(gain == 0)
         gain = 1.0f;
     m_queue.push_back(QueueEntry{g_sounds.resolveSoundFile(filename), fadetime, gain});
-    std::random_shuffle(m_queue.begin(), m_queue.end());
+    std::shuffle(m_queue.begin(), m_queue.end(), g);
     //update();
 }
 
@@ -95,3 +100,5 @@ void SoundChannel::setGain(float gain)
         m_currentSource->setGain(gain);
     m_gain = gain;
 }
+
+#endif
