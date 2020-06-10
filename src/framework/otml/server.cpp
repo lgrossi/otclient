@@ -20,23 +20,45 @@
  * THE SOFTWARE.
  */
 
-#ifndef FRAMEWORK_NET_DECLARATIONS_H
-#define FRAMEWORK_NET_DECLARATIONS_H
+#include "server.h"
+#include "connection.h"
 
-#include <framework/global.h>
+extern asio::io_service g_ioService;
 
-namespace asio = boost::asio;
+Server::Server(int port)
+    : m_acceptor(g_ioService, asio::ip::tcp::endpoint(asio::ip::tcp::v4(), port))
+{
+}
 
-class InputMessage;
-class OutputMessage;
-class Connection;
-class Protocol;
-class Server;
+ServerPtr Server::create(int port)
+{
+    try {
+        Server *server = new Server(port);
+        return ServerPtr(server);
+    }
+    catch(const std::exception& e) {
+        g_logger.error(stdext::format("Failed to initialize server: %s", e.what()));
+        return ServerPtr();
+    }
+}
 
-typedef stdext::shared_object_ptr<InputMessage> InputMessagePtr;
-typedef stdext::shared_object_ptr<OutputMessage> OutputMessagePtr;
-typedef stdext::shared_object_ptr<Connection> ConnectionPtr;
-typedef stdext::shared_object_ptr<Protocol> ProtocolPtr;
-typedef stdext::shared_object_ptr<Server> ServerPtr;
+void Server::close()
+{
+    m_isOpen = false;
+    m_acceptor.cancel();
+    m_acceptor.close();
+}
 
-#endif
+void Server::acceptNext()
+{
+    ConnectionPtr connection = ConnectionPtr(new Connection);
+    connection->m_connecting = true;
+    auto self = static_self_cast<Server>();
+    m_acceptor.async_accept(connection->m_socket, [=](const boost::system::error_code& error) {
+        if(!error) {
+            connection->m_connected = true;
+            connection->m_connecting = false;
+        }
+        self->callLuaField("onAccept", connection, error.message(), error.value());
+    });
+}

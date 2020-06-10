@@ -20,23 +20,25 @@
  * THE SOFTWARE.
  */
 
-#ifndef FRAMEWORK_NET_DECLARATIONS_H
-#define FRAMEWORK_NET_DECLARATIONS_H
+#ifndef SERVER_H
+#define SERVER_H
 
-#include <framework/global.h>
+#include "declarations.h"
+#include <framework/luaengine/luaobject.h>
 
-namespace asio = boost::asio;
+class Server : public LuaObject
+{
+public:
+    Server(int port);
+    static ServerPtr create(int port);
+    bool isOpen() { return m_isOpen; }
+    void close();
 
-class InputMessage;
-class OutputMessage;
-class Connection;
-class Protocol;
-class Server;
+    void acceptNext();
 
-typedef stdext::shared_object_ptr<InputMessage> InputMessagePtr;
-typedef stdext::shared_object_ptr<OutputMessage> OutputMessagePtr;
-typedef stdext::shared_object_ptr<Connection> ConnectionPtr;
-typedef stdext::shared_object_ptr<Protocol> ProtocolPtr;
-typedef stdext::shared_object_ptr<Server> ServerPtr;
+private:
+    stdext::boolean<true> m_isOpen;
+    asio::ip::tcp::acceptor m_acceptor;
+};
 
 #endif
