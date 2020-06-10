@@ -63,6 +63,9 @@ set(framework_SOURCES ${framework_SOURCES}
     # core
     ${CMAKE_CURRENT_LIST_DIR}/core/application.cpp
     ${CMAKE_CURRENT_LIST_DIR}/core/application.h
+    ${CMAKE_CURRENT_LIST_DIR}/core/adaptiverenderer.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/core/adaptiverenderer.h
+    ${CMAKE_CURRENT_LIST_DIR}/core/adaptativeframecounter.h
     ${CMAKE_CURRENT_LIST_DIR}/core/adaptativeframecounter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/core/adaptativeframecounter.h
     ${CMAKE_CURRENT_LIST_DIR}/core/asyncdispatcher.cpp
@@ -353,13 +356,15 @@ if(FRAMEWORK_GRAPHICS)
     set(framework_SOURCES ${framework_SOURCES}
         ${CMAKE_CURRENT_LIST_DIR}/graphics/animatedtexture.cpp
         ${CMAKE_CURRENT_LIST_DIR}/graphics/animatedtexture.h
+        ${CMAKE_CURRENT_LIST_DIR}/graphics/bitmapfont.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/graphics/bitmapfont.h
         ${CMAKE_CURRENT_LIST_DIR}/graphics/cachedtext.cpp
         ${CMAKE_CURRENT_LIST_DIR}/graphics/cachedtext.h
         ${CMAKE_CURRENT_LIST_DIR}/graphics/coordsbuffer.cpp
         ${CMAKE_CURRENT_LIST_DIR}/graphics/coordsbuffer.h
         ${CMAKE_CURRENT_LIST_DIR}/graphics/declarations.h
-        ${CMAKE_CURRENT_LIST_DIR}/graphics/bitmapfont.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/graphics/bitmapfont.h
+        ${CMAKE_CURRENT_LIST_DIR}/graphics/drawcache.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/graphics/drawcache.h
         ${CMAKE_CURRENT_LIST_DIR}/graphics/fontmanager.cpp
         ${CMAKE_CURRENT_LIST_DIR}/graphics/fontmanager.h
         ${CMAKE_CURRENT_LIST_DIR}/graphics/framebuffer.cpp
@@ -404,11 +409,18 @@ if(FRAMEWORK_GRAPHICS)
         ${CMAKE_CURRENT_LIST_DIR}/graphics/shaderprogram.h
         ${CMAKE_CURRENT_LIST_DIR}/graphics/texture.cpp
         ${CMAKE_CURRENT_LIST_DIR}/graphics/texture.h
+        ${CMAKE_CURRENT_LIST_DIR}/graphics/textrender.cpp
+        ${CMAKE_CURRENT_LIST_DIR}/graphics/textrender.h
         ${CMAKE_CURRENT_LIST_DIR}/graphics/texturemanager.cpp
         ${CMAKE_CURRENT_LIST_DIR}/graphics/texturemanager.h
         ${CMAKE_CURRENT_LIST_DIR}/graphics/vertexarray.h
         ${CMAKE_CURRENT_LIST_DIR}/graphics/apngloader.cpp
         ${CMAKE_CURRENT_LIST_DIR}/graphics/apngloader.h
+
+        # shaders
+        ${CMAKE_CURRENT_LIST_DIR}/graphics/shaders/newshader.h
+        ${CMAKE_CURRENT_LIST_DIR}/graphics/shaders/shaders.h
+        ${CMAKE_CURRENT_LIST_DIR}/graphics/shaders/shadersources.h
 
         # ui
         ${CMAKE_CURRENT_LIST_DIR}/ui/declarations.h

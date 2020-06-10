@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,6 +35,9 @@ public:
 
     /// Parse OTML from a file
     static OTMLDocumentPtr parse(const std::string& fileName);
+
+    /// Parse OTML from a string
+    static OTMLDocumentPtr parseString(const std::string& data, const std::string& source);
 
     /// Parse OTML from input stream
     /// @param source is the file name that will be used to show errors messages

@@ -20,23 +20,18 @@
  * THE SOFTWARE.
  */
 
-#ifndef FRAMEWORK_NET_DECLARATIONS_H
-#define FRAMEWORK_NET_DECLARATIONS_H
+#ifndef FRAMEWORK_OTML_DECLARATIONS_H
+#define FRAMEWORK_OTML_DECLARATIONS_H
 
 #include <framework/global.h>
 
-namespace asio = boost::asio;
+class OTMLNode;
+class OTMLDocument;
+class OTMLParser;
+class OTMLEmitter;
 
-class InputMessage;
-class OutputMessage;
-class Connection;
-class Protocol;
-class Server;
-
-typedef stdext::shared_object_ptr<InputMessage> InputMessagePtr;
-typedef stdext::shared_object_ptr<OutputMessage> OutputMessagePtr;
-typedef stdext::shared_object_ptr<Connection> ConnectionPtr;
-typedef stdext::shared_object_ptr<Protocol> ProtocolPtr;
-typedef stdext::shared_object_ptr<Server> ServerPtr;
+typedef stdext::shared_object_ptr<OTMLNode> OTMLNodePtr;
+typedef stdext::shared_object_ptr<OTMLDocument> OTMLDocumentPtr;
+typedef std::vector<OTMLNodePtr> OTMLNodeList;
 
 #endif
