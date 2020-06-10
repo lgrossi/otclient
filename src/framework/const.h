@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -247,7 +247,8 @@ namespace Fw
         MouseNoButton = 0,
         MouseLeftButton,
         MouseRightButton,
-        MouseMidButton
+        MouseMidButton,
+        MouseTouch
     };
 
     enum MouseWheelDirection {
@@ -279,13 +280,14 @@ namespace Fw
         AlternateState = 1024,
         DraggingState = 2048,
         HiddenState = 4096,
-        LastWidgetState = 8192
+        MobileState = 8192,
+        LastWidgetState = 16384
     };
 
     enum DrawPane {
         ForegroundPane = 1,
-        BackgroundPane = 2,
-        BothPanes = 3
+        MapBackgroundPane = 2,
+        MapForegroundPane = 3,
     };
 
 #ifdef FW_SQL

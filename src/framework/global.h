@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,15 @@
 
 // common C/C++ headers
 #include "pch.h"
+
+// error handling
+#if defined(NDEBUG)
+#define VALIDATE(expression) ((void)0)
+#else
+extern void fatalError(const char* error, const char* file, int line);
+#define VALIDATE(expression) { if(!(expression)) fatalError(#expression, __FILE__, __LINE__); };
+#endif
+
 
 // global constants
 #include "const.h"

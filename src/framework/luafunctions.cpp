@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,7 @@
  */
 
 #include <framework/core/application.h>
+#include <framework/core/adaptiverenderer.h>
 #include <framework/luaengine/luainterface.h>
 #include <framework/core/eventdispatcher.h>
 #include <framework/core/configmanager.h>
@@ -33,6 +34,8 @@
 #include <framework/graphics/texturemanager.h>
 #include <framework/stdext/net.h>
 #include <framework/platform/platform.h>
+#include <framework/util/stats.h>
+#include <regex>
 
 #ifdef FW_SOUND
 #include <framework/sound/soundmanager.h>
@@ -44,8 +47,8 @@
 
 #ifdef FW_GRAPHICS
 #include <framework/graphics/graphics.h>
+#include <framework/graphics/atlas.h>
 #include <framework/platform/platformwindow.h>
-#include <framework/graphics/particlemanager.h>
 #include <framework/graphics/fontmanager.h>
 #include <framework/ui/ui.h>
 #include <framework/input/mouse.h>
@@ -54,12 +57,19 @@
 #ifdef FW_NET
 #include <framework/net/server.h>
 #include <framework/net/protocol.h>
-#include <framework/net/protocolhttp.h>
+#ifdef FW_PROXY
+#include <extras/proxy/proxy.h>
+#endif
 #endif
 
 #ifdef FW_SQL
 #include <framework/sql/mysql.h>
 #endif
+
+#include <framework/util/extras.h>
+
+#include <framework/http/http.h>
+
 
 void Application::registerLuaFunctions()
 {
@@ -76,6 +86,26 @@ void Application::registerLuaFunctions()
     g_lua.bindGlobalFunction("stringtoip", [](const std::string& v) { return stdext::string_to_ip(v); });
     g_lua.bindGlobalFunction("listSubnetAddresses", [](uint32 a, uint8 b) { return stdext::listSubnetAddresses(a, b); });
     g_lua.bindGlobalFunction("ucwords", [](std::string s) { return stdext::ucwords(s); });
+    g_lua.bindGlobalFunction("regexMatch", [](std::string s, const std::string& exp) {
+        int limit = 10000;
+        std::vector<std::vector<std::string>> ret;
+        if (s.empty() || exp.empty())
+            return ret;
+        try {
+            std::smatch m;
+            std::regex e(exp, std::regex::ECMAScript);
+            while (std::regex_search (s,m,e)) {
+                ret.push_back(std::vector<std::string>());
+                for (auto x:m)
+                    ret[ret.size() - 1].push_back(x);                
+                s = m.suffix().str();
+                if (--limit == 0)
+                    return ret;
+            }
+        } catch (...) {
+        }
+        return ret;
+    });
 
     // Platform
     g_lua.registerSingletonClass("g_platform");
@@ -88,10 +118,17 @@ void Application::registerLuaFunctions()
     g_lua.bindSingletonFunction("g_platform", "killProcess", &Platform::killProcess, &g_platform);
     g_lua.bindSingletonFunction("g_platform", "getTempPath", &Platform::getTempPath, &g_platform);
     g_lua.bindSingletonFunction("g_platform", "openUrl", &Platform::openUrl, &g_platform);
+    g_lua.bindSingletonFunction("g_platform", "openDir", &Platform::openDir, &g_platform);
     g_lua.bindSingletonFunction("g_platform", "getCPUName", &Platform::getCPUName, &g_platform);
     g_lua.bindSingletonFunction("g_platform", "getTotalSystemMemory", &Platform::getTotalSystemMemory, &g_platform);
+    g_lua.bindSingletonFunction("g_platform", "getMemoryUsage", &Platform::getMemoryUsage, &g_platform);
     g_lua.bindSingletonFunction("g_platform", "getOSName", &Platform::getOSName, &g_platform);
     g_lua.bindSingletonFunction("g_platform", "getFileModificationTime", &Platform::getFileModificationTime, &g_platform);
+    g_lua.bindSingletonFunction("g_platform", "getMacAddresses", &Platform::getMacAddresses, &g_platform);
+    g_lua.bindSingletonFunction("g_platform", "getUserName", &Platform::getUserName, &g_platform);
+    g_lua.bindSingletonFunction("g_platform", "getDlls", &Platform::getDlls, &g_platform);
+    g_lua.bindSingletonFunction("g_platform", "getProcesses", &Platform::getProcesses, &g_platform);
+    g_lua.bindSingletonFunction("g_platform", "getWindows", &Platform::getWindows, &g_platform);
 
     // Application
     g_lua.registerSingletonClass("g_app");
@@ -109,9 +146,13 @@ void Application::registerLuaFunctions()
     g_lua.bindSingletonFunction("g_app", "getBuildCommit", &Application::getBuildCommit, static_cast<Application*>(&g_app));
     g_lua.bindSingletonFunction("g_app", "getBuildType", &Application::getBuildType, static_cast<Application*>(&g_app));
     g_lua.bindSingletonFunction("g_app", "getBuildArch", &Application::getBuildArch, static_cast<Application*>(&g_app));
+    g_lua.bindSingletonFunction("g_app", "getAuthor", &Application::getAuthor, static_cast<Application*>(&g_app));
     g_lua.bindSingletonFunction("g_app", "getOs", &Application::getOs, static_cast<Application*>(&g_app));
     g_lua.bindSingletonFunction("g_app", "getStartupOptions", &Application::getStartupOptions, static_cast<Application*>(&g_app));
     g_lua.bindSingletonFunction("g_app", "exit", &Application::exit, static_cast<Application*>(&g_app));
+    g_lua.bindSingletonFunction("g_app", "quick_exit", &Application::quick_exit, static_cast<Application*>(&g_app));
+    g_lua.bindSingletonFunction("g_app", "isMobile", &Application::isMobile, static_cast<Application*>(&g_app));
+    g_lua.bindSingletonFunction("g_app", "restart", &Application::restart, static_cast<Application*>(&g_app));
 
     // Crypt
     g_lua.registerSingletonClass("g_crypt");
@@ -120,8 +161,13 @@ void Application::registerLuaFunctions()
     g_lua.bindSingletonFunction("g_crypt", "getMachineUUID", &Crypt::getMachineUUID, &g_crypt);
     g_lua.bindSingletonFunction("g_crypt", "encrypt", &Crypt::encrypt, &g_crypt);
     g_lua.bindSingletonFunction("g_crypt", "decrypt", &Crypt::decrypt, &g_crypt);
+    g_lua.bindSingletonFunction("g_crypt", "sha1Encode", &Crypt::sha1Encode, &g_crypt);
+    g_lua.bindSingletonFunction("g_crypt", "md5Encode", &Crypt::md5Encode, &g_crypt);
+    g_lua.bindSingletonFunction("g_crypt", "crc32", &Crypt::crc32, &g_crypt);
+    g_lua.bindSingletonFunction("g_crypt", "rsaGenerateKey", &Crypt::rsaGenerateKey, &g_crypt);
     g_lua.bindSingletonFunction("g_crypt", "rsaSetPublicKey", &Crypt::rsaSetPublicKey, &g_crypt);
     g_lua.bindSingletonFunction("g_crypt", "rsaSetPrivateKey", &Crypt::rsaSetPrivateKey, &g_crypt);
+    g_lua.bindSingletonFunction("g_crypt", "rsaCheckKey", &Crypt::rsaCheckKey, &g_crypt);
     g_lua.bindSingletonFunction("g_crypt", "rsaGetSize", &Crypt::rsaGetSize, &g_crypt);
 
     // Clock
@@ -129,6 +175,8 @@ void Application::registerLuaFunctions()
     g_lua.bindSingletonFunction("g_clock", "micros", &Clock::micros, &g_clock);
     g_lua.bindSingletonFunction("g_clock", "millis", &Clock::millis, &g_clock);
     g_lua.bindSingletonFunction("g_clock", "seconds", &Clock::seconds, &g_clock);
+    g_lua.bindSingletonFunction("g_clock", "realMillis", &Clock::realMillis, &g_clock);
+    g_lua.bindSingletonFunction("g_clock", "realMicros", &Clock::realMicros, &g_clock);
 
     // ConfigManager
     g_lua.registerSingletonClass("g_configs");
@@ -150,6 +198,37 @@ void Application::registerLuaFunctions()
     g_lua.bindSingletonFunction("g_logger", "warning", &Logger::warning, &g_logger);
     g_lua.bindSingletonFunction("g_logger", "error", &Logger::error, &g_logger);
     g_lua.bindSingletonFunction("g_logger", "fatal", &Logger::fatal, &g_logger);
+    g_lua.bindSingletonFunction("g_logger", "getLastLog", &Logger::getLastLog, &g_logger);
+
+    // Lua stats
+    g_lua.registerSingletonClass("g_stats");
+    g_lua.bindSingletonFunction("g_stats", "types", &Stats::types, &g_stats);
+    g_lua.bindSingletonFunction("g_stats", "get", &Stats::get, &g_stats);
+    g_lua.bindSingletonFunction("g_stats", "clear", &Stats::clear, &g_stats);
+    g_lua.bindSingletonFunction("g_stats", "clearAll", &Stats::clearAll, &g_stats);
+    g_lua.bindSingletonFunction("g_stats", "getSlow", &Stats::getSlow, &g_stats);
+    g_lua.bindSingletonFunction("g_stats", "clearSlow", &Stats::clearSlow, &g_stats);
+    g_lua.bindSingletonFunction("g_stats", "getSleepTime", &Stats::getSleepTime, &g_stats);
+    g_lua.bindSingletonFunction("g_stats", "resetSleepTime", &Stats::resetSleepTime, &g_stats);
+    g_lua.bindSingletonFunction("g_stats", "getWidgetsInfo", &Stats::getWidgetsInfo, &g_stats);
+    
+    g_lua.registerSingletonClass("g_extras");
+    g_lua.bindSingletonFunction("g_extras", "set", &Extras::set, &g_extras);
+    g_lua.bindSingletonFunction("g_extras", "get", &Extras::get, &g_extras);
+    g_lua.bindSingletonFunction("g_extras", "getDescription", &Extras::getDescription, &g_extras);
+    g_lua.bindSingletonFunction("g_extras", "getAll", &Extras::getAll, &g_extras);
+
+    g_lua.registerSingletonClass("g_http");
+    g_lua.bindSingletonFunction("g_http", "get", &Http::get, &g_http);
+    g_lua.bindSingletonFunction("g_http", "post", &Http::post, &g_http);
+    g_lua.bindSingletonFunction("g_http", "download", &Http::download, &g_http);
+    g_lua.bindSingletonFunction("g_http", "ws", &Http::ws, &g_http);
+    g_lua.bindSingletonFunction("g_http", "wsSend", &Http::wsSend, &g_http);
+    g_lua.bindSingletonFunction("g_http", "wsClose", &Http::wsClose, &g_http);
+    g_lua.bindSingletonFunction("g_http", "cancel", &Http::cancel, &g_http);
+
+    g_lua.registerSingletonClass("g_atlas");
+    g_lua.bindSingletonFunction("g_atlas", "getStats", &Atlas::getStats, &g_atlas);
 
     // ModuleManager
     g_lua.registerSingletonClass("g_modules");
@@ -164,35 +243,38 @@ void Application::registerLuaFunctions()
 
     // EventDispatcher
     g_lua.registerSingletonClass("g_dispatcher");
-    g_lua.bindSingletonFunction("g_dispatcher", "addEvent", &EventDispatcher::addEvent, &g_dispatcher);
-    g_lua.bindSingletonFunction("g_dispatcher", "scheduleEvent", &EventDispatcher::scheduleEvent, &g_dispatcher);
-    g_lua.bindSingletonFunction("g_dispatcher", "cycleEvent", &EventDispatcher::cycleEvent, &g_dispatcher);
+    g_lua.bindSingletonFunction("g_dispatcher", "addEvent", &EventDispatcher::addEventEx, &g_dispatcher);
+    g_lua.bindSingletonFunction("g_dispatcher", "scheduleEvent", &EventDispatcher::scheduleEventEx, &g_dispatcher);
+    g_lua.bindSingletonFunction("g_dispatcher", "cycleEvent", &EventDispatcher::cycleEventEx, &g_dispatcher);
 
     // ResourceManager
     g_lua.registerSingletonClass("g_resources");
-    g_lua.bindSingletonFunction("g_resources", "addSearchPath", &ResourceManager::addSearchPath, &g_resources);
-    g_lua.bindSingletonFunction("g_resources", "setupUserWriteDir", &ResourceManager::setupUserWriteDir, &g_resources);
-    g_lua.bindSingletonFunction("g_resources", "setWriteDir", &ResourceManager::setWriteDir, &g_resources);
-    g_lua.bindSingletonFunction("g_resources", "searchAndAddPackages", &ResourceManager::searchAndAddPackages, &g_resources);
-    g_lua.bindSingletonFunction("g_resources", "removeSearchPath", &ResourceManager::removeSearchPath, &g_resources);
     g_lua.bindSingletonFunction("g_resources", "fileExists", &ResourceManager::fileExists, &g_resources);
     g_lua.bindSingletonFunction("g_resources", "directoryExists", &ResourceManager::directoryExists, &g_resources);
-    g_lua.bindSingletonFunction("g_resources", "getRealDir", &ResourceManager::getRealDir, &g_resources);
     g_lua.bindSingletonFunction("g_resources", "getWorkDir", &ResourceManager::getWorkDir, &g_resources);
-    g_lua.bindSingletonFunction("g_resources", "getUserDir", &ResourceManager::getUserDir, &g_resources);
     g_lua.bindSingletonFunction("g_resources", "getWriteDir", &ResourceManager::getWriteDir, &g_resources);
-    g_lua.bindSingletonFunction("g_resources", "getSearchPaths", &ResourceManager::getSearchPaths, &g_resources);
-    g_lua.bindSingletonFunction("g_resources", "getRealPath", &ResourceManager::getRealPath, &g_resources);
+    g_lua.bindSingletonFunction("g_resources", "getBinaryName", &ResourceManager::getBinaryName, &g_resources);
     g_lua.bindSingletonFunction("g_resources", "listDirectoryFiles", &ResourceManager::listDirectoryFiles, &g_resources);
-    g_lua.bindSingletonFunction("g_resources", "getDirectoryFiles", &ResourceManager::getDirectoryFiles, &g_resources);
-    g_lua.bindSingletonFunction("g_resources", "readFileContents", &ResourceManager::readFileContents, &g_resources);
+    g_lua.bindSingletonFunction("g_resources", "isFileType", &ResourceManager::isFileType, &g_resources);
+    g_lua.bindSingletonFunction("g_resources", "readFileContents", &ResourceManager::readFileContentsSafe, &g_resources);
     g_lua.bindSingletonFunction("g_resources", "writeFileContents", &ResourceManager::writeFileContents, &g_resources);
     g_lua.bindSingletonFunction("g_resources", "guessFilePath", &ResourceManager::guessFilePath, &g_resources);
-    g_lua.bindSingletonFunction("g_resources", "isFileType", &ResourceManager::isFileType, &g_resources);
-    g_lua.bindSingletonFunction("g_resources", "getFileTime", &ResourceManager::getFileTime, &g_resources);
     g_lua.bindSingletonFunction("g_resources", "makeDir", &ResourceManager::makeDir, &g_resources);
     g_lua.bindSingletonFunction("g_resources", "deleteFile", &ResourceManager::deleteFile, &g_resources);
+    g_lua.bindSingletonFunction("g_resources", "readCrashLog", [] { return std::string(); });
+    g_lua.bindSingletonFunction("g_resources", "deleteCrashLog", [] { return std::string(); });
+
     g_lua.bindSingletonFunction("g_resources", "resolvePath", &ResourceManager::resolvePath, &g_resources);
+    g_lua.bindSingletonFunction("g_resources", "isLoadedFromMemory", &ResourceManager::isLoadedFromMemory, &g_resources);    
+    g_lua.bindSingletonFunction("g_resources", "isLoadedFromArchive", &ResourceManager::isLoadedFromArchive, &g_resources);    
+    g_lua.bindSingletonFunction("g_resources", "listUpdateableFiles", [] { return std::list<std::string>(); } );
+    g_lua.bindSingletonFunction("g_resources", "fileChecksum", &ResourceManager::fileChecksum, &g_resources);
+    g_lua.bindSingletonFunction("g_resources", "filesChecksums", &ResourceManager::filesChecksums, &g_resources);
+    g_lua.bindSingletonFunction("g_resources", "selfChecksum", &ResourceManager::selfChecksum, &g_resources);
+    g_lua.bindSingletonFunction("g_resources", "updateData", &ResourceManager::updateData, &g_resources);
+    g_lua.bindSingletonFunction("g_resources", "updateExecutable", &ResourceManager::updateExecutable, &g_resources);
+    g_lua.bindSingletonFunction("g_resources", "setLayout", &ResourceManager::setLayout, &g_resources);
+    g_lua.bindSingletonFunction("g_resources", "getLayout", &ResourceManager::getLayout, &g_resources);
 
     // Config
     g_lua.registerClass<Config>();
@@ -245,13 +327,22 @@ void Application::registerLuaFunctions()
 
 #ifdef FW_GRAPHICS
     // GraphicalApplication
-    g_lua.bindSingletonFunction("g_app", "setForegroundPaneMaxFps", &GraphicalApplication::setForegroundPaneMaxFps, &g_app);
-    g_lua.bindSingletonFunction("g_app", "setBackgroundPaneMaxFps", &GraphicalApplication::setBackgroundPaneMaxFps, &g_app);
+    g_lua.bindSingletonFunction("g_app", "setMaxFps", &GraphicalApplication::setMaxFps, &g_app);
+    g_lua.bindSingletonFunction("g_app", "getMaxFps", &GraphicalApplication::getMaxFps, &g_app);
+    g_lua.bindSingletonFunction("g_app", "getFps", &GraphicalApplication::getFps, &g_app);
+    g_lua.bindSingletonFunction("g_app", "getGraphicsFps", &GraphicalApplication::getGraphicsFps, &g_app);
+    g_lua.bindSingletonFunction("g_app", "getProcessingFps", &GraphicalApplication::getProcessingFps, &g_app);
     g_lua.bindSingletonFunction("g_app", "isOnInputEvent", &GraphicalApplication::isOnInputEvent, &g_app);
-    g_lua.bindSingletonFunction("g_app", "getForegroundPaneFps", &GraphicalApplication::getForegroundPaneFps, &g_app);
-    g_lua.bindSingletonFunction("g_app", "getBackgroundPaneFps", &GraphicalApplication::getBackgroundPaneFps, &g_app);
-    g_lua.bindSingletonFunction("g_app", "getForegroundPaneMaxFps", &GraphicalApplication::getForegroundPaneMaxFps, &g_app);
-    g_lua.bindSingletonFunction("g_app", "getBackgroundPaneMaxFps", &GraphicalApplication::getBackgroundPaneMaxFps, &g_app);
+    g_lua.bindSingletonFunction("g_app", "doScreenshot", &GraphicalApplication::doScreenshot, &g_app);
+    g_lua.bindSingletonFunction("g_app", "scaleDown", &GraphicalApplication::scaleDown, &g_app);
+    g_lua.bindSingletonFunction("g_app", "scaleUp", &GraphicalApplication::scaleUp, &g_app);
+    g_lua.bindSingletonFunction("g_app", "scale", &GraphicalApplication::scale, &g_app);
+
+    // AdaptiveRenderer
+    g_lua.registerSingletonClass("g_adaptiveRenderer");
+    g_lua.bindSingletonFunction("g_adaptiveRenderer", "getLevel", &AdaptiveRenderer::getLevel, &g_adaptiveRenderer);
+    g_lua.bindSingletonFunction("g_adaptiveRenderer", "setLevel", &AdaptiveRenderer::setForcedLevel, &g_adaptiveRenderer);
+    g_lua.bindSingletonFunction("g_adaptiveRenderer", "getDebugInfo", &AdaptiveRenderer::getDebugInfo, &g_adaptiveRenderer);
 
     // PlatformWindow
     g_lua.registerSingletonClass("g_window");
@@ -259,7 +350,7 @@ void Application::registerLuaFunctions()
     g_lua.bindSingletonFunction("g_window", "resize", &PlatformWindow::resize, &g_window);
     g_lua.bindSingletonFunction("g_window", "show", &PlatformWindow::show, &g_window);
     g_lua.bindSingletonFunction("g_window", "hide", &PlatformWindow::hide, &g_window);
-    g_lua.bindSingletonFunction("g_window", "poll", &PlatformWindow::poll, &g_window);
+    g_lua.bindSingletonFunction("g_window", "poll", [] {}); // for backward compability
     g_lua.bindSingletonFunction("g_window", "maximize", &PlatformWindow::maximize, &g_window);
     g_lua.bindSingletonFunction("g_window", "restoreMouseCursor", &PlatformWindow::restoreMouseCursor, &g_window);
     g_lua.bindSingletonFunction("g_window", "showMouse", &PlatformWindow::showMouse, &g_window);
@@ -292,7 +383,8 @@ void Application::registerLuaFunctions()
     g_lua.bindSingletonFunction("g_window", "isFullscreen", &PlatformWindow::isFullscreen, &g_window);
     g_lua.bindSingletonFunction("g_window", "isMaximized", &PlatformWindow::isMaximized, &g_window);
     g_lua.bindSingletonFunction("g_window", "hasFocus", &PlatformWindow::hasFocus, &g_window);
-
+    g_lua.bindSingletonFunction("g_window", "showTextEditor", &PlatformWindow::showTextEditor, &g_window);
+    
     // Input
     g_lua.registerSingletonClass("g_mouse");
     g_lua.bindSingletonFunction("g_mouse", "loadCursors", &Mouse::loadCursors, &g_mouse);
@@ -304,31 +396,26 @@ void Application::registerLuaFunctions()
 
     // Graphics
     g_lua.registerSingletonClass("g_graphics");
-    g_lua.bindSingletonFunction("g_graphics", "isPainterEngineAvailable", &Graphics::isPainterEngineAvailable, &g_graphics);
-    g_lua.bindSingletonFunction("g_graphics", "selectPainterEngine", &Graphics::selectPainterEngine, &g_graphics);
-    g_lua.bindSingletonFunction("g_graphics", "canCacheBackbuffer", &Graphics::canCacheBackbuffer, &g_graphics);
-    g_lua.bindSingletonFunction("g_graphics", "canUseShaders", &Graphics::canUseShaders, &g_graphics);
-    g_lua.bindSingletonFunction("g_graphics", "shouldUseShaders", &Graphics::shouldUseShaders, &g_graphics);
-    g_lua.bindSingletonFunction("g_graphics", "setShouldUseShaders", &Graphics::setShouldUseShaders, &g_graphics);
-    g_lua.bindSingletonFunction("g_graphics", "getPainterEngine", &Graphics::getPainterEngine, &g_graphics);
-    g_lua.bindSingletonFunction("g_graphics", "getViewportSize", &Graphics::getViewportSize, &g_graphics);
     g_lua.bindSingletonFunction("g_graphics", "getVendor", &Graphics::getVendor, &g_graphics);
     g_lua.bindSingletonFunction("g_graphics", "getRenderer", &Graphics::getRenderer, &g_graphics);
     g_lua.bindSingletonFunction("g_graphics", "getVersion", &Graphics::getVersion, &g_graphics);
+    g_lua.bindSingletonFunction("g_graphics", "getExtensions", &Graphics::getExtensions, &g_graphics);
 
     // Textures
     g_lua.registerSingletonClass("g_textures");
     g_lua.bindSingletonFunction("g_textures", "preload", &TextureManager::preload, &g_textures);
     g_lua.bindSingletonFunction("g_textures", "clearCache", &TextureManager::clearCache, &g_textures);
-    g_lua.bindSingletonFunction("g_textures", "liveReload", &TextureManager::liveReload, &g_textures);
+    g_lua.bindSingletonFunction("g_textures", "reload", &TextureManager::reload, &g_textures);
 
     // UI
     g_lua.registerSingletonClass("g_ui");
     g_lua.bindSingletonFunction("g_ui", "clearStyles", &UIManager::clearStyles, &g_ui);
     g_lua.bindSingletonFunction("g_ui", "importStyle", &UIManager::importStyle, &g_ui);
+    g_lua.bindSingletonFunction("g_ui", "importStyleFromString", &UIManager::importStyleFromString, &g_ui);
     g_lua.bindSingletonFunction("g_ui", "getStyle", &UIManager::getStyle, &g_ui);
     g_lua.bindSingletonFunction("g_ui", "getStyleClass", &UIManager::getStyleClass, &g_ui);
     g_lua.bindSingletonFunction("g_ui", "loadUI", &UIManager::loadUI, &g_ui);
+    g_lua.bindSingletonFunction("g_ui", "loadUIFromString", &UIManager::loadUIFromString, &g_ui);
     g_lua.bindSingletonFunction("g_ui", "displayUI", &UIManager::displayUI, &g_ui);
     g_lua.bindSingletonFunction("g_ui", "createWidget", &UIManager::createWidget, &g_ui);
     g_lua.bindSingletonFunction("g_ui", "createWidgetFromOTML", &UIManager::createWidgetFromOTML, &g_ui);
@@ -347,10 +434,9 @@ void Application::registerLuaFunctions()
     g_lua.bindSingletonFunction("g_fonts", "fontExists", &FontManager::fontExists, &g_fonts);
     g_lua.bindSingletonFunction("g_fonts", "setDefaultFont", &FontManager::setDefaultFont, &g_fonts);
 
-    // ParticleManager
+    // Particles, for backward compability
     g_lua.registerSingletonClass("g_particles");
-    g_lua.bindSingletonFunction("g_particles", "importParticle", &ParticleManager::importParticle, &g_particles);
-    g_lua.bindSingletonFunction("g_particles", "getEffectsTypes", &ParticleManager::getEffectsTypes, &g_particles);
+    g_lua.bindSingletonFunction("g_particles", "importParticle", [](const std::string& v) {});
 
     // UIWidget
     g_lua.registerClass<UIWidget>();
@@ -364,6 +450,7 @@ void Application::registerLuaFunctions()
     g_lua.bindClassMemberFunction<UIWidget>("lowerChild", &UIWidget::lowerChild);
     g_lua.bindClassMemberFunction<UIWidget>("raiseChild", &UIWidget::raiseChild);
     g_lua.bindClassMemberFunction<UIWidget>("moveChildToIndex", &UIWidget::moveChildToIndex);
+    g_lua.bindClassMemberFunction<UIWidget>("reorderChildren", &UIWidget::reorderChildren);
     g_lua.bindClassMemberFunction<UIWidget>("lockChild", &UIWidget::lockChild);
     g_lua.bindClassMemberFunction<UIWidget>("unlockChild", &UIWidget::unlockChild);
     g_lua.bindClassMemberFunction<UIWidget>("mergeStyle", &UIWidget::mergeStyle);
@@ -428,7 +515,6 @@ void Application::registerLuaFunctions()
     g_lua.bindClassMemberFunction<UIWidget>("backwardsGetWidgetById", &UIWidget::backwardsGetWidgetById);
     g_lua.bindClassMemberFunction<UIWidget>("resize", &UIWidget::resize);
     g_lua.bindClassMemberFunction<UIWidget>("move", &UIWidget::move);
-    g_lua.bindClassMemberFunction<UIWidget>("rotate", &UIWidget::rotate);
     g_lua.bindClassMemberFunction<UIWidget>("hide", &UIWidget::hide);
     g_lua.bindClassMemberFunction<UIWidget>("show", &UIWidget::show);
     g_lua.bindClassMemberFunction<UIWidget>("disable", &UIWidget::disable);
@@ -460,6 +546,7 @@ void Application::registerLuaFunctions()
     g_lua.bindClassMemberFunction<UIWidget>("containsPaddingPoint", &UIWidget::containsPaddingPoint);
     g_lua.bindClassMemberFunction<UIWidget>("containsPoint", &UIWidget::containsPoint);
     g_lua.bindClassMemberFunction<UIWidget>("getId", &UIWidget::getId);
+    g_lua.bindClassMemberFunction<UIWidget>("getSource", &UIWidget::getSource);
     g_lua.bindClassMemberFunction<UIWidget>("getParent", &UIWidget::getParent);
     g_lua.bindClassMemberFunction<UIWidget>("getFocusedChild", &UIWidget::getFocusedChild);
     g_lua.bindClassMemberFunction<UIWidget>("getChildren", &UIWidget::getChildren);
@@ -570,7 +657,9 @@ void Application::registerLuaFunctions()
     g_lua.bindClassMemberFunction<UIWidget>("getPaddingLeft", &UIWidget::getPaddingLeft);
     g_lua.bindClassMemberFunction<UIWidget>("getOpacity", &UIWidget::getOpacity);
     g_lua.bindClassMemberFunction<UIWidget>("getRotation", &UIWidget::getRotation);
+    g_lua.bindClassMemberFunction<UIWidget>("setQRCode", &UIWidget::setQRCode);
     g_lua.bindClassMemberFunction<UIWidget>("setImageSource", &UIWidget::setImageSource);
+    g_lua.bindClassMemberFunction<UIWidget>("setImageSourceBase64", &UIWidget::setImageSourceBase64);
     g_lua.bindClassMemberFunction<UIWidget>("setImageClip", &UIWidget::setImageClip);
     g_lua.bindClassMemberFunction<UIWidget>("setImageOffsetX", &UIWidget::setImageOffsetX);
     g_lua.bindClassMemberFunction<UIWidget>("setImageOffsetY", &UIWidget::setImageOffsetY);
@@ -610,6 +699,7 @@ void Application::registerLuaFunctions()
     g_lua.bindClassMemberFunction<UIWidget>("resizeToText", &UIWidget::resizeToText);
     g_lua.bindClassMemberFunction<UIWidget>("clearText", &UIWidget::clearText);
     g_lua.bindClassMemberFunction<UIWidget>("setText", &UIWidget::setText);
+    g_lua.bindClassMemberFunction<UIWidget>("setColoredText", &UIWidget::setColoredText);
     g_lua.bindClassMemberFunction<UIWidget>("setTextAlign", &UIWidget::setTextAlign);
     g_lua.bindClassMemberFunction<UIWidget>("setTextOffset", &UIWidget::setTextOffset);
     g_lua.bindClassMemberFunction<UIWidget>("setTextWrap", &UIWidget::setTextWrap);
@@ -624,6 +714,7 @@ void Application::registerLuaFunctions()
     g_lua.bindClassMemberFunction<UIWidget>("getTextWrap", &UIWidget::getTextWrap);
     g_lua.bindClassMemberFunction<UIWidget>("getFont", &UIWidget::getFont);
     g_lua.bindClassMemberFunction<UIWidget>("getTextSize", &UIWidget::getTextSize);
+    g_lua.bindClassMemberFunction<UIWidget>("getUseCount", &UIWidget::getUseCount);
 
     // UILayout
     g_lua.registerClass<UILayout>();
@@ -736,17 +827,6 @@ void Application::registerLuaFunctions()
     g_lua.registerClass<ShaderProgram>();
     g_lua.registerClass<PainterShaderProgram>();
     g_lua.bindClassMemberFunction<PainterShaderProgram>("addMultiTexture", &PainterShaderProgram::addMultiTexture);
-
-    // ParticleEffect
-    g_lua.registerClass<ParticleEffectType>();
-    g_lua.bindClassStaticFunction<ParticleEffectType>("create", []{ return ParticleEffectTypePtr(new ParticleEffectType); });
-    g_lua.bindClassMemberFunction<ParticleEffectType>("getName", &ParticleEffectType::getName);
-    g_lua.bindClassMemberFunction<ParticleEffectType>("getDescription", &ParticleEffectType::getDescription);
-
-    // UIParticles
-    g_lua.registerClass<UIParticles, UIWidget>();
-    g_lua.bindClassStaticFunction<UIParticles>("create", []{ return UIParticlesPtr(new UIParticles); } );
-    g_lua.bindClassMemberFunction<UIParticles>("addEffect", &UIParticles::addEffect);
 #endif
 
 #ifdef FW_NET
@@ -777,14 +857,7 @@ void Application::registerLuaFunctions()
     g_lua.bindClassMemberFunction<Protocol>("generateXteaKey", &Protocol::generateXteaKey);
     g_lua.bindClassMemberFunction<Protocol>("enableXteaEncryption", &Protocol::enableXteaEncryption);
     g_lua.bindClassMemberFunction<Protocol>("enableChecksum", &Protocol::enableChecksum);
-
-    // ProtocolHttp
-    g_lua.registerClass<ProtocolHttp>();
-    g_lua.bindClassStaticFunction<ProtocolHttp>("create", []{ return ProtocolHttpPtr(new ProtocolHttp); });
-    g_lua.bindClassMemberFunction<ProtocolHttp>("connect", &ProtocolHttp::connect);
-    g_lua.bindClassMemberFunction<ProtocolHttp>("disconnect", &ProtocolHttp::disconnect);
-    g_lua.bindClassMemberFunction<ProtocolHttp>("send", &ProtocolHttp::send);
-    g_lua.bindClassMemberFunction<ProtocolHttp>("recv", &ProtocolHttp::recv);
+    g_lua.bindClassMemberFunction<Protocol>("enableBigPackets", &Protocol::enableBigPackets);
 
     // InputMessage
     g_lua.registerClass<InputMessage>();
@@ -824,6 +897,18 @@ void Application::registerLuaFunctions()
     g_lua.bindClassMemberFunction<OutputMessage>("setMessageSize", &OutputMessage::setMessageSize);
     g_lua.bindClassMemberFunction<OutputMessage>("getWritePos", &OutputMessage::getWritePos);
     g_lua.bindClassMemberFunction<OutputMessage>("setWritePos", &OutputMessage::setWritePos);
+
+#ifdef FW_PROXY
+    g_lua.registerSingletonClass("g_proxy");
+    g_lua.bindSingletonFunction("g_proxy", "addProxy", &ProxyManager::addProxy, &g_proxy);
+    g_lua.bindSingletonFunction("g_proxy", "removeProxy", &ProxyManager::removeProxy, &g_proxy);
+    g_lua.bindSingletonFunction("g_proxy", "clear", &ProxyManager::clear, &g_proxy);
+    g_lua.bindSingletonFunction("g_proxy", "setMaxActiveProxies", &ProxyManager::setMaxActiveProxies, &g_proxy);
+    g_lua.bindSingletonFunction("g_proxy", "getProxies", &ProxyManager::getProxies, &g_proxy);
+    g_lua.bindSingletonFunction("g_proxy", "getProxiesDebugInfo", &ProxyManager::getProxiesDebugInfo, &g_proxy);
+    g_lua.bindSingletonFunction("g_proxy", "getPing", &ProxyManager::getPing, &g_proxy);
+#endif
+
 #endif
 
 #ifdef FW_SOUND
