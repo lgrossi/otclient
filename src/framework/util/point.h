@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -64,10 +64,10 @@ public:
     TPoint<T> operator&(int a) { return TPoint<T>(x & a, y & a); }
     TPoint<T>& operator&=(int a) { x &= a; y &= a; return *this; }
 
-    bool operator<=(const TPoint<T>&other) const { return x<=other.x && y<=other.y; }
-    bool operator>=(const TPoint<T>&other) const { return x>=other.x && y>=other.y; }
-    bool operator<(const TPoint<T>&other) const { return x<other.x && y<other.y; }
-    bool operator>(const TPoint<T>&other) const { return x>other.x && y>other.y; }
+    bool operator<=(const TPoint<T>&other) const { return x<=other.x || (x==other.x && y<=other.y); }
+    bool operator>=(const TPoint<T>&other) const { return x>=other.x || (x==other.x && y>=other.y); }
+    bool operator<(const TPoint<T>&other) const { return x<other.x || (x==other.x && y<other.y); }
+    bool operator>(const TPoint<T>&other) const { return x>other.x || (x==other.x && y>other.y); }
 
     TPoint<T>& operator=(const TPoint<T>& other) { x = other.x; y = other.y; return *this; }
     bool operator==(const TPoint<T>& other) const { return other.x==x && other.y==y; }

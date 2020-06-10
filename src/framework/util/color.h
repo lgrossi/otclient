@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,6 +28,8 @@
 #include "../stdext/string.h"
 #include "../const.h"
 #include <iomanip>
+#include <algorithm>
+#include <sstream>
 
 class Color
 {
@@ -39,24 +41,20 @@ public:
     Color(float r, float g, float b, float a = 1.0f) : m_r(r), m_g(g), m_b(b), m_a(a) { }
     Color(const std::string& coltext);
 
-    Color(const Color &color) = default;
-
-    uint8 a() const { return m_a*255.0f; }
-    uint8 b() const { return m_b*255.0f; }
-    uint8 g() const { return m_g*255.0f; }
-    uint8 r() const { return m_r*255.0f; }
+    uint8 a() const { return 255.0f * m_a; }
+    uint8 b() const { return 255.0f * m_b; }
+    uint8 g() const { return 255.0f * m_g; }
+    uint8 r() const { return 255.0f * m_r; }
 
     float aF() const { return m_a; }
     float bF() const { return m_b; }
     float gF() const { return m_g; }
     float rF() const { return m_r; }
 
-    uint32 rgba() const { return uint32(a() | b() << 8 | g() << 16 | r() << 24); }
-
-    void setRed(int r) { m_r = uint8(r)/255.0f; }
-    void setGreen(int g) { m_g = uint8(g)/255.0f; }
-    void setBlue(int b) { m_b = uint8(b)/255.0f; }
-    void setAlpha(int a) { m_a = uint8(a)/255.0f; }
+    void setRed(int r) { m_r = 0.003921f * r; }
+    void setGreen(int g) { m_g = 0.003921f * g; }
+    void setBlue(int b) { m_b = 0.003921f * b; }
+    void setAlpha(int a) { m_a = 0.003921f * a; }
 
     void setRed(float r) { m_r = r; }
     void setGreen(float g) { m_g = g; }
@@ -66,6 +64,10 @@ public:
     void setRGBA(uint8 r, uint8 g, uint8 b, uint8 a = 0xFF) { m_r = r/255.0f; m_g = g/255.0f; m_b = b/255.0f; m_a = a/255.0f; }
     void setRGBA(uint32 rgba) { setRGBA((rgba >> 0) & 0xff, (rgba >> 8) & 0xff, (rgba >> 16) & 0xff, (rgba >> 24) & 0xff); }
 
+    Color opacity(float opacity) const {
+        return Color(m_r, m_g, m_b, m_a * opacity);
+    }
+
     Color operator+(const Color& other) const { return Color(m_r + other.m_r, m_g + other.m_g, m_b + other.m_b, m_a + other.m_a); }
     Color operator-(const Color& other) const { return Color(m_r - other.m_r, m_g - other.m_g, m_b - other.m_b, m_a - other.m_a); }
 
@@ -73,11 +75,23 @@ public:
     Color operator/(float v) const { return Color(m_r/v, m_g/v, m_b/v, m_a/v); }
 
     Color& operator=(uint32_t rgba) { setRGBA(rgba); return *this; }
-    bool operator==(uint32_t rgba) const { return this->rgba() == rgba; }
+    
+    Color operator+=(const Color& other) const { 
+        return Color(std::min<float>(1.0f, m_r + other.m_r), std::min<float>(1.0f, m_g + other.m_g),
+            std::min<float>(1.0f, m_b + other.m_b), std::min<float>(1.0f, m_a + other.m_a));
+    }
 
     Color& operator=(const Color& other) { m_r = other.m_r; m_g = other.m_g; m_b = other.m_b; m_a = other.m_a; return *this; }
-    bool operator==(const Color& other) const { return other.rgba() == rgba(); }
-    bool operator!=(const Color& other) const { return other.rgba() != rgba(); }
+    bool operator==(const Color& other) const {
+        if (std::abs(other.m_r - m_r) > 0.001) return false;
+        if (std::abs(other.m_g - m_g) > 0.001) return false;
+        if (std::abs(other.m_b - m_b) > 0.001) return false;
+        if (std::abs(other.m_a - m_a) > 0.001) return false;
+        return true;
+    }
+    bool operator!=(const Color& other) const { return !(other == *this); }
+
+    std::string toHex();
 
     static uint8 to8bit(const Color& color) {
         uint8 c = 0;
@@ -96,6 +110,8 @@ public:
         int b = color % 6 * 51;
         return Color(r, g, b);
     }
+
+    static Color getOutfitColor(int color);
 
     static const Color alpha;
     static const Color white;
@@ -153,7 +169,7 @@ inline std::istream& operator>>(std::istream& in, Color& color)
             else
                 color.setAlpha(255);
         } else
-            in.seekg(-(std::istream::streampos)tmp.length()-1, ios_base::cur);
+            in.seekg(-(std::streampos)tmp.length()-1, ios_base::cur);
     } else {
         in.unget();
         in >> tmp;

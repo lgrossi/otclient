@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,8 +40,8 @@ public:
     bool isEmpty() const { return wd<1 || ht<1; }
     bool isValid() const { return wd>=0 && ht>=0; }
 
-    int width() const { return wd; }
-    int height() const { return ht; }
+    T width() const { return wd; }
+    T height() const { return ht; }
 
     void resize(T w, T h) { wd = w; ht = h; }
     void setWidth(T w) { wd = w; }
