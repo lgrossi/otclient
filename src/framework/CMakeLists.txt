@@ -27,8 +27,13 @@ set(framework_SOURCES ${framework_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/util/crypt.cpp
     ${CMAKE_CURRENT_LIST_DIR}/util/crypt.h
     ${CMAKE_CURRENT_LIST_DIR}/util/databuffer.h
+    ${CMAKE_CURRENT_LIST_DIR}/util/extras.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/util/extras.h
+    ${CMAKE_CURRENT_LIST_DIR}/util/framecounter.h
     ${CMAKE_CURRENT_LIST_DIR}/util/matrix.h
     ${CMAKE_CURRENT_LIST_DIR}/util/point.h
+    ${CMAKE_CURRENT_LIST_DIR}/util/qrcodegen.c
+    ${CMAKE_CURRENT_LIST_DIR}/util/qrcodegen.h
     ${CMAKE_CURRENT_LIST_DIR}/util/rect.h
     ${CMAKE_CURRENT_LIST_DIR}/util/size.h
 
@@ -43,6 +48,7 @@ set(framework_SOURCES ${framework_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/stdext/dynamic_storage.h
     ${CMAKE_CURRENT_LIST_DIR}/stdext/exception.h
     ${CMAKE_CURRENT_LIST_DIR}/stdext/format.h
+    ${CMAKE_CURRENT_LIST_DIR}/stdext/fastrand.h
     ${CMAKE_CURRENT_LIST_DIR}/stdext/math.cpp
     ${CMAKE_CURRENT_LIST_DIR}/stdext/math.h
     ${CMAKE_CURRENT_LIST_DIR}/stdext/net.cpp
@@ -59,6 +65,13 @@ set(framework_SOURCES ${framework_SOURCES}
     ${CMAKE_CURRENT_LIST_DIR}/stdext/time.h
     ${CMAKE_CURRENT_LIST_DIR}/stdext/traits.h
     ${CMAKE_CURRENT_LIST_DIR}/stdext/types.h
+    ${CMAKE_CURRENT_LIST_DIR}/stdext/uri.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/stdext/uri.h
+
+    # http
+    ${CMAKE_CURRENT_LIST_DIR}/http/http.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/http/http.h
+    ${CMAKE_CURRENT_LIST_DIR}/http/result.h
 
     # core
     ${CMAKE_CURRENT_LIST_DIR}/core/application.cpp
