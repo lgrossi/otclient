@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -67,6 +67,7 @@ private:
     stdext::boolean<false> m_autoLoad;
     stdext::boolean<false> m_reloadable;
     stdext::boolean<false> m_sandboxed;
+    bool m_loadedOnStartup = false;
     int m_autoLoadPriority;
     int m_sandboxEnv;
     std::tuple<std::string, std::string> m_onLoadFunc;

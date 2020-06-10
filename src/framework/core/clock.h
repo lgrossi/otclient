@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,6 +36,8 @@ public:
     ticks_t micros() { return m_currentMicros; }
     ticks_t millis() { return m_currentMillis; }
     float seconds() { return m_currentSeconds; }
+    ticks_t realMicros();
+    ticks_t realMillis();
 
 private:
     ticks_t m_currentMicros;

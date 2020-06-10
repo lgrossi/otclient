@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 #define APPLICATION_H
 
 #include <framework/global.h>
-#include <framework/core/adaptativeframecounter.h>
 
 //@bindsingleton g_app
 class Application
@@ -39,7 +38,9 @@ public:
     virtual void run() = 0;
     virtual void poll();
     virtual void exit();
+    virtual void quick_exit();
     virtual void close();
+    void restart();
 
     void setName(const std::string& name) { m_appName = name; }
     void setCompactName(const std::string& compactName) { m_appCompactName = compactName; }
@@ -59,8 +60,14 @@ public:
     std::string getBuildCommit() { return BUILD_COMMIT; }
     std::string getBuildType() { return BUILD_TYPE; }
     std::string getBuildArch() { return BUILD_ARCH; }
+    std::string getAuthor() { return "otclient.ovh"; }
     std::string getOs();
     std::string getStartupOptions() { return m_startupOptions; }
+
+    bool isMobile()
+    {
+        return m_mobile;
+    }
 
 protected:
     void registerLuaFunctions();
@@ -73,6 +80,7 @@ protected:
     stdext::boolean<false> m_running;
     stdext::boolean<false> m_stopping;
     stdext::boolean<false> m_terminated;
+    stdext::boolean<false> m_mobile;
 };
 
 #ifdef FW_GRAPHICS

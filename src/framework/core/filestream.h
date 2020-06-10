@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,7 +38,6 @@ public:
     FileStream(const std::string& name, const std::string& buffer);
     ~FileStream();
 
-    void cache();
     void close();
     void flush();
     void write(const void *buffer, uint count);
@@ -78,6 +77,7 @@ public:
     FileStreamPtr asFileStream() { return static_self_cast<FileStream>(); }
 
 private:
+    bool initFromGzip(const std::string& buffer);
     void checkWrite();
     void throwError(const std::string& message, bool physfsError = false);
 

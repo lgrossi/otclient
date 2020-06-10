@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,4 +36,14 @@ void Clock::update()
     m_currentMicros = stdext::micros();
     m_currentMillis = m_currentMicros / 1000;
     m_currentSeconds = m_currentMicros / 1000000.0f;
+}
+
+ticks_t Clock::realMicros()
+{
+    return stdext::micros();
+}
+
+ticks_t Clock::realMillis()
+{
+    return stdext::millis();
 }

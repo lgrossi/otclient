@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,8 @@
 #include "logger.h"
 #include "eventdispatcher.h"
 
-//#include <boost/regex.hpp>
 #include <framework/core/resourcemanager.h>
+#include <framework/core/graphicalapplication.h>
 
 #ifdef FW_GRAPHICS
 #include <framework/platform/platformwindow.h>
@@ -36,7 +36,10 @@ Logger g_logger;
 
 void Logger::log(Fw::LogLevel level, const std::string& message)
 {
-    std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    std::unique_lock<std::recursive_mutex> lock(m_mutex, std::try_to_lock);
+    if (!lock.owns_lock()) {
+        return;
+    }
 
 #ifdef NDEBUG
     if(level == Fw::LogDebug)
@@ -48,34 +51,21 @@ void Logger::log(Fw::LogLevel level, const std::string& message)
         return;
 
     const static std::string logPrefixes[] = { "", "", "WARNING: ", "ERROR: ", "FATAL ERROR: " };
-
     std::string outmsg = logPrefixes[level] + message;
-
-    /*
-#if !defined(NDEBUG) && !defined(WIN32)
-    // replace paths for improved debug with vim
-    std::stringstream tmp;
-    boost::smatch m;
-    boost::regex e ("/[^ :]+");
-    while(boost::regex_search(outmsg,m,e)) {
-        tmp << m.prefix().str();
-        tmp << g_resources.getRealDir(m.str()) << m.str();
-        outmsg = m.suffix().str();
-    }
-    if(!tmp.str().empty())
-        outmsg = tmp.str();
-#endif
-    */
-
+#ifdef ANDROID
+    const static int logPriorities[] = { ANDROID_LOG_INFO, ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR, ANDROID_LOG_FATAL };
+    __android_log_print(logPriorities[level], "OTCLIENTV8", "%s", outmsg.c_str());
+#else
     std::cout << outmsg << std::endl;
 
     if(m_outFile.good()) {
         m_outFile << outmsg << std::endl;
         m_outFile.flush();
     }
+#endif
 
-    std::size_t now = std::time(nullptr);
-    m_logMessages.emplace_back(level, outmsg, now);
+    std::size_t now = std::time(NULL);
+    m_logMessages.push_back(LogMessage(level, outmsg, now));
     if(m_logMessages.size() > MAX_LOG_HISTORY)
         m_logMessages.pop_front();
 
@@ -92,7 +82,11 @@ void Logger::log(Fw::LogLevel level, const std::string& message)
         g_window.displayFatalError(message);
 #endif
         ignoreLogs = true;
-        exit(-1);
+#ifdef _MSC_VER
+        ::quick_exit(0);
+#else
+        exit(0);
+#endif
     }
 }
 
@@ -131,12 +125,33 @@ void Logger::fireOldMessages()
 
 void Logger::setLogFile(const std::string& file)
 {
+#ifndef ANDROID
     std::lock_guard<std::recursive_mutex> lock(m_mutex);
+    m_outFile.open(stdext::utf8_to_latin1(file.c_str()).c_str(), std::ios::in | std::ios::binary);
+    if (m_outFile.is_open()) {
+        m_outFile.seekg(0, m_outFile.end);
+        int length = m_outFile.tellg();
+        int offset = std::max<int>(0, length - 100000);
+        length -= offset;
+        m_outFile.seekg(offset, m_outFile.beg);
+        if (length > 0) {
+            m_lastLog.resize(length);
+            m_outFile.read(&m_lastLog[0], length);
+            m_lastLog.resize(m_outFile.gcount());
+        }
+        m_outFile.close();
+    }
 
-    m_outFile.open(stdext::utf8_to_latin1(file).c_str(), std::ios::out | std::ios::app);
+    m_outFile.open(stdext::utf8_to_latin1(file.c_str()).c_str(), std::ios::out | std::ios::app);
     if(!m_outFile.is_open() || !m_outFile.good()) {
         g_logger.error(stdext::format("Unable to save log to '%s'", file));
         return;
     }
     m_outFile.flush();
+#endif
+}
+
+void fatalError(const char* error, const char* file, int line)
+{
+    g_logger.fatal(stdext::format("Fatal error: %s\nIn: %s:%i", error, file, line));
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,17 +35,28 @@ public:
     void shutdown();
     void poll();
 
-    EventPtr addEvent(const std::function<void()>& callback, bool pushFront = false);
-    ScheduledEventPtr scheduleEvent(const std::function<void()>& callback, int delay);
-    ScheduledEventPtr cycleEvent(const std::function<void()>& callback, int delay);
+    EventPtr addEventEx(const std::string& function, const std::function<void()>& callback, bool pushFront = false);
+    ScheduledEventPtr scheduleEventEx(const std::string& function, const std::function<void()>& callback, int delay);
+    ScheduledEventPtr cycleEventEx(const std::string& function, const std::function<void()>& callback, int delay);
+
+    bool isBotSafe() { return m_botSafe; }
 
 private:
     std::list<EventPtr> m_eventList;
     int m_pollEventsSize;
-    stdext::boolean<false> m_disabled;
+    bool m_disabled = false;
+    bool m_botSafe = false;
+    std::recursive_mutex m_mutex;
     std::priority_queue<ScheduledEventPtr, std::vector<ScheduledEventPtr>, lessScheduledEvent> m_scheduledEventList;
 };
 
 extern EventDispatcher g_dispatcher;
+extern EventDispatcher g_graphicsDispatcher;
+extern std::thread::id g_mainThreadId;
+extern std::thread::id g_dispatcherThreadId;
+
+#define addEvent(...) addEventEx(__FUNCTION__, __VA_ARGS__)
+#define scheduleEvent(...) scheduleEventEx(__FUNCTION__, __VA_ARGS__)
+#define cycleEvent(...) cycleEventEx(__FUNCTION__, __VA_ARGS__)
 
 #endif

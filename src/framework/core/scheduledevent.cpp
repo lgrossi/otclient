@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 
 #include "scheduledevent.h"
 
-ScheduledEvent::ScheduledEvent(const std::function<void()>& callback, int delay, int maxCycles) : Event(callback)
+ScheduledEvent::ScheduledEvent(const std::string& function, const std::function<void()>& callback, int delay, int maxCycles, bool botSafe) : Event(function, callback, botSafe)
 {
     m_ticks = g_clock.millis() + delay;
     m_delay = delay;

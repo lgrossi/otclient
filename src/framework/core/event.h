@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@
 class Event : public LuaObject
 {
 public:
-    Event(const std::function<void()>& callback);
+    Event(const std::string& function, const std::function<void()>& callback, bool botSafe = false);
     virtual ~Event();
 
     virtual void execute();
@@ -37,11 +37,16 @@ public:
 
     bool isCanceled() { return m_canceled; }
     bool isExecuted() { return m_executed; }
+    bool isBotSafe() { return m_botSafe; }
+
+    const std::string& getFunction() { return m_function; }
 
 protected:
+    std::string m_function;
     std::function<void()> m_callback;
     bool m_canceled;
     bool m_executed;
+    bool m_botSafe;
 };
 
 #endif
