@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,23 +25,51 @@
 #include <framework/core/application.h>
 #include <random>
 
+extern asio::io_service g_ioService;
+
 Protocol::Protocol()
 {
     m_xteaEncryptionEnabled = false;
     m_checksumEnabled = false;
+    m_bigPackets = false;
+    m_compression = false;
     m_inputMessage = InputMessagePtr(new InputMessage);
+
+    // compression
+    m_zstreamBuffer.resize(InputMessage::BUFFER_MAXSIZE);
+    m_zstream.next_in = m_inputMessage->getDataBuffer();
+    m_zstream.next_out = m_zstreamBuffer.data();
+    m_zstream.avail_in = 0;
+    m_zstream.avail_out = 0;
+    m_zstream.total_in = 0;
+    m_zstream.total_out = 0;
+    m_zstream.zalloc = nullptr;
+    m_zstream.zfree = nullptr;
+    m_zstream.opaque = nullptr;
+    m_zstream.data_type = Z_BINARY;
+    inflateInit2(&m_zstream, -15);
 }
 
 Protocol::~Protocol()
 {
 #ifndef NDEBUG
-    assert(!g_app.isTerminated());
+    VALIDATE(!g_app.isTerminated());
 #endif
     disconnect();
+    inflateEnd(&m_zstream);
 }
 
 void Protocol::connect(const std::string& host, uint16 port)
 {
+#ifdef FW_PROXY
+    if (host == "proxy" || host == "0.0.0.0" || (host == "127.0.0.1" && g_proxy.isActive())) {
+        m_disconnected = false;
+        m_proxy = g_proxy.addSession(port,
+                                     std::bind(&Protocol::onProxyPacket, asProtocol(), std::placeholders::_1),
+                                     std::bind(&Protocol::onProxyDisconnected, asProtocol(), std::placeholders::_1));
+        return onConnect();
+    }
+#endif
     m_connection = ConnectionPtr(new Connection);
     m_connection->setErrorCallback(std::bind(&Protocol::onError, asProtocol(), std::placeholders::_1));
     m_connection->connect(host, port, std::bind(&Protocol::onConnect, asProtocol()));
@@ -49,6 +77,13 @@ void Protocol::connect(const std::string& host, uint16 port)
 
 void Protocol::disconnect()
 {
+#ifdef FW_PROXY
+    m_disconnected = true;
+    if (m_proxy) {
+        g_proxy.removeSession(m_proxy);
+        return;
+    }
+#endif
     if(m_connection) {
         m_connection->close();
         m_connection.reset();
@@ -57,6 +92,10 @@ void Protocol::disconnect()
 
 bool Protocol::isConnected()
 {
+#ifdef FW_PROXY
+    if (m_proxy)
+        return !m_disconnected;
+#endif
     if(m_connection && m_connection->isConnected())
         return true;
     return false;
@@ -64,6 +103,10 @@ bool Protocol::isConnected()
 
 bool Protocol::isConnecting()
 {
+#ifdef FW_PROXY
+    if (m_proxy)
+        return false;
+#endif
     if(m_connection && m_connection->isConnecting())
         return true;
     return false;
@@ -80,7 +123,16 @@ void Protocol::send(const OutputMessagePtr& outputMessage)
         outputMessage->writeChecksum();
 
     // write message size
-    outputMessage->writeMessageSize();
+    outputMessage->writeMessageSize(m_bigPackets);
+
+#ifdef FW_PROXY
+    if (m_proxy) {
+        auto packet = std::make_shared<ProxyPacket>(outputMessage->getHeaderBuffer(), outputMessage->getWriteBuffer());
+        g_proxy.send(m_proxy, packet);
+        outputMessage->reset();
+        return;
+    }
+#endif
 
     // send
     if(m_connection)
@@ -92,33 +144,38 @@ void Protocol::send(const OutputMessagePtr& outputMessage)
 
 void Protocol::recv()
 {
+#ifdef FW_PROXY
+    if (m_proxy) {
+        return;
+    }
+#endif
     m_inputMessage->reset();
 
     // first update message header size
-    int headerSize = 2; // 2 bytes for message size
+    int headerSize = m_bigPackets ? 4 : 2; // 2 or 4 bytes for message size
     if(m_checksumEnabled)
         headerSize += 4; // 4 bytes for checksum
     if(m_xteaEncryptionEnabled)
-        headerSize += 2; // 2 bytes for XTEA encrypted message size
+        headerSize += m_bigPackets ? 4 : 2; // 2 or 4 bytes for XTEA encrypted message size
     m_inputMessage->setHeaderSize(headerSize);
 
     // read the first 2 bytes which contain the message size
     if(m_connection)
-        m_connection->read(2, std::bind(&Protocol::internalRecvHeader, asProtocol(), std::placeholders::_1,  std::placeholders::_2));
+        m_connection->read(m_bigPackets ? 4 : 2, std::bind(&Protocol::internalRecvHeader, asProtocol(), std::placeholders::_1,  std::placeholders::_2));
 }
 
-void Protocol::internalRecvHeader(uint8* buffer, uint16 size)
+void Protocol::internalRecvHeader(uint8* buffer, uint32 size)
 {
     // read message size
     m_inputMessage->fillBuffer(buffer, size);
-    uint16 remainingSize = m_inputMessage->readSize();
+    uint32 remainingSize = m_inputMessage->readSize(m_bigPackets);
 
     // read remaining message data
     if(m_connection)
         m_connection->read(remainingSize, std::bind(&Protocol::internalRecvData, asProtocol(), std::placeholders::_1,  std::placeholders::_2));
 }
 
-void Protocol::internalRecvData(uint8* buffer, uint16 size)
+void Protocol::internalRecvData(uint8* buffer, uint32 size)
 {
     // process data only if really connected
     if(!isConnected()) {
@@ -127,10 +184,16 @@ void Protocol::internalRecvData(uint8* buffer, uint16 size)
     }
 
     m_inputMessage->fillBuffer(buffer, size);
-
-    if(m_checksumEnabled && !m_inputMessage->readChecksum()) {
-        g_logger.traceError("got a network message with invalid checksum");
-        return;
+    
+    bool decompress = false;
+    if(m_checksumEnabled) {
+        if (m_inputMessage->peekU32() == 0) { // compressed data
+            m_inputMessage->getU32();
+            decompress = true;
+        } else if (!m_inputMessage->readChecksum()) {
+            g_logger.traceError(stdext::format("got a network message with invalid checksum, size: %i", (int)m_inputMessage->getMessageSize()));
+            return;
+        }
     }
 
     if(m_xteaEncryptionEnabled) {
@@ -139,12 +202,31 @@ void Protocol::internalRecvData(uint8* buffer, uint16 size)
             return;
         }
     }
+
+    if (decompress || m_compression) {
+        m_inputMessage->addZlibFooter();
+        m_zstream.next_in = m_inputMessage->getDataBuffer();
+        m_zstream.next_out = m_zstreamBuffer.data();
+        m_zstream.avail_in = m_inputMessage->getUnreadSize();
+        m_zstream.avail_out = m_zstreamBuffer.size();
+        if (inflate(&m_zstream, Z_SYNC_FLUSH) != Z_OK) {
+            g_logger.traceError("failed to decompress message");
+            return;
+        }
+        int decryptedSize = m_zstreamBuffer.size() - m_zstream.avail_out;
+        if (decryptedSize == 0) {
+            g_logger.traceError(stdext::format("invalid size of decompressed message - %i", (int)decryptedSize));
+            return;
+        }
+        m_inputMessage->fillBuffer(m_zstreamBuffer.data(), decryptedSize);
+        m_inputMessage->setMessageSize(m_inputMessage->getHeaderSize() + decryptedSize);
+    }
     onRecv(m_inputMessage);
 }
 
 void Protocol::generateXteaKey()
 {
-    std::mt19937 eng(std::time(nullptr));
+    std::mt19937 eng(std::time(NULL));
     std::uniform_int_distribution<uint32> unif(0, 0xFFFFFFFF);
     m_xteaKey[0] = unif(eng);
     m_xteaKey[1] = unif(eng);
@@ -171,14 +253,14 @@ std::vector<uint32> Protocol::getXteaKey()
 
 bool Protocol::xteaDecrypt(const InputMessagePtr& inputMessage)
 {
-    uint16 encryptedSize = inputMessage->getUnreadSize();
+    uint32 encryptedSize = inputMessage->getUnreadSize();
     if(encryptedSize % 8 != 0) {
-        g_logger.traceError("invalid encrypted network message");
+        g_logger.traceError(stdext::format("invalid encrypted network message %i", (int)encryptedSize));
         return false;
     }
 
     uint32 *buffer = (uint32*)(inputMessage->getReadBuffer());
-    int readPos = 0;
+    uint32_t readPos = 0;
 
     while(readPos < encryptedSize/4) {
         uint32 v0 = buffer[readPos], v1 = buffer[readPos + 1];
@@ -194,9 +276,9 @@ bool Protocol::xteaDecrypt(const InputMessagePtr& inputMessage)
         readPos = readPos + 2;
     }
 
-    uint16 decryptedSize = inputMessage->getU16() + 2;
+    uint32 decryptedSize = m_bigPackets ? (inputMessage->getU32() + 4) : (inputMessage->getU16() + 2);
     int sizeDelta = decryptedSize - encryptedSize;
-    if(sizeDelta > 0 || -sizeDelta > encryptedSize) {
+    if(sizeDelta > 0 || -sizeDelta > (int)encryptedSize) {
         g_logger.traceError("invalid decrypted network message");
         return false;
     }
@@ -207,18 +289,18 @@ bool Protocol::xteaDecrypt(const InputMessagePtr& inputMessage)
 
 void Protocol::xteaEncrypt(const OutputMessagePtr& outputMessage)
 {
-    outputMessage->writeMessageSize();
-    uint16 encryptedSize = outputMessage->getMessageSize();
+    outputMessage->writeMessageSize(m_bigPackets);
+    uint32 encryptedSize = outputMessage->getMessageSize();
 
     //add bytes until reach 8 multiple
     if((encryptedSize % 8) != 0) {
-        uint16 n = 8 - (encryptedSize % 8);
+        uint32 n = 8 - (encryptedSize % 8);
         outputMessage->addPaddingBytes(n);
         encryptedSize += n;
     }
 
-    int readPos = 0;
-    uint32 *buffer = (uint32*)(outputMessage->getDataBuffer() - 2);
+    uint32_t readPos = 0;
+    uint32 *buffer = (uint32*)(outputMessage->getDataBuffer() - (m_bigPackets ? 4 : 2));
     while(readPos < encryptedSize / 4) {
         uint32 v0 = buffer[readPos], v1 = buffer[readPos + 1];
         uint32 delta = 0x61C88647;
@@ -249,3 +331,42 @@ void Protocol::onError(const boost::system::error_code& err)
     callLuaField("onError", err.message(), err.value());
     disconnect();
 }
+
+#ifdef FW_PROXY
+void Protocol::onProxyPacket(ProxyPacketPtr packet)
+{
+    if (m_disconnected)
+        return;
+    auto self(asProtocol());
+    boost::asio::post(g_ioService, [&, self, packet]
+    {
+        if (m_disconnected)
+            return;
+        m_inputMessage->reset();
+
+        // first update message header size
+        int headerSize = m_bigPackets ? 4 : 2; // 2 bytes for message size
+        if (m_checksumEnabled)
+            headerSize += 4; // 4 bytes for checksum
+        if (m_xteaEncryptionEnabled)
+            headerSize += m_bigPackets ? 4 : 2; // 2 bytes for XTEA encrypted message size
+        m_inputMessage->setHeaderSize(headerSize);
+        m_inputMessage->fillBuffer(packet->data(), m_bigPackets ? 4 : 2);
+        m_inputMessage->readSize(m_bigPackets);
+        internalRecvData(packet->data() + (m_bigPackets ? 4 : 2), packet->size() - (m_bigPackets ? 4 : 2));
+    });
+}
+
+void Protocol::onProxyDisconnected(boost::system::error_code ec)
+{
+    if (m_disconnected)
+        return;
+    auto self(asProtocol());
+    boost::asio::post(g_ioService, [&, self, ec] {
+        if (m_disconnected)
+            return;
+        m_disconnected = true;
+        onError(ec);
+    });
+}
+#endif

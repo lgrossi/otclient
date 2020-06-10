@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,6 @@
 #define FRAMEWORK_NET_DECLARATIONS_H
 
 #include <framework/global.h>
-#include <boost/asio.hpp>
-#include <boost/system/error_code.hpp>
 
 namespace asio = boost::asio;
 
@@ -33,14 +31,12 @@ class InputMessage;
 class OutputMessage;
 class Connection;
 class Protocol;
-class ProtocolHttp;
 class Server;
 
 typedef stdext::shared_object_ptr<InputMessage> InputMessagePtr;
 typedef stdext::shared_object_ptr<OutputMessage> OutputMessagePtr;
 typedef stdext::shared_object_ptr<Connection> ConnectionPtr;
 typedef stdext::shared_object_ptr<Protocol> ProtocolPtr;
-typedef stdext::shared_object_ptr<ProtocolHttp> ProtocolHttpPtr;
 typedef stdext::shared_object_ptr<Server> ServerPtr;
 
 #endif

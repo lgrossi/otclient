@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -101,7 +101,7 @@ void OutputMessage::addPaddingBytes(int bytes, uint8 byte)
 
 void OutputMessage::encryptRsa()
 {
-    int size = g_crypt.rsaGetSize();
+    uint32_t size = g_crypt.rsaGetSize();
     if(m_messageSize < size)
         throw stdext::exception("insufficient bytes in buffer to encrypt");
 
@@ -112,18 +112,22 @@ void OutputMessage::encryptRsa()
 void OutputMessage::writeChecksum()
 {
     uint32 checksum = stdext::adler32(m_buffer + m_headerPos, m_messageSize);
-    assert(m_headerPos - 4 >= 0);
+    VALIDATE(m_headerPos >= 4);
     m_headerPos -= 4;
     stdext::writeULE32(m_buffer + m_headerPos, checksum);
     m_messageSize += 4;
 }
 
-void OutputMessage::writeMessageSize()
+void OutputMessage::writeMessageSize(bool bigSize)
 {
-    assert(m_headerPos - 2 >= 0);
-    m_headerPos -= 2;
-    stdext::writeULE16(m_buffer + m_headerPos, m_messageSize);
-    m_messageSize += 2;
+    VALIDATE(m_headerPos >= (bigSize ? 4 : 2));
+    m_headerPos -= (bigSize ? 4 : 2);
+    if (bigSize) {
+        stdext::writeULE32(m_buffer + m_headerPos, m_messageSize);
+    } else {
+        stdext::writeULE16(m_buffer + m_headerPos, m_messageSize);
+    }
+    m_messageSize += (bigSize ? 4 : 2);
 }
 
 bool OutputMessage::canWrite(int bytes)
