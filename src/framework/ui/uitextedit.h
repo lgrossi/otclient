@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -52,6 +52,7 @@ public:
     void setSelectionColor(const Color& color) { m_selectionColor = color; }
     void setSelectionBackgroundColor(const Color& color) { m_selectionBackgroundColor = color; }
     void setAutoScroll(bool autoScroll) { m_autoScroll = autoScroll; }
+    void setAutoSubmit(bool autoSubmit) { m_autoSubmit = autoSubmit; }
 
     void moveCursorHorizontally(bool right);
     void moveCursorVertically(bool up);
@@ -103,7 +104,7 @@ protected:
     virtual bool onMouseRelease(const Point& mousePos, Fw::MouseButton button);
     virtual bool onMouseMove(const Point& mousePos, const Point& mouseMoved);
     virtual bool onDoubleClick(const Point& mousePos);
-    virtual void onTextAreaUpdate(const Point& vitualOffset, const Size& visibleSize, const Size& totalSize);
+    virtual void onTextAreaUpdate(const Point& vitualOffset, const Size& virtualSize, const Size& totalSize);
 
 private:
     void disableUpdates() { m_updatesEnabled = false; }
@@ -127,6 +128,7 @@ private:
     uint m_maxLength;
     bool m_updatesEnabled;
     bool m_autoScroll;
+    bool m_autoSubmit;
 
     bool m_selectable;
     int m_selectionReference;

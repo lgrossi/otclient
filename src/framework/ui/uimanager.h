@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,10 +45,12 @@ public:
 
     void clearStyles();
     bool importStyle(std::string file);
+    bool importStyleFromString(std::string data);
     void importStyleFromOTML(const OTMLNodePtr& styleNode);
     OTMLNodePtr getStyle(const std::string& styleName);
     std::string getStyleClass(const std::string& styleName);
 
+    UIWidgetPtr loadUIFromString(const std::string& data, const UIWidgetPtr& parent);
     UIWidgetPtr loadUI(std::string file, const UIWidgetPtr& parent);
     UIWidgetPtr displayUI(const std::string& file) { return loadUI(file, m_rootWidget); }
     UIWidgetPtr createWidget(const std::string& styleName, const UIWidgetPtr& parent);

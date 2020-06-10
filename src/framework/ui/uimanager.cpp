@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,7 @@
 #include <framework/core/eventdispatcher.h>
 #include <framework/core/application.h>
 #include <framework/core/resourcemanager.h>
+#include <framework/util/extras.h>
 
 UIManager g_ui;
 
@@ -63,7 +64,7 @@ void UIManager::render(Fw::DrawPane drawPane)
 
 void UIManager::resize(const Size& size)
 {
-    m_rootWidget->setSize(g_window.getSize());
+    m_rootWidget->setSize(size);
 }
 
 void UIManager::inputEvent(const InputEvent& event)
@@ -142,13 +143,14 @@ void UIManager::inputEvent(const InputEvent& event)
                     break;
             }
 
-            if(m_pressedWidget) {
-                if(m_pressedWidget->onMouseMove(event.mousePos, event.mouseMoved)) {
+            if (m_pressedWidget) {
+                if (m_pressedWidget->onMouseMove(event.mousePos, event.mouseMoved)) {
                     break;
                 }
             }
 
-            m_mouseReceiver->propagateOnMouseMove(event.mousePos, event.mouseMoved, widgetList);
+            //m_mouseReceiver->propagateOnMouseMove(event.mousePos, event.mouseMoved, widgetList);
+            m_rootWidget->propagateOnMouseMove(event.mousePos, event.mouseMoved, widgetList);
             for(const UIWidgetPtr& widget : widgetList) {
                 if(widget->onMouseMove(event.mousePos, event.mouseMoved))
                     break;
@@ -269,6 +271,8 @@ void UIManager::onWidgetDisappear(const UIWidgetPtr& widget)
 
 void UIManager::onWidgetDestroy(const UIWidgetPtr& widget)
 {
+    AutoStat s(STATS_MAIN, "UIManager::onWidgetDestroy", stdext::format("%s (%s)", widget->getId(), widget->getParent() ? widget->getParent()->getId() : ""));
+
     // release input grabs
     if(m_keyboardReceiver == widget)
         resetKeyboardReceiver();
@@ -285,7 +289,9 @@ void UIManager::onWidgetDestroy(const UIWidgetPtr& widget)
     if(m_draggingWidget == widget)
         updateDraggingWidget(nullptr);
 
-#ifndef NDEBUG
+    if (!g_extras.debugWidgets)
+        return;
+
     if(widget == m_rootWidget || !m_rootWidget)
         return;
 
@@ -296,17 +302,16 @@ void UIManager::onWidgetDestroy(const UIWidgetPtr& widget)
 
     m_checkEvent = g_dispatcher.scheduleEvent([this] {
         g_lua.collectGarbage();
-        UIWidgetList backupList = m_destroyedWidgets;
+        UIWidgetList backupList(std::move(m_destroyedWidgets));
         m_destroyedWidgets.clear();
         g_dispatcher.scheduleEvent([backupList] {
             g_lua.collectGarbage();
             for(const UIWidgetPtr& widget : backupList) {
                 if(widget->ref_count() != 1)
-                    g_logger.warning(stdext::format("widget '%s' destroyed but still have %d reference(s) left", widget->getId(), widget->getUseCount()-1));
+                    g_logger.warning(stdext::format("widget '%s' (parent: '%s' (%s), source: '%s') destroyed but still have %d reference(s) left", widget->getId(), widget->getParent() ? widget->getParent()->getId() : "", widget->getParentId(), widget->getSource(), widget->getUseCount()-1));
             }
         }, 1);
     }, 1000);
-#endif
 }
 
 void UIManager::clearStyles()
@@ -326,6 +331,19 @@ bool UIManager::importStyle(std::string file)
         return true;
     } catch(stdext::exception& e) {
         g_logger.error(stdext::format("Failed to import UI styles from '%s': %s", file, e.what()));
+        return false;
+    }
+}
+
+bool UIManager::importStyleFromString(std::string data)
+{
+    try {
+        OTMLDocumentPtr doc = OTMLDocument::parseString(data, g_lua.getCurrentSourcePath());
+        for(const OTMLNodePtr& styleNode : doc->children())
+            importStyleFromOTML(styleNode);
+        return true;
+    } catch(stdext::exception& e) {
+        g_logger.error(stdext::format("Failed to import UI styles from '%s': %s", g_lua.getCurrentSourcePath(), e.what()));
         return false;
     }
 }
@@ -399,6 +417,36 @@ std::string UIManager::getStyleClass(const std::string& styleName)
     return "";
 }
 
+
+UIWidgetPtr UIManager::loadUIFromString(const std::string& data, const UIWidgetPtr& parent)
+{
+    try {
+        std::stringstream sstream;
+        sstream.clear(std::ios::goodbit);
+        sstream.write(&data[0], data.length());
+        sstream.seekg(0, std::ios::beg);
+        OTMLDocumentPtr doc = OTMLDocument::parse(sstream, "(string)");
+        UIWidgetPtr widget;
+        for (const OTMLNodePtr& node : doc->children()) {
+            std::string tag = node->tag();
+
+            // import styles in these files too
+            if (tag.find("<") != std::string::npos)
+                importStyleFromOTML(node);
+            else {
+                if (widget)
+                    stdext::throw_exception("cannot have multiple main widgets in otui files");
+                widget = createWidgetFromOTML(node, parent);
+            }
+        }
+
+        return widget;
+    } catch (stdext::exception& e) {
+        g_logger.error(stdext::format("failed to load UI from string: %s", e.what()));
+        return nullptr;
+    }
+}
+
 UIWidgetPtr UIManager::loadUI(std::string file, const UIWidgetPtr& parent)
 {
     try {
@@ -468,5 +516,6 @@ UIWidgetPtr UIManager::createWidgetFromOTML(const OTMLNodePtr& widgetNode, const
         stdext::throw_exception(stdext::format("unable to create widget of type '%s'", widgetType));
 
     widget->callLuaField("onSetup");
+
     return widget;
 }

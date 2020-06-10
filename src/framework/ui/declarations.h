@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,10 +36,8 @@ class UIGridLayout;
 class UIAnchor;
 class UIAnchorGroup;
 class UIAnchorLayout;
-class UIParticles;
 
 typedef stdext::shared_object_ptr<UIWidget> UIWidgetPtr;
-typedef stdext::shared_object_ptr<UIParticles> UIParticlesPtr;
 typedef stdext::shared_object_ptr<UITextEdit> UITextEditPtr;
 typedef stdext::shared_object_ptr<UILayout> UILayoutPtr;
 typedef stdext::shared_object_ptr<UIBoxLayout> UIBoxLayoutPtr;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -51,14 +51,16 @@ public:
     UIWidget();
     virtual ~UIWidget();
 
-protected:
     virtual void draw(const Rect& visibleRect, Fw::DrawPane drawPane);
+
+protected:
     virtual void drawSelf(Fw::DrawPane drawPane);
     virtual void drawChildren(const Rect& visibleRect, Fw::DrawPane drawPane);
 
     friend class UIManager;
 
     std::string m_id;
+    std::string m_source;
     Rect m_rect;
     Point m_virtualOffset;
     stdext::boolean<true> m_enabled;
@@ -71,8 +73,10 @@ protected:
     stdext::boolean<false> m_clipping;
     UILayoutPtr m_layout;
     UIWidgetPtr m_parent;
+    std::string m_parentId;
     UIWidgetList m_children;
     UIWidgetList m_lockedChildren;
+    std::map<UIWidgetPtr, std::string> m_childrenShortcuts;
     UIWidgetPtr m_focusedChild;
     OTMLNodePtr m_style;
     Timer m_clickTimer;
@@ -81,6 +85,7 @@ protected:
 
 public:
     void addChild(const UIWidgetPtr& child);
+    void onChildIdChange(const UIWidgetPtr& child);
     void insertChild(int index, const UIWidgetPtr& child);
     void removeChild(UIWidgetPtr child);
     void focusChild(const UIWidgetPtr& child, Fw::FocusReason reason);
@@ -89,6 +94,7 @@ public:
     void lowerChild(UIWidgetPtr child);
     void raiseChild(UIWidgetPtr child);
     void moveChildToIndex(const UIWidgetPtr& child, int index);
+    void reorderChildren(const std::vector<UIWidgetPtr>& childrens);
     void lockChild(const UIWidgetPtr& child);
     void unlockChild(const UIWidgetPtr& child);
     void mergeStyle(const OTMLNodePtr& styleNode);
@@ -246,13 +252,15 @@ public:
     bool isClipping() { return m_clipping; }
     bool isDestroyed() { return m_destroyed; }
 
-    bool hasChildren() { return !m_children.empty(); }
+    bool hasChildren() { return m_children.size() > 0; }
     bool containsMarginPoint(const Point& point) { return getMarginRect().contains(point); }
     bool containsPaddingPoint(const Point& point) { return getPaddingRect().contains(point); }
     bool containsPoint(const Point& point) { return m_rect.contains(point); }
 
     std::string getId() { return m_id; }
+    std::string getSource() { return m_source; }
     UIWidgetPtr getParent() { return m_parent; }
+    std::string getParentId() { return m_parentId; }
     UIWidgetPtr getFocusedChild() { return m_focusedChild; }
     UIWidgetList getChildren() { return m_children; }
     UIWidgetPtr getFirstChild() { return getChildByIndex(1); }
@@ -266,6 +274,17 @@ public:
     Point getVirtualOffset() { return m_virtualOffset; }
     std::string getStyleName() { return m_style->tag(); }
     Point getLastClickPosition() { return m_lastClickPosition; }
+
+    // for stats only
+    bool isRootChild()
+    {
+        return m_isRootChild;
+    }
+
+    void setRootChild(bool v)
+    {
+        m_isRootChild = v;
+    }
 
 
 // base style
@@ -294,6 +313,7 @@ protected:
     float m_rotation;
     int m_autoRepeatDelay;
     Point m_lastClickPosition;
+    bool m_isRootChild = false; // for stats
 
 public:
     void setX(int x) { move(x, getY()); }
@@ -394,7 +414,6 @@ public:
     float getOpacity() { return m_opacity; }
     float getRotation() { return m_rotation; }
 
-
 // image
 private:
     void initImage();
@@ -423,7 +442,9 @@ protected:
     EdgeGroup<int> m_imageBorder;
 
 public:
+    void setQRCode(const std::string& code, int border);
     void setImageSource(const std::string& source);
+    void setImageSourceBase64(const std::string & data);
     void setImageClip(const Rect& clipRect) { m_imageClipRect = clipRect; updateImageCache(); }
     void setImageOffsetX(int x) { m_imageRect.setX(x); updateImageCache(); }
     void setImageOffsetY(int y) { m_imageRect.setY(y); updateImageCache(); }
@@ -468,7 +489,6 @@ private:
     void parseTextStyle(const OTMLNodePtr& styleNode);
 
     stdext::boolean<true> m_textMustRecache;
-    CoordsBuffer m_textCoordsBuffer;
     Rect m_textCachedScreenCoords;
 
 protected:
@@ -487,12 +507,15 @@ protected:
     stdext::boolean<false> m_textHorizontalAutoResize;
     stdext::boolean<false> m_textOnlyUpperCase;
     BitmapFontPtr m_font;
+    std::vector<std::pair<int, Color>> m_textColors;
+    std::vector<std::pair<int, Color>> m_drawTextColors;
 
 public:
     void resizeToText() { setSize(getTextSize()); }
     void clearText() { setText(""); }
 
     void setText(std::string text, bool dontFireLuaCall = false);
+    void setColoredText(const std::vector<std::string>& texts, bool dontFireLuaCall = false);
     void setTextAlign(Fw::AlignmentFlag align) { m_textAlign = align; updateText(); }
     void setTextOffset(const Point& offset) { m_textOffset = offset; updateText(); }
     void setTextWrap(bool textWrap) { m_textWrap = textWrap; updateText(); }
