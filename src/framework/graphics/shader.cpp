@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +45,7 @@ Shader::Shader(Shader::ShaderType shaderType)
 Shader::~Shader()
 {
 #ifndef NDEBUG
-    assert(!g_app.isTerminated());
+    VALIDATE(!g_app.isTerminated());
 #endif
     if(g_graphics.ok())
         glDeleteShader(m_shaderId);
@@ -53,23 +53,16 @@ Shader::~Shader()
 
 bool Shader::compileSourceCode(const std::string& sourceCode)
 {
-#ifndef OPENGL_ES
+#ifdef OPENGL_ES
     static const char *qualifierDefines =
-        "#define lowp\n"
-        "#define mediump\n"
-        "#define highp\n";
-#else
-    static const char *qualifierDefines =
-        "#ifndef GL_FRAGMENT_PRECISION_HIGH\n"
-        "#define highp mediump\n"
-        "#endif\n"
-        "precision highp float;\n";
-#endif
-
+        "precision mediump float;\n";
     std::string code = qualifierDefines;
     code.append(sourceCode);
-    const char *c_source = code.c_str();
-    glShaderSource(m_shaderId, 1, &c_source, nullptr);
+    const char* c_source = code.c_str();
+#else
+    const char* c_source = sourceCode.c_str();
+#endif
+    glShaderSource(m_shaderId, 1, &c_source, NULL);
     glCompileShader(m_shaderId);
 
     int res = GL_FALSE;
@@ -95,7 +88,7 @@ std::string Shader::log()
     glGetShaderiv(m_shaderId, GL_INFO_LOG_LENGTH, &infoLogLength);
     if(infoLogLength > 1) {
         std::vector<char> buf(infoLogLength);
-        glGetShaderInfoLog(m_shaderId, infoLogLength-1, nullptr, &buf[0]);
+        glGetShaderInfoLog(m_shaderId, infoLogLength-1, NULL, &buf[0]);
         infoLog = &buf[0];
     }
     return infoLog;

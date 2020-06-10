@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,17 +25,19 @@
 
 #include "declarations.h"
 #include "coordsbuffer.h"
+#include "drawqueue.h"
 
 class CachedText
 {
 public:
     CachedText();
 
-    void draw(const Rect& rect);
+    void draw(const Rect& rect, const Color& color);
 
     void wrapText(int maxWidth);
     void setFont(const BitmapFontPtr& font) { m_font = font; update(); }
-    void setText(const std::string& text) { m_text = text; update(); }
+    void setText(const std::string& text) { m_textColors.clear();  m_text = text; update(); }
+    void setColoredText(const std::vector<std::string>& texts);
     void setAlign(Fw::AlignmentFlag align) { m_align = align; update(); }
 
     Size getTextSize() { return m_textSize; }
@@ -43,13 +45,15 @@ public:
     BitmapFontPtr getFont() const { return m_font; }
     Fw::AlignmentFlag getAlign() { return m_align; }
 
+    bool hasText() { return !m_text.empty(); }
+
 private:
     void update();
 
     std::string m_text;
+    std::vector<std::pair<int, Color>> m_textColors;
     Size m_textSize;
     stdext::boolean<true> m_textMustRecache;
-    CoordsBuffer m_textCoordsBuffer;
     Rect m_textCachedScreenCoords;
     BitmapFontPtr m_font;
     Fw::AlignmentFlag m_align;

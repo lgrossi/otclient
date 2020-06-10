@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,14 +32,16 @@ public:
     AnimatedTexture(const Size& size, std::vector<ImagePtr> frames, std::vector<int> framesDelay, bool buildMipmaps = false, bool compress = false);
     virtual ~AnimatedTexture();
 
+    void replace(const ImagePtr& image) { }
+    void update();
+
+    virtual bool isAnimatedTexture() { return true; }
+
+protected:
     virtual bool buildHardwareMipmaps();
 
     virtual void setSmooth(bool smooth);
     virtual void setRepeat(bool repeat);
-
-    void updateAnimation();
-
-    virtual bool isAnimatedTexture() { return true; }
 
 private:
     std::vector<TexturePtr> m_frames;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,11 +39,27 @@ ShaderProgram::ShaderProgram()
 ShaderProgram::~ShaderProgram()
 {
 #ifndef NDEBUG
-    assert(!g_app.isTerminated());
+    VALIDATE(!g_app.isTerminated());
 #endif
     if(g_graphics.ok())
         glDeleteProgram(m_programId);
 }
+
+PainterShaderProgramPtr ShaderProgram::create(const std::string& vertexShader, const std::string& fragmentShader, bool colorMatrix)
+{
+    PainterShaderProgramPtr program(new PainterShaderProgram);
+    if (!program)
+        g_logger.fatal(stdext::format("Cant creatre shader: \n%s", vertexShader));
+    program->addShaderFromSourceCode(Shader::Vertex, vertexShader);
+    program->addShaderFromSourceCode(Shader::Fragment, fragmentShader);
+    if (colorMatrix) {
+        program->enableColorMatrix();
+    }
+    program->link();
+    g_graphics.checkForError(__FUNCTION__, vertexShader + "\n" + fragmentShader, __LINE__);
+    return program;
+}
+
 
 bool ShaderProgram::addShader(const ShaderPtr& shader) {
     glAttachShader(m_programId, shader->getShaderId());
@@ -55,7 +71,7 @@ bool ShaderProgram::addShader(const ShaderPtr& shader) {
 bool ShaderProgram::addShaderFromSourceCode(Shader::ShaderType shaderType, const std::string& sourceCode) {
     ShaderPtr shader(new Shader(shaderType));
     if(!shader->compileSourceCode(sourceCode)) {
-        g_logger.error(stdext::format("failed to compile shader: %s", shader->log()));
+        g_logger.fatal(stdext::format("failed to compile shader: %s", shader->log()));
         return false;
     }
     return addShader(shader);
@@ -64,7 +80,7 @@ bool ShaderProgram::addShaderFromSourceCode(Shader::ShaderType shaderType, const
 bool ShaderProgram::addShaderFromSourceFile(Shader::ShaderType shaderType, const std::string& sourceFile) {
     ShaderPtr shader(new Shader(shaderType));
     if(!shader->compileSourceFile(sourceFile)) {
-        g_logger.error(stdext::format("failed to compile shader: %s", shader->log()));
+        g_logger.fatal(stdext::format("failed to compile shader: %s", shader->log()));
         return false;
     }
     return addShader(shader);
@@ -87,27 +103,35 @@ void ShaderProgram::removeAllShaders()
         removeShader(m_shaders.front());
 }
 
-bool ShaderProgram::link()
+void ShaderProgram::link()
 {
     if(m_linked)
-        return true;
+        return;
 
     glLinkProgram(m_programId);
 
     int value = GL_FALSE;
     glGetProgramiv(m_programId, GL_LINK_STATUS, &value);
     m_linked = (value != GL_FALSE);
+    if (m_linked) {
+        return;
+    }
 
-    if(!m_linked)
-        g_logger.traceWarning(log());
-    return m_linked;
+    GLint maxLength = 0;
+    glGetProgramiv(m_programId, GL_INFO_LOG_LENGTH, &maxLength);
+    std::vector<GLchar> infoLog(maxLength);
+    glGetProgramInfoLog(m_programId, maxLength, &maxLength, &infoLog[0]);
+    g_logger.fatal(stdext::format("Program %i linking error (%i): %s - %s - %s %s\nExtensions: %s", m_programId, infoLog.size(),
+        std::string(infoLog.begin(), infoLog.end()).c_str(), log().c_str(),
+        g_graphics.getRenderer(), g_graphics.getVersion(), g_graphics.getExtensions()));
 }
 
 bool ShaderProgram::bind()
 {
     if(m_currentProgram != m_programId) {
-        if(!m_linked && !link())
-            return false;
+        if (!m_linked) {
+            link();
+        }
         glUseProgram(m_programId);
         m_currentProgram = m_programId;
     }
@@ -129,7 +153,7 @@ std::string ShaderProgram::log()
     glGetProgramiv(m_programId, GL_INFO_LOG_LENGTH, &infoLogLength);
     if(infoLogLength > 1) {
         std::vector<char> buf(infoLogLength);
-        glGetShaderInfoLog(m_programId, infoLogLength-1, nullptr, &buf[0]);
+        glGetShaderInfoLog(m_programId, infoLogLength-1, NULL, &buf[0]);
         infoLog = &buf[0];
     }
     return infoLog;
@@ -147,7 +171,7 @@ void ShaderProgram::bindAttributeLocation(int location, const char* name)
 
 void ShaderProgram::bindUniformLocation(int location, const char* name)
 {
-    assert(m_linked);
-    assert(location >= 0 && location < MAX_UNIFORM_LOCATIONS);
+    VALIDATE(m_linked);
+    VALIDATE(location >= 0 && location < MAX_UNIFORM_LOCATIONS);
     m_uniformLocations[location] = glGetUniformLocation(m_programId, name);
 }

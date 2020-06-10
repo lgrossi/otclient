@@ -23,16 +23,14 @@
  *
  */
 
-#include "apngloader.h"
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <fstream>
-#include <iostream>
-#include <memory>
-#include <sstream>
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <memory.h>
 #include <zlib.h>
+#include "apngloader.h"
+#include <iostream>
+#include <sstream>
+#include <fstream>
 
 #if defined(_MSC_VER) && _MSC_VER >= 1300
 #define swap16(data) _byteswap_ushort(data)
@@ -171,7 +169,7 @@ void unpack(z_stream& zstream, unsigned char * dst, unsigned int dst_size, unsig
 {
     unsigned int    j;
     unsigned char * row = dst;
-    unsigned char * prev_row = nullptr;
+    unsigned char * prev_row = NULL;
 
     zstream.next_out  = dst;
     zstream.avail_out = dst_size;
@@ -611,7 +609,7 @@ int load_apng(std::stringstream& file, struct apng_data *apng)
             pData=(unsigned char *)malloc(zbuf_size);
             pImg1=pOut1;
             pImg2=pOut2;
-            frames_delay = nullptr;
+            frames_delay = NULL;
 
             /* apng decoding - begin */
             memset(pOut1, 0, outimg1);
@@ -679,7 +677,7 @@ int load_apng(std::stringstream& file, struct apng_data *apng)
                     frames = read32(file);
                     if(frames_delay)
                         free(frames_delay);
-                    frames_delay = (unsigned short*)malloc(frames*sizeof(unsigned short));
+                    frames_delay = (unsigned short*)malloc(frames*sizeof(int));
                     loops  = read32(file);
                     /*crc = */read32(file);
                     if (pOut1)
@@ -873,7 +871,7 @@ void write_chunk(std::ostream& f, const char* name, unsigned char* data, unsigne
     f.write(name, 4);
     crc = crc32(crc, (const Bytef*)name, 4);
 
-    if(data != nullptr && length > 0) {
+    if(data != NULL && length > 0) {
         f.write((char*)data, length);
         crc = crc32(crc, data, length);
     }
@@ -957,17 +955,8 @@ void save_png(std::stringstream& f, unsigned int width, unsigned int height, int
     unsigned char* zbuf1     = (unsigned char*)malloc(zbuf_size);
     unsigned char* zbuf2     = (unsigned char*)malloc(zbuf_size);
 
-    if(!row_buf || !sub_row || !up_row || !avg_row || !paeth_row || !zbuf1 || !zbuf2) {
-        free(row_buf);
-        free(sub_row);
-        free(up_row);
-        free(avg_row);
-        free(paeth_row);
-        free(zbuf1);
-        free(zbuf2);
-
+    if(!row_buf || !sub_row || !up_row || !avg_row || !paeth_row || !zbuf1 || !zbuf2)
         return;
-    }
 
     row_buf[0]   = 0;
     sub_row[0]   = 1;
@@ -979,13 +968,13 @@ void save_png(std::stringstream& f, unsigned int width, unsigned int height, int
     zstream1.zalloc    = Z_NULL;
     zstream1.zfree     = Z_NULL;
     zstream1.opaque    = Z_NULL;
-    deflateInit2(&zstream1, Z_BEST_COMPRESSION, 8, 15, 8, Z_DEFAULT_STRATEGY);
+    deflateInit2(&zstream1, 3, 8, 15, 8, Z_DEFAULT_STRATEGY);
 
     zstream2.data_type = Z_BINARY;
     zstream2.zalloc    = Z_NULL;
     zstream2.zfree     = Z_NULL;
     zstream2.opaque    = Z_NULL;
-    deflateInit2(&zstream2, Z_BEST_COMPRESSION, 8, 15, 8, Z_FILTERED);
+    deflateInit2(&zstream2, 3, 8, 15, 8, Z_FILTERED);
 
     int a, b, c, pa, pb, pc, p, v;
     unsigned char* prev;
@@ -1005,7 +994,7 @@ void save_png(std::stringstream& f, unsigned int width, unsigned int height, int
     zstream2.next_out  = zbuf2;
     zstream2.avail_out = zbuf_size;
 
-    prev = nullptr;
+    prev = NULL;
     row  = pixels;
 
     for(j = 0; j < (unsigned int)height; j++) {
@@ -1133,7 +1122,7 @@ void save_png(std::stringstream& f, unsigned int width, unsigned int height, int
     deflateReset(&zstream2);
     zstream2.data_type = Z_BINARY;
 
-    write_chunk(f, "IEND", nullptr, 0);
+    write_chunk(f, "IEND", 0, 0);
 
     deflateEnd(&zstream1);
     deflateEnd(&zstream2);
