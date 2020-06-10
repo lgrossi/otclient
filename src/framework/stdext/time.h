@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ public:
     float elapsed_seconds() { return (float)((stdext::micros() - m_start)/1000000.0); }
     ticks_t elapsed_millis() { return (stdext::micros() - m_start)/1000; }
     ticks_t elapsed_micros() { return stdext::micros() - m_start; }
-    void restart() { m_start = stdext::micros(); }
+    void restart(int shift = 0) { m_start = stdext::micros() - shift; }
 private:
     ticks_t m_start;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,6 @@
 
 #include <string>
 #include <cstdio>
-#include <cassert>
 #include <tuple>
 #include <iostream>
 #include <sstream>
@@ -87,18 +86,13 @@ inline std::string format(const std::string& format) { return format; }
 // Format strings with the sprintf style, accepting std::string and string convertible types for %s
 template<typename... Args>
 std::string format(const std::string& format, const Args&... args) {
-    int n, size = 1024;
-    std::string str;
-    while(true) {
-        str.resize(size);
-        n = snprintf(&str[0], size, format.c_str(), args...);
-        assert(n != -1);
-        if(n < size) {
-            str.resize(n);
-            return str;
-        }
-        size *= 2;
-    }
+    int n = snprintf(NULL, 0, format.c_str(), args...);
+    VALIDATE(n != -1);
+    std::string buffer(n + 1, '\0');
+    n = snprintf(&buffer[0], buffer.size(), format.c_str(), args...);
+    VALIDATE(n != -1);
+    buffer.resize(n);
+    return buffer;
 }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,8 @@
 #include "types.h"
 #include <type_traits>
 #include <functional>
-#include <cassert>
 #include <ostream>
-
-#ifdef THREAD_SAFE
 #include <atomic>
-#endif
 
 namespace stdext {
 
@@ -52,11 +48,7 @@ public:
     template<typename T> stdext::shared_object_ptr<T> const_self_cast() { return stdext::shared_object_ptr<T>(const_cast<T*>(this)); }
 
 private:
-#ifdef THREAD_SAFE
     std::atomic<refcount_t> refs;
-#else
-    refcount_t refs;
-#endif
 };
 
 template<class T>
@@ -86,8 +78,8 @@ public:
 
     template<class U> shared_object_ptr& operator=(shared_object_ptr<U> const& rhs) { shared_object_ptr(rhs).swap(*this); return *this; }
 
-    T& operator*() const { assert(px != nullptr); return *px; }
-    T* operator->() const { assert(px != nullptr); return px; }
+    T& operator*() const { VALIDATE(px != nullptr); return *px; }
+    T* operator->() const { VALIDATE(px != nullptr); return px; }
 
     shared_object_ptr& operator=(shared_object_ptr const& rhs) { shared_object_ptr(rhs).swap(*this); return *this; }
     shared_object_ptr& operator=(T* rhs) { shared_object_ptr(rhs).swap(*this); return *this; }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
 #define STDEXT_ANY_H
 
 #include <algorithm>
-#include <cassert>
 #include <typeinfo>
 
 namespace stdext {
@@ -52,7 +51,7 @@ public:
     any() : content(nullptr) { }
     any(const any& other) : content(other.content ? other.content->clone() : nullptr) { }
     template<typename T> any(const T& value) : content(new holder<T>(value)) { }
-    ~any() { delete content; }
+    ~any() { if(content) delete content; }
 
     any& swap(any& rhs) { std::swap(content, rhs.content); return *this; }
 
@@ -66,7 +65,7 @@ public:
 
 template<typename T>
 const T& any_cast(const any& operand) {
-    assert(operand.type() == typeid(T));
+    VALIDATE(operand.type() == typeid(T));
     return static_cast<any::holder<T>*>(operand.content)->held;
 }
 

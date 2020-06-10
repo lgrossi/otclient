@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2020 OTClient <https://github.com/edubart/otclient>
+ * Copyright (c) 2010-2017 OTClient <https://github.com/edubart/otclient>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,6 @@
  */
 
 #include "time.h"
-
 #include <chrono>
 #include <ctime>
 #include <thread>
@@ -31,13 +30,14 @@ namespace stdext {
 const static auto startup_time = std::chrono::high_resolution_clock::now();
 
 ticks_t time() {
-    return std::time(nullptr);
+    return std::time(NULL);
 }
 
 ticks_t millis()
 {
     return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - startup_time).count();
 }
+
 ticks_t micros() {
     return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - startup_time).count();
 }
