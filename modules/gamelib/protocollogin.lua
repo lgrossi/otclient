@@ -38,8 +38,11 @@ function ProtocolLogin:sendLoginPacket()
   local msg = OutputMessage.create()
   msg:addU8(ClientOpcodes.ClientEnterAccount)
   msg:addU16(g_game.getOs())
-
-  msg:addU16(g_game.getProtocolVersion())
+  if g_game.getCustomProtocolVersion() > 0 then
+    msg:addU16(g_game.getCustomProtocolVersion())  
+  else
+    msg:addU16(g_game.getProtocolVersion())
+  end
 
   if g_game.getFeature(GameClientVersion) then
     msg:addU32(g_game.getClientVersion())
@@ -83,6 +86,13 @@ function ProtocolLogin:sendLoginPacket()
   if self.getLoginExtendedData then
     local data = self:getLoginExtendedData()
     msg:addString(data)
+  else
+    msg:addString("OTCv8")
+    local version = g_app.getVersion():split(" ")[1]:gsub("%.", "")
+    if version:len() == 2 then
+      version = version .. "0" 
+    end
+    msg:addU16(tonumber(version))
   end
 
   local paddingBytes = g_crypt.rsaGetSize() - (msg:getMessageSize() - offset)
@@ -126,6 +136,10 @@ function ProtocolLogin:sendLoginPacket()
     end
 
     msg:encryptRsa()
+  end
+
+  if g_game.getFeature(GamePacketSizeU32) then
+    self:enableBigPackets()
   end
 
   if g_game.getFeature(GameProtocolChecksum) then

@@ -11,23 +11,35 @@ HotkeyListLabel < UILabel
 MainWindow
   id: hotkeysWindow
   !text: tr('Hotkeys')
-  size: 340 410
+  size: 370 475
 
   @onEnter: modules.game_hotkeys.ok()
   @onEscape: modules.game_hotkeys.cancel()
-
-  Label
-    id: currentHotkeysLabel
-    !text: tr('Current hotkeys') .. ':'
+  
+  ComboBox
+    id: configSelector
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: parent.top
+    menu-scroll: true
+    menu-height: 125
+    menu-scroll-step: 25
+    text-offset: 5 2
+    @onOptionChange:  modules.game_hotkeys.onConfigChange()  
+    @onSetup: |
+      self:addOption(tr("Hotkeys config #1"))
+      self:addOption(tr("Hotkeys config #2"))
+      self:addOption(tr("Hotkeys config #3"))
+      self:addOption(tr("Hotkeys config #4"))
+      self:addOption(tr("Hotkeys config #5"))
+    
 
   VerticalScrollBar
     id: currentHotkeysScrollBar
     height: 150
-    anchors.top: parent.top
+    anchors.top: prev.bottom
     anchors.right: parent.right
+    margin-top: 5
     step: 14
     pixels-scroll: true
 
@@ -68,14 +80,42 @@ MainWindow
     margin-top: 8
     @onClick: modules.game_hotkeys.removeHotkey()
 
+  HorizontalSeparator
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: prev.bottom
+    margin-top: 5
+    
+  Label
+    anchors.left: parent.left
+    anchors.top: prev.bottom
+    margin-top: 10
+    !text: tr('Extra action:')    
+  
+  ComboBox
+    id: action
+    anchors.left: prev.right
+    anchors.right: parent.right
+    anchors.top: prev.top
+    margin-left: 5
+    margin-top: -4
+    enabled: false
+    @onOptionChange: modules.game_hotkeys.updateHotkeyAction()
+
+  HorizontalSeparator
+    anchors.left: parent.left
+    anchors.right: parent.right
+    anchors.top: prev.bottom
+    margin-top: 5
+
   Label
     id: hotKeyTextLabel
-    !text: tr('Edit hotkey text') .. ':'
+    !text: tr('Edit hotkey text:')
     enable: false
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.top: prev.bottom
-    margin-top: 10
+    margin-top: 6
 
   TextEdit
     id: hotkeyText
@@ -162,7 +202,7 @@ MainWindow
     anchors.left: parent.left
     anchors.right: parent.right
     anchors.bottom: next.top
-    margin-bottom: 10
+    margin-bottom: 5
 
   Button
     id: okButton

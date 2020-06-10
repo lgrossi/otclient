@@ -141,6 +141,7 @@ function init()
   terminalWindow.onDoubleClick = popWindow
 
   terminalButton = modules.client_topmenu.addLeftButton('terminalButton', tr('Terminal') .. ' (Ctrl + T)', '/images/topbuttons/terminal', toggle)
+  terminalButton:setOn(false)
   g_keyboard.bindKeyDown('Ctrl+T', toggle)
 
   commandHistory = g_settings.getList('terminal-history')
@@ -203,7 +204,7 @@ function terminate()
 end
 
 function hideButton()
-  terminalButton:hide()
+  --terminalButton:hide()
 end
 
 function popWindow()
@@ -265,7 +266,7 @@ function hide()
 end
 
 function disable()
-  terminalButton:hide()
+  --terminalButton:hide()
   g_keyboard.unbindKeyDown('Ctrl+T')
   disabled = true
 end
@@ -312,11 +313,22 @@ function addLine(text, color)
   table.insert(cachedLines, {text=text, color=color})
 end
 
+function terminalPrint(value)
+  if type(value) == "table" then
+    return print(json.encode(value, 2))
+  end
+  print(tostring(value))
+end
+
 function executeCommand(command)
   if command == nil or #string.gsub(command, '\n', '') == 0 then return end
 
   -- add command line
   addLine("> " .. command, "#ffffff")
+  if g_game.getFeature(GameNoDebug) then
+    addLine("Terminal is disabled on this server", "#ff8888")
+    return    
+  end
 
   -- reset current history index
   currentHistoryIndex = 0
@@ -324,7 +336,7 @@ function executeCommand(command)
   -- add new command to history
   if #commandHistory == 0 or commandHistory[#commandHistory] ~= command then
     table.insert(commandHistory, command)
-    if #commandHistory > MaxHistory then
+    while #commandHistory > MaxHistory do
       table.remove(commandHistory, 1)
     end
   end
@@ -332,7 +344,7 @@ function executeCommand(command)
   -- detect and convert commands with simple syntax
   local realCommand
   if string.sub(command, 1, 1) == '=' then
-    realCommand = 'print(' .. string.sub(command,2) .. ')'
+    realCommand = 'modules.client_terminal.terminalPrint(' .. string.sub(command,2) .. ')'
   else
     realCommand = command
   end
@@ -358,6 +370,8 @@ function executeCommand(command)
     addLine('ERROR: incorrect lua syntax: ' .. err:sub(5), 'red')
     return
   end
+  
+  commandEnv['player'] = g_game.getLocalPlayer()
 
   -- setup func env to commandEnv
   setfenv(func, commandEnv)

@@ -19,6 +19,7 @@ end
 
 function UIMiniWindow:close(dontSave)
   if not self:isExplicitlyVisible() then return end
+  if self.forceOpen then return end
   self:setVisible(false)
 
   if not dontSave then
@@ -33,7 +34,9 @@ function UIMiniWindow:minimize(dontSave)
   self:getChildById('contentsPanel'):hide()
   self:getChildById('miniwindowScrollBar'):hide()
   self:getChildById('bottomResizeBorder'):hide()
-  self:getChildById('minimizeButton'):setOn(true)
+  if self.minimizeButton then
+    self.minimizeButton:setOn(true)
+  end
   self.maximizedHeight = self:getHeight()
   self:setHeight(self.minimizedHeight)
 
@@ -49,7 +52,9 @@ function UIMiniWindow:maximize(dontSave)
   self:getChildById('contentsPanel'):show()
   self:getChildById('miniwindowScrollBar'):show()
   self:getChildById('bottomResizeBorder'):show()
-  self:getChildById('minimizeButton'):setOn(false)
+  if self.minimizeButton then
+    self.minimizeButton:setOn(false)
+  end
   self:setHeight(self:getSettings('height') or self.maximizedHeight)
 
   if not dontSave then
@@ -64,20 +69,64 @@ function UIMiniWindow:maximize(dontSave)
   signalcall(self.onMaximize, self)
 end
 
+function UIMiniWindow:lock(dontSave)
+  local lockButton = self:getChildById('lockButton')
+  if lockButton then
+    lockButton:setOn(true)
+  end
+  self:setDraggable(false)
+  if not dontsave then
+    self:setSettings({locked = true})
+  end
+
+  signalcall(self.onLockChange, self)
+end
+
+function UIMiniWindow:unlock(dontSave)
+  local lockButton = self:getChildById('lockButton')
+  if lockButton then
+    lockButton:setOn(false)
+  end
+  self:setDraggable(true)
+  if not dontsave then
+    self:setSettings({locked = false})
+  end
+  signalcall(self.onLockChange, self)
+end
+
 function UIMiniWindow:setup()
   self:getChildById('closeButton').onClick =
     function()
       self:close()
     end
-
-  self:getChildById('minimizeButton').onClick =
-    function()
-      if self:isOn() then
-        self:maximize()
-      else
-        self:minimize()
+  if self.forceOpen then
+      if self.closeButton then
+        self.closeButton:hide()
       end
-    end
+  end
+
+  if(self.minimizeButton) then
+    self.minimizeButton.onClick =
+      function()
+        if self:isOn() then
+          self:maximize()
+        else
+          self:minimize()
+        end
+      end
+  end
+  
+  local lockButton = self:getChildById('lockButton')
+  if lockButton then
+    lockButton.onClick = 
+      function ()
+        if self:isDraggable() then
+          self:lock()
+        else
+          self:unlock()
+        end
+      end
+  end
 
   self:getChildById('miniwindowTopBar').onDoubleClick =
     function()
@@ -117,7 +166,15 @@ function UIMiniWindow:setup()
         end
       end
 
-      if selfSettings.closed then
+      if selfSettings.closed and not self.forceOpen then
+        self:close(true)
+      end
+
+      if selfSettings.locked then
+        self:lock(true)
+      end
+    else 
+      if not self.forceOpen and self.autoOpen ~= nil and (self.autoOpen == 0 or self.autoOpen == false) then
         self:close(true)
       end
     end
@@ -148,7 +205,7 @@ function UIMiniWindow:onDragEnter(mousePos)
   if not parent then return false end
 
   if parent:getClassName() == 'UIMiniWindowContainer' then
-    local containerParent = parent:getParent()
+    local containerParent = parent:getParent():getParent()
     parent:removeChild(self)
     containerParent:addChild(self)
     parent:saveChildren()
@@ -170,6 +227,7 @@ function UIMiniWindow:onDragLeave(droppedWidget, mousePos)
     self.movedIndex = nil
   end
 
+  UIWindow:onDragLeave(self, droppedWidget, mousePos)
   self:saveParent(self:getParent())
 end
 

@@ -81,6 +81,15 @@ local function parseMarketDetail(protocol, msg)
       msg:getU16()
     end
   end
+
+  if g_game.getClientVersion() >= 1100 then -- imbuements
+    if msg:peekU16() ~= 0x00 then
+      table.insert(descriptions, {MarketItemDescription.Last + 1, msg:getString()})
+    else
+      msg:getU16()
+    end  
+  end
+
   local time = (os.time() / 1000) * statistics.SECONDS_PER_DAY;
 
   local purchaseStats = {}
@@ -129,14 +138,6 @@ local function parseMarketBrowse(protocol, msg)
   return true
 end
 
-local function parseMarketResourcesBalance(protocol, msg)
-  local resourceType = msg:getU8() -- type
-  local value = msg:getU64() -- value
-
-  signalcall(Market.onMarketResourceBalance, resourceType, value)
-  return true
-end
-
 -- public functions
 function initProtocol()
   connect(g_game, { onGameStart = MarketProtocol.registerProtocol,
@@ -169,7 +170,6 @@ function MarketProtocol.registerProtocol()
     ProtocolGame.registerOpcode(GameServerOpcodes.GameServerMarketLeave, parseMarketLeave)
     ProtocolGame.registerOpcode(GameServerOpcodes.GameServerMarketDetail, parseMarketDetail)
     ProtocolGame.registerOpcode(GameServerOpcodes.GameServerMarketBrowse, parseMarketBrowse)
-    ProtocolGame.registerOpcode(GameServerOpcodes.GameServerSendResourceBalance, parseMarketResourcesBalance)
   end
   MarketProtocol.updateProtocol(g_game.getProtocolGame())
 end
@@ -180,7 +180,6 @@ function MarketProtocol.unregisterProtocol()
     ProtocolGame.unregisterOpcode(GameServerOpcodes.GameServerMarketLeave, parseMarketLeave)
     ProtocolGame.unregisterOpcode(GameServerOpcodes.GameServerMarketDetail, parseMarketDetail)
     ProtocolGame.unregisterOpcode(GameServerOpcodes.GameServerMarketBrowse, parseMarketBrowse)
-    ProtocolGame.unregisterOpcode(GameServerOpcodes.GameServerSendResourceBalance, parseMarketResourcesBalance)
   end
   MarketProtocol.updateProtocol(nil)
 end

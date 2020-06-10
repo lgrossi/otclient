@@ -12,7 +12,7 @@ SpeakTypesSettings = {
   channelYellow = { speakType = MessageModes.Channel, color = '#FFFF00' },
   channelWhite = { speakType = MessageModes.ChannelManagement, color = '#FFFFFF' },
   channelRed = { speakType = MessageModes.GamemasterChannel, color = '#F55E5E' },
-  channelOrange = { speakType = MessageModes.ChannelHighlight, color = '#FE6500' },
+  channelOrange = { speakType = MessageModes.ChannelHighlight, color = '#F6A731' },
   monsterSay = { speakType = MessageModes.MonsterSay, color = '#FE6500', hideInConsole = true},
   monsterYell = { speakType = MessageModes.MonsterYell, color = '#FE6500', hideInConsole = true},
   rvrAnswerFrom = { speakType = MessageModes.RVRAnswer, color = '#FE6500' },
@@ -67,6 +67,7 @@ consolePanel = nil
 consoleContentPanel = nil
 consoleTabBar = nil
 consoleTextEdit = nil
+consoleToggleChat = nil
 channels = nil
 channelsWindow = nil
 communicationWindow = nil
@@ -81,6 +82,8 @@ violationWindow = nil
 violationReportTab = nil
 ignoredChannels = {}
 filters = {}
+
+floatingMode = false
 
 local communicationSettings = {
   useIgnoreList = true,
@@ -97,16 +100,16 @@ function init()
     onTalk = onTalk,
     onChannelList = onChannelList,
     onOpenChannel = onOpenChannel,
+    onCloseChannel = onCloseChannel,
+    onChannelEvent = onChannelEvent,
     onOpenPrivateChannel = onOpenPrivateChannel,
     onOpenOwnPrivateChannel = onOpenOwnPrivateChannel,
-    onCloseChannel = onCloseChannel,
     onRuleViolationChannel = onRuleViolationChannel,
     onRuleViolationRemove = onRuleViolationRemove,
     onRuleViolationCancel = onRuleViolationCancel,
     onRuleViolationLock = onRuleViolationLock,
     onGameStart = online,
     onGameEnd = offline,
-    onChannelEvent = onChannelEvent,
   })
 
   consolePanel = g_ui.loadUI('console', modules.game_interface.getBottomPanel())
@@ -115,7 +118,14 @@ function init()
   consoleTabBar = consolePanel:getChildById('consoleTabBar')
   consoleTabBar:setContentWidget(consoleContentPanel)
   channels = {}
-
+    
+  consolePanel.onDragEnter = onDragEnter
+  consolePanel.onDragLeave = onDragLeave
+  consolePanel.onDragMove = onDragMove
+  consoleTabBar.onDragEnter = onDragEnter
+  consoleTabBar.onDragLeave = onDragLeave
+  consoleTabBar.onDragMove = onDragMove
+  
   consolePanel.onKeyPress = function(self, keyCode, keyboardModifiers)
     if not (keyboardModifiers == KeyboardCtrlModifier and keyCode == KeyC) then return false end
 
@@ -141,9 +151,10 @@ function init()
   consoleTabBar.onTabChange = onTabChange
 
   -- tibia like hotkeys
-  g_keyboard.bindKeyDown('Ctrl+O', g_game.requestChannels)
-  g_keyboard.bindKeyDown('Ctrl+E', removeCurrentTab)
-  g_keyboard.bindKeyDown('Ctrl+H', openHelp)
+  local gameRootPanel = modules.game_interface.getRootPanel()
+  g_keyboard.bindKeyDown('Ctrl+O', g_game.requestChannels, gameRootPanel)
+  g_keyboard.bindKeyDown('Ctrl+E', removeCurrentTab, gameRootPanel)
+  g_keyboard.bindKeyDown('Ctrl+H', openHelp, gameRootPanel)
 
   consoleToggleChat = consolePanel:getChildById('toggleChat')
   load()
@@ -182,56 +193,68 @@ function toggleChat()
   end
 end
 
-function enableChat()
-  local gameInterface = modules.game_interface
+function enableChat(temporarily)
+  if g_app.isMobile() then return end
+  if consoleToggleChat:isChecked() then
+    return consoleToggleChat:setChecked(false)
+  end
+  if not temporarily then
+    modules.client_options.setOption("wsadWalking", false)
+  end
 
   consoleTextEdit:setVisible(true)
   consoleTextEdit:setText("")
+  consoleTextEdit:focus()
 
-  g_keyboard.unbindKeyUp("Space")
-  g_keyboard.unbindKeyUp("Enter")
-  g_keyboard.unbindKeyUp("Escape")
+  local gameRootPanel = modules.game_interface.getRootPanel()
+  g_keyboard.unbindKeyDown("Enter", gameRootPanel)
+  
+  if temporarily then
+    local quickFunc = function()
+      if not g_game.isOnline() then return end
+      g_keyboard.unbindKeyDown("Enter", gameRootPanel)
+      g_keyboard.unbindKeyDown("Escape", gameRootPanel)
+      disableChat(temporarily)
+    end
+    g_keyboard.bindKeyDown("Enter", quickFunc, gameRootPanel)
+    g_keyboard.bindKeyDown("Escape", quickFunc, gameRootPanel)  
+  end
 
-  gameInterface.unbindWalkKey("W")
-  gameInterface.unbindWalkKey("D")
-  gameInterface.unbindWalkKey("S")
-  gameInterface.unbindWalkKey("A")
-
-  gameInterface.unbindWalkKey("E")
-  gameInterface.unbindWalkKey("Q")
-  gameInterface.unbindWalkKey("C")
-  gameInterface.unbindWalkKey("Z")
+  modules.game_walking.disableWSAD()
 
   consoleToggleChat:setTooltip(tr("Disable chat mode, allow to walk using ASDW"))
 end
 
-function disableChat()
-  local gameInterface = modules.game_interface
+function disableChat(temporarily)
+  if g_app.isMobile() then return end
+  if not consoleToggleChat:isChecked() then
+    return consoleToggleChat:setChecked(true)
+  end
+  if not temporarily then
+    modules.client_options.setOption("wsadWalking", true)
+  end
 
   consoleTextEdit:setVisible(false)
   consoleTextEdit:setText("")
 
   local quickFunc = function()
+    if not g_game.isOnline() then return end
     if consoleToggleChat:isChecked() then
       consoleToggleChat:setChecked(false)
     end
-    enableChat()
+    enableChat(true)
   end
-  g_keyboard.bindKeyUp("Space", quickFunc)
-  g_keyboard.bindKeyUp("Enter", quickFunc)
-  g_keyboard.bindKeyUp("Escape", quickFunc)
+  
+  local gameRootPanel = modules.game_interface.getRootPanel()
+  g_keyboard.bindKeyDown("Enter", quickFunc, gameRootPanel)
 
-  gameInterface.bindWalkKey("W", North)
-  gameInterface.bindWalkKey("D", East)
-  gameInterface.bindWalkKey("S", South)
-  gameInterface.bindWalkKey("A", West)
-
-  gameInterface.bindWalkKey("E", NorthEast)
-  gameInterface.bindWalkKey("Q", NorthWest)
-  gameInterface.bindWalkKey("C", SouthEast)
-  gameInterface.bindWalkKey("Z", SouthWest)
+  modules.game_walking.enableWSAD()
 
   consoleToggleChat:setTooltip(tr("Enable chat mode"))
+end
+
+function isChatEnabled()
+  return consoleTextEdit:isVisible()
 end
 
 function terminate()
@@ -254,9 +277,10 @@ function terminate()
 
   if g_game.isOnline() then clear() end
 
-  g_keyboard.unbindKeyDown('Ctrl+O')
-  g_keyboard.unbindKeyDown('Ctrl+E')
-  g_keyboard.unbindKeyDown('Ctrl+H')
+  local gameRootPanel = modules.game_interface.getRootPanel()
+  g_keyboard.unbindKeyDown('Ctrl+O', gameRootPanel)
+  g_keyboard.unbindKeyDown('Ctrl+E', gameRootPanel)
+  g_keyboard.unbindKeyDown('Ctrl+H', gameRootPanel)
 
   saveCommunicationSettings()
 
@@ -361,6 +385,33 @@ function clear()
   end
 end
 
+function switchMode(newView)
+  if newView then
+    consolePanel:setImageColor('#ffffff88')  
+  else
+    consolePanel:setImageColor('white')  
+  end
+  --consolePanel:setDraggable(floating)
+  --consoleTabBar:setDraggable(floating)
+  --floatingMode = floating
+end
+
+function onDragEnter(widget, pos)
+  return floatingMode
+end
+
+function onDragMove(widget, pos, moved)
+  if not floatingMode then
+    return
+  end
+  -- update margin
+  return true
+end
+
+function onDragLeave(widget, pos)
+  return floatingMode
+end
+
 function clearChannel(consoleTabBar)
   consoleTabBar:getCurrentTab().tabPanel:getChildById('consoleBuffer'):destroyChildren()
 end
@@ -434,6 +485,10 @@ function removeTab(tab)
     g_game.closeNpcChannel()
   end
 
+  if getCurrentTab() == tab then
+    consoleTabBar:selectTab(defaultTab)
+  end
+
   consoleTabBar:removeTab(tab)
 end
 
@@ -474,7 +529,7 @@ end
 
 function addPrivateChannel(receiver)
   channels[receiver] = receiver
-  return addTab(receiver, false)
+  return addTab(receiver, true)
 end
 
 function addPrivateText(text, speaktype, name, isPrivateCommand, creatureName)
@@ -538,6 +593,29 @@ function getHighlightedText(text)
   return tmpData
 end
 
+function getNewHighlightedText(text, color, highlightColor)
+  local tmpData = {}
+  
+  for i, part in ipairs(text:split("{")) do
+    if i == 1 then
+      table.insert(tmpData, part)
+      table.insert(tmpData, color)
+    else
+      for j, part2 in ipairs(part:split("}")) do
+        if j == 1 then
+          table.insert(tmpData, part2)
+          table.insert(tmpData, highlightColor)
+        else
+          table.insert(tmpData, part2)
+          table.insert(tmpData, color)
+        end
+      end
+    end
+  end
+
+  return tmpData
+end
+
 function addTabText(text, speaktype, tab, creatureName)
   if not tab or tab.locked or not text or #text == 0 then return end
 
@@ -547,22 +625,36 @@ function addTabText(text, speaktype, tab, creatureName)
 
   local panel = consoleTabBar:getTabPanel(tab)
   local consoleBuffer = panel:getChildById('consoleBuffer')
-  local label = g_ui.createWidget('ConsoleLabel', consoleBuffer)
+
+  local label = nil
+  if consoleBuffer:getChildCount() > MAX_LINES then
+    label = consoleBuffer:getFirstChild()
+    consoleBuffer:moveChildToIndex(label, consoleBuffer:getChildCount())
+  end
+
+  if not label then
+    label = g_ui.createWidget('ConsoleLabel', consoleBuffer)
+  end
   label:setId('consoleLabel' .. consoleBuffer:getChildCount())
   label:setText(text)
   label:setColor(speaktype.color)
   consoleTabBar:blinkTab(tab)
 
-  -- Overlay for consoleBuffer which shows highlighted words only
+  -- Overlay for consoleBuffer which shows highlighted words only  
+  local labelHighlight = label:getChildById("consoleLabelHighlight")
+  if labelHighlight then
+    labelHighlight:setText("")
+  end  
 
   if speaktype.npcChat and (g_game.getCharacterName() ~= creatureName or g_game.getCharacterName() == 'Account Manager') then
     local highlightData = getHighlightedText(text)
     if #highlightData > 0 then
-      local labelHighlight = g_ui.createWidget('ConsolePhantomLabel', label)
-      labelHighlight:fill('parent')
-
-      labelHighlight:setId('consoleLabelHighlight' .. consoleBuffer:getChildCount())
-      labelHighlight:setColor("#1f9ffe")
+      if not labelHighlight then
+        labelHighlight = g_ui.createWidget('ConsolePhantomLabel', label)
+        labelHighlight:fill('parent')
+        labelHighlight:setId('consoleLabelHighlight')
+        labelHighlight:setColor("#1f9ffe")
+      end
 
       -- Remove the curly braces
       for i = 1, #highlightData / 3 do
@@ -696,12 +788,6 @@ function addTabText(text, speaktype, tab, creatureName)
 
     return true
   end
-
-  if consoleBuffer:getChildCount() > MAX_LINES then
-    local child = consoleBuffer:getFirstChild()
-    clearSelection(consoleBuffer)
-    child:destroy()
-  end
 end
 
 function removeTabLabelByName(tab, name)
@@ -738,7 +824,7 @@ function processChannelTabMenu(tab, mousePos, mouseButton)
       end
 
       local filename = worldName .. ' - ' .. characterName .. ' - ' .. channelName .. '.txt'
-      local filepath = '/' .. filename
+      local filepath = '/user_dir/' .. filename
 
       -- extra information at the beginning
       table.insert(lines, 1, os.date('\nChannel saved at %a %b %d %H:%M:%S %Y'))
@@ -804,6 +890,7 @@ end
 function sendCurrentMessage()
   local message = consoleTextEdit:getText()
   if #message == 0 then return end
+  if not isChatEnabled() then return end
   consoleTextEdit:clearText()
 
   -- send message
@@ -921,6 +1008,7 @@ function sendMessage(message, tab)
     local isPrivateCommand = false
     local priv = true
     local tabname = name
+    local dontAdd = false
     if chatCommandPrivateReady then
       speaktypedesc = 'privatePlayerToPlayer'
       name = chatCommandPrivate
@@ -930,10 +1018,11 @@ function sendMessage(message, tab)
     elseif tab == violationReportTab then
       if violationReportTab.locked then
         modules.game_textmessage.displayFailureMessage('Wait for a gamemaster reply.')
-        return
+        dontAdd = true
+      else
+        speaktypedesc = 'rvrContinue'
+        tabname = tr('Report Rule') .. '...'
       end
-      speaktypedesc = 'rvrContinue'
-      tabname = tr('Report Rule') .. '...'
     elseif tab.violationChatName then
       speaktypedesc = 'rvrAnswerTo'
       name = tab.violationChatName
@@ -946,9 +1035,10 @@ function sendMessage(message, tab)
     local speaktype = SpeakTypesSettings[speaktypedesc]
     local player = g_game.getLocalPlayer()
     g_game.talkPrivate(speaktype.speakType, name, message)
-
-    message = applyMessagePrefixies(g_game.getCharacterName(), player:getLevel(), message)
-    addPrivateText(message, speaktype, tabname, isPrivateCommand, g_game.getCharacterName())
+    if not dontAdd then
+      message = applyMessagePrefixies(g_game.getCharacterName(), player:getLevel(), message)
+      addPrivateText(message, speaktype, tabname, isPrivateCommand, g_game.getCharacterName())
+    end
   end
 end
 
@@ -974,6 +1064,10 @@ function setIgnoreNpcMessages(ignore)
 end
 
 function navigateMessageHistory(step)
+  if not isChatEnabled() then
+    return
+  end
+
   local numCommands = #messageHistory
   if numCommands > 0 then
     currentMessageIndex = math.min(math.max(currentMessageIndex + step, 0), numCommands)
@@ -983,6 +1077,10 @@ function navigateMessageHistory(step)
     else
       consoleTextEdit:clearText()
     end
+  end
+  local player = g_game.getLocalPlayer()
+  if player then
+    player:lockWalk(200) -- lock walk for 200 ms to avoid walk during release of shift
   end
 end
 
@@ -1040,16 +1138,16 @@ function onTalk(name, level, mode, message, channelId, creaturePos)
     -- Remove curly braces from screen message
     local staticMessage = message
     if isNpcMode then
-      local highlightData = getHighlightedText(staticMessage)
-      if #highlightData > 0 then
-        for i = 1, #highlightData / 3 do
-          local dataBlock = { _start = highlightData[(i-1)*3+1], _end = highlightData[(i-1)*3+2], words = highlightData[(i-1)*3+3] }
-          staticMessage = staticMessage:gsub("{"..dataBlock.words.."}", dataBlock.words)
-        end
+      local highlightData = getNewHighlightedText(staticMessage, speaktype.color, "#1f9ffe")
+      if #highlightData > 2 then
+        staticText:addColoredMessage(name, mode, highlightData)
+      else
+        staticText:addMessage(name, mode, staticMessage)
       end
       staticText:setColor(speaktype.color)
+    else
+      staticText:addMessage(name, mode, staticMessage)
     end
-    staticText:addMessage(name, mode, staticMessage)
     g_map.addThing(staticText, creaturePos, -1)
   end
 
@@ -1165,6 +1263,7 @@ function doChannelListSubmit()
     if selectedChannelLabel.channelId == 0xFFFF then
       g_game.openOwnChannel()
     else
+      g_game.leaveChannel(selectedChannelLabel.channelId)
       g_game.joinChannel(selectedChannelLabel.channelId)
     end
   end
@@ -1264,6 +1363,7 @@ end
 function addIgnoredPlayer(name)
   if isIgnored(name) then return end
   table.insert(communicationSettings.ignoredPlayers, name)
+  communicationSettings.useIgnoreList = true
 end
 
 function removeIgnoredPlayer(name)
@@ -1418,8 +1518,15 @@ function online()
   defaultTab = addTab(tr('Default'), true)
   serverTab = addTab(tr('Server Log'), false)
 
+
+  if g_game.getClientVersion() >= 820 then
+    local tab = addTab("NPCs", false)
+    tab.npcChat = true
+  end
+  
   if g_game.getClientVersion() < 862 then
-    g_keyboard.bindKeyDown('Ctrl+R', openPlayerReportRuleViolationWindow)
+    local gameRootPanel = modules.game_interface.getRootPanel()
+    g_keyboard.bindKeyDown('Ctrl+R', openPlayerReportRuleViolationWindow, gameRootPanel)
   end
   -- open last channels
   local lastChannelsOpen = g_settings.getNode('lastChannelsOpen')
@@ -1437,12 +1544,14 @@ function online()
       end
     end
   end
+  scheduleEvent(function() consoleTabBar:selectTab(defaultTab) end, 500)
   scheduleEvent(function() ignoredChannels = {} end, 3000)
 end
 
 function offline()
   if g_game.getClientVersion() < 862 then
-    g_keyboard.unbindKeyDown('Ctrl+R')
+    local gameRootPanel = modules.game_interface.getRootPanel()
+    g_keyboard.unbindKeyDown('Ctrl+R', gameRootPanel)
   end
   clear()
 end

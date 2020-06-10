@@ -39,31 +39,21 @@ Panel
     size: 34 34
     padding: 1
     font: verdana-11px-rounded
-    border-color: #535353
-    border-width: 1
+    border-color: white
     anchors.top: rightTabBar.bottom
     anchors.left: rightTabContent.left
     margin-top: 6
     margin-left: 6
 
-    Label
-      id: selectedItemLabel
-      font: verdana-11px-rounded
-      text-offset: 0 2
-      anchors.top: selectedItem.top
-      anchors.left: selectedItem.left
-      size: 34 34
-      text-align: center
-      !text: '?'
-
   Label
-    id: selectedItemTitleLabel
+    id: nameLabel
     !text: tr('No item selected.')
     font: verdana-11px-rounded
     text-offset: 0 2
-    anchors.top: selectedItem.top
-    anchors.left: selectedItem.right
-    margin-left: 6
+    anchors.top: prev.top
+    anchors.left: prev.right
+    anchors.right: parent.right
+    margin-left: 5
 
   Label
     id: createLabel

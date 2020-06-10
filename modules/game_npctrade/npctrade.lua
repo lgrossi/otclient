@@ -13,6 +13,7 @@ searchText = nil
 setupPanel = nil
 quantity = nil
 quantityScroll = nil
+idLabel = nil
 nameLabel = nil
 priceLabel = nil
 moneyLabel = nil
@@ -31,7 +32,7 @@ ignoreCapacity = nil
 ignoreEquipped = nil
 showAllItems = nil
 sellAllButton = nil
-
+sellAllWithDelayButton = nil
 playerFreeCapacity = 0
 playerMoney = 0
 tradeItems = {}
@@ -39,6 +40,8 @@ playerItems = {}
 selectedItem = nil
 
 cancelNextRelease = nil
+
+sellAllWithDelayEvent = nil
 
 function init()
   npcWindow = g_ui.displayUI('npctrade')
@@ -49,6 +52,7 @@ function init()
 
   setupPanel = npcWindow:recursiveGetChildById('setupPanel')
   quantityScroll = setupPanel:getChildById('quantityScroll')
+  idLabel = setupPanel:getChildById('id')
   nameLabel = setupPanel:getChildById('name')
   priceLabel = setupPanel:getChildById('price')
   moneyLabel = setupPanel:getChildById('money')
@@ -63,7 +67,7 @@ function init()
   ignoreEquipped = npcWindow:recursiveGetChildById('ignoreEquipped')
   showAllItems = npcWindow:recursiveGetChildById('showAllItems')
   sellAllButton = npcWindow:recursiveGetChildById('sellAllButton')
-
+  sellAllWithDelayButton = npcWindow:recursiveGetChildById('sellAllWithDelayButton')
   buyTab = npcWindow:getChildById('buyTab')
   sellTab = npcWindow:getChildById('sellTab')
 
@@ -93,7 +97,8 @@ end
 function terminate()
   initialized = false
   npcWindow:destroy()
-
+  removeEvent(sellAllWithDelayEvent)
+  
   disconnect(g_game, {  onGameEnd = hide,
                         onOpenNpcTrade = onOpenNpcTrade,
                         onCloseNpcTrade = onCloseNpcTrade,
@@ -118,7 +123,26 @@ function show()
 end
 
 function hide()
+  removeEvent(sellAllWithDelayEvent)
+
   npcWindow:hide()
+
+  local layout = itemsPanel:getLayout()
+  layout:disableUpdates()
+
+  clearSelectedItem()
+
+  searchText:clearText()
+  setupPanel:disable()
+  itemsPanel:destroyChildren()
+
+  if radioItems then
+    radioItems:destroy()
+    radioItems = nil
+  end
+
+  layout:enableUpdates()
+  layout:update()  
 end
 
 function onItemBoxChecked(widget)
@@ -152,12 +176,14 @@ function onTradeTypeChange(radioTabs, selected, deselected)
   ignoreEquipped:setVisible(currentTradeType == SELL)
   showAllItems:setVisible(currentTradeType == SELL)
   sellAllButton:setVisible(currentTradeType == SELL)
-
+  sellAllWithDelayButton:setVisible(currentTradeType == SELL)
+  
   refreshTradeItems()
   refreshPlayerGoods()
 end
 
 function onTradeClick()
+  removeEvent(sellAllWithDelayEvent)
   if getCurrentTradeType() == BUY then
     g_game.buyItem(selectedItem.ptr, quantityScroll:getValue(), ignoreCapacity:isChecked(), buyWithBackpack:isChecked())
   else
@@ -226,6 +252,7 @@ function setShowYourCapacity(state)
 end
 
 function clearSelectedItem()
+  idLabel:clearText()
   nameLabel:clearText()
   weightLabel:clearText()
   priceLabel:clearText()
@@ -288,6 +315,7 @@ function canTradeItem(item)
 end
 
 function refreshItem(item)
+  idLabel:setText(item.ptr:getId())
   nameLabel:setText(item.name)
   weightLabel:setText(string.format('%.2f', item.weight) .. ' ' .. WEIGHT_UNIT)
   priceLabel:setText(formatCurrency(getItemPrice(item)))
@@ -393,7 +421,6 @@ end
 function onOpenNpcTrade(items)
   tradeItems[BUY] = {}
   tradeItems[SELL] = {}
-
   for key,item in pairs(items) do
     if item[4] > 0 then
       local newItem = {}
@@ -403,7 +430,7 @@ function onOpenNpcTrade(items)
       newItem.price = item[4]
       table.insert(tradeItems[BUY], newItem)
     end
-
+    
     if item[5] > 0 then
       local newItem = {}
       newItem.ptr = item[1]
@@ -420,11 +447,11 @@ end
 
 function closeNpcTrade()
   g_game.closeNpcTrade()
-  hide()
+  addEvent(hide)
 end
 
 function onCloseNpcTrade()
-  hide()
+  addEvent(hide)
 end
 
 function onPlayerGoods(money, items)
@@ -481,6 +508,8 @@ end
 function checkSellAllTooltip()
   sellAllButton:setEnabled(true)
   sellAllButton:removeTooltip()
+  sellAllWithDelayButton:setEnabled(true)
+  sellAllWithDelayButton:removeTooltip()
 
   local total = 0
   local info = ''
@@ -506,8 +535,10 @@ function checkSellAllTooltip()
   if info ~= '' then
     info = info.."\nTotal: "..total.." gold"
     sellAllButton:setTooltip(info)
+    sellAllWithDelayButton:setTooltip(info)
   else
     sellAllButton:setEnabled(false)
+    sellAllWithDelayButton:setEnabled(false)
   end
 end
 
@@ -526,12 +557,23 @@ function getMaxAmount()
   return 100
 end
 
-function sellAll()
-  for itemid,item in pairs(playerItems) do
-    local item = Item.create(itemid)
-    local amount = getSellQuantity(item)
-    if amount > 0 then
-      g_game.sellItem(item, amount, ignoreEquipped:isChecked())
+function sellAll(delayed)
+  removeEvent(sellAllWithDelayEvent)
+  local queue = {}
+  for _,entry in ipairs(tradeItems[SELL]) do
+    local sellQuantity = getSellQuantity(entry.ptr)
+    while sellQuantity > 0 do
+      local maxAmount = math.min(sellQuantity, getMaxAmount())
+      if delayed then
+        g_game.sellItem(entry.ptr, maxAmount, ignoreEquipped:isChecked())
+        sellAllWithDelayEvent = scheduleEvent(function() sellAll(true) end, 1100)
+        return
+      end
+      table.insert(queue, {entry.ptr, maxAmount, ignoreEquipped:isChecked()})
+      sellQuantity = sellQuantity - maxAmount
     end
+  end
+  for _, entry in ipairs(queue) do
+    g_game.sellItem(entry[1], entry[2], entry[3])
   end
 end

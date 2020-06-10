@@ -1,31 +1,22 @@
-Panel
-  ButtonBox
-    id: opengl1
-    anchors.left: parent.left
-    anchors.top: parent.top
-    text: OpenGL 1
-    size: 80 20
+OptionPanel
+  Label
+    text-wrap: false
+    @onSetup: |
+      self:setText(tr("GPU: ") .. g_graphics.getRenderer())      
 
-  ButtonBox
-    id: opengl2
-    anchors.left: prev.right
-    anchors.verticalCenter: prev.verticalCenter
-    text: OpenGL 2
-    size: 80 20
-    margin-left: 4
+  Label
+    text-wrap: false
+    @onSetup: |
+      self:setText(tr("Version: ") .. g_graphics.getVersion())      
 
-  ButtonBox
-    id: directx9
-    anchors.left: prev.right
-    anchors.verticalCenter: prev.verticalCenter
-    text: DirectX 9
-    size: 80 20
-    margin-left: 4
+  HorizontalSeparator
+    id: separator
+    margin: 5 5 5 5
 
   OptionCheckBox
     id: vsync
     !text: tr('Enable vertical synchronization')
-    !tooltip: tr('Limits FPS to 60')
+    !tooltip: tr('Limits FPS (usually to 60)')
 
   OptionCheckBox
     id: showFps
@@ -40,16 +31,32 @@ Panel
     !text: tr('Fullscreen')
     tooltip: Ctrl+Shift+F
 
-  OptionCheckBox
-    id: dontStretchShrink
-    !text: tr('Don\'t stretch/shrink Game Window')
+  Label
+    margin-top: 12
+    id: optimizationLevelLabel
+    !text: tr("Optimization level")
+    
+  ComboBox
+    id: optimizationLevel
+    margin-top: 3
+    margin-right: 2
+    margin-left: 2
+    @onOptionChange: modules.client_options.setOption(self:getId(), self.currentIndex)
+    @onSetup: |
+      self:addOption("Automatic")
+      self:addOption("None")
+      self:addOption("Low")
+      self:addOption("Medium")
+      self:addOption("High")
+      self:addOption("Maximum")
+      
+  Label
+    !text: tr('High/Maximum optimization level may cause visual defects.')
+    margin-top: 5
 
   Label
     id: backgroundFrameRateLabel
     !text: tr('Game framerate limit: %s', 'max')
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.top: prev.bottom
     margin-top: 12
     @onSetup: |
       local value = modules.client_options.getOption('backgroundFrameRate')
@@ -57,47 +64,16 @@ Panel
       if value <= 0 or value >= 201 then
         text = 'max'
       end
-
       self:setText(tr('Game framerate limit: %s', text))
 
   OptionScrollbar
     id: backgroundFrameRate
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.top: prev.bottom
     margin-top: 3
     minimum: 10
     maximum: 201
 
   Label
-    id: foregroundFrameRateLabel
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.top: prev.bottom
-    margin-top: 6
-    @onSetup: |
-      local value = modules.client_options.getOption('foregroundFrameRate')
-      local text = value
-      if value <= 0 or value >= 61 then
-        text = 'max'
-      end
-
-      self:setText(tr('Interface framerate limit: %s', text))
-
-  OptionScrollbar
-    id: foregroundFrameRate
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.top: prev.bottom
-    margin-top: 3
-    minimum: 1
-    maximum: 61
-
-  Label
     id: ambientLightLabel
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.top: prev.bottom
     margin-top: 6
     @onSetup: |
       local value = modules.client_options.getOption('ambientLight')
@@ -105,10 +81,16 @@ Panel
 
   OptionScrollbar
     id: ambientLight
-    anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.top: prev.bottom
     margin-top: 3
     minimum: 0
     maximum: 100
-
+  
+  Label
+    id: tips
+    margin-top: 20
+    text-auto-resize: true
+    text-align: left
+    text-wrap: true
+    !text: tr("If you have FPS issues:\n- Use OpenGL version (_gl)\n- Disable vertical synchronization\n- Set higher optimization level\n- Lower screen resolution\nOr report it on forum: http://otclient.net")
+    $mobile:
+      visible: false

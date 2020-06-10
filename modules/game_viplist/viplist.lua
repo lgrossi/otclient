@@ -13,7 +13,7 @@ function init()
 
   g_keyboard.bindKeyDown('Ctrl+P', toggle)
 
-  vipButton = modules.client_topmenu.addRightGameToggleButton('vipListButton', tr('VIP List') .. ' (Ctrl+P)', '/images/topbuttons/viplist', toggle)
+  vipButton = modules.client_topmenu.addRightGameToggleButton('vipListButton', tr('VIP List') .. ' (Ctrl+P)', '/images/topbuttons/viplist', toggle, false, 3)
   vipButton:setOn(true)
   vipWindow = g_ui.loadUI('viplist', modules.game_interface.getRightPanel())
 
@@ -148,9 +148,9 @@ function createEditWindow(widget)
       g_game.editVip(id, description, iconId, notify)
     else
       if notify ~= false or #description > 0 or iconId > 0 then
-        vipInfo[name] = {description = description, iconId = iconId, notifyLogin = notify}
+        vipInfo[id] = {description = description, iconId = iconId, notifyLogin = notify}
       else
-        vipInfo[name] = nil
+        vipInfo[id] = nil
       end
     end
 
@@ -203,11 +203,10 @@ function removeVip(widgetOrName)
 
   if widget then
     local id = widget:getId():sub(4)
-    local name = widget:getText()
     g_game.removeVip(id)
     vipList:removeChild(widget)
-    if vipInfo[name] and g_game.getFeature(GameAdditionalVipInfo) then
-      vipInfo[name] = nil
+    if vipInfo[id] and g_game.getFeature(GameAdditionalVipInfo) then
+      vipInfo[id] = nil
     end
   end
 end
@@ -244,16 +243,27 @@ function sortBy(state)
   refresh()
 end
 
-function onAddVip(id, name, state, description, iconId, notify)
+function onAddVip(id, name, state, description, iconId, notify)  
+  if not name or name:len() == 0 then
+    return
+  end
+  
   local vipList = vipWindow:getChildById('contentsPanel')
-
+  local childrenCount = vipList:getChildCount()
+  for i=1,childrenCount do
+    local child = vipList:getChildByIndex(i)
+    if child:getText() == name then
+      return -- don't add duplicated vips
+    end
+  end
+  
   local label = g_ui.createWidget('VipListLabel')
   label.onMousePress = onVipListLabelMousePress
   label:setId('vip' .. id)
   label:setText(name)
 
   if not g_game.getFeature(GameAdditionalVipInfo) then
-    local tmpVipInfo = vipInfo[name]
+    local tmpVipInfo = vipInfo[tostring(id)]
     label.iconId = 0
     label.notifyLogin = false
     if tmpVipInfo then
@@ -327,6 +337,9 @@ end
 function onVipStateChange(id, state)
   local vipList = vipWindow:getChildById('contentsPanel')
   local label = vipList:getChildById('vip' .. id)
+  if not label then
+    return
+  end
   local name = label:getText()
   local description = label:getTooltip()
   local iconId = label.iconId
@@ -336,7 +349,7 @@ function onVipStateChange(id, state)
   onAddVip(id, name, state, description, iconId, notify)
 
   if notify and state ~= VipState.Pending then
-    modules.game_textmessage.displayFailureMessage(state == VipState.Online and tr('%s has logged in.', name) or tr('%s has logged out.', name))
+    modules.game_textmessage.displayFailureMessage(tr('%s has logged %s.', name, (state == VipState.Online and 'in' or 'out')))
   end
 end
 

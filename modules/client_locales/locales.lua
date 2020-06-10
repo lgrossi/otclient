@@ -4,15 +4,7 @@ dofile 'neededtranslations'
 local defaultLocaleName = 'en'
 local installedLocales
 local currentLocale
-
-function sendLocale(localeName)
-  local protocolGame = g_game.getProtocolGame()
-  if protocolGame then
-    protocolGame:sendExtendedOpcode(ExtendedIds.Locale, localeName)
-    return true
-  end
-  return false
-end
+local missingTranslations = {}
 
 function createWindow()
   localesWindow = g_ui.displayUI('locales')
@@ -44,18 +36,7 @@ function selectFirstLocale(name)
   if setLocale(name) then
     g_modules.reloadModules()
   end
-end
-
--- hooked functions
-function onGameStart()
-  sendLocale(currentLocale.name)
-end
-
-function onExtendedLocales(protocol, opcode, buffer)
-  local locale = installedLocales[buffer]
-  if locale and setLocale(locale.name) then
-    g_modules.reloadModules()
-  end
+  g_settings.save()
 end
 
 -- public functions
@@ -69,20 +50,15 @@ function init()
     pdebug('Using configured locale: ' .. userLocaleName)
   else
     setLocale(defaultLocaleName)
-    connect(g_app, { onRun = createWindow })
+    --connect(g_app, { onRun = createWindow })
   end
-
-  ProtocolGame.registerExtendedOpcode(ExtendedIds.Locale, onExtendedLocales)
-  connect(g_game, { onGameStart = onGameStart })
 end
 
 function terminate()
   installedLocales = nil
   currentLocale = nil
 
-  ProtocolGame.unregisterExtendedOpcode(ExtendedIds.Locale)
-  disconnect(g_app, { onRun = createWindow })
-  disconnect(g_game, { onGameStart = onGameStart })
+  --disconnect(g_app, { onRun = createWindow })
 end
 
 function generateNewTranslationTable(localename)
@@ -144,16 +120,10 @@ end
 
 function setLocale(name)
   local locale = installedLocales[name]
-  if locale == currentLocale then
-    g_settings.set('locale', name)
-    return
-  end
+  if locale == currentLocale then return end
   if not locale then
     pwarning("Locale " .. name .. ' does not exist.')
     return false
-  end
-  if currentLocale then
-    sendLocale(locale.name)
   end
   currentLocale = locale
   g_settings.set('locale', name)
@@ -192,7 +162,10 @@ function _G.tr(text, ...)
       if not translation then
         if translation == nil then
           if currentLocale.name ~= defaultLocaleName then
-            pdebug('Unable to translate: \"' .. text .. '\"')
+            if not missingTranslations[text] then
+              pdebug('Unable to translate: \"' .. text .. '\"')
+              missingTranslations[text] = true
+            end
           end
         end
         translation = text

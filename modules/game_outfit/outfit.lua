@@ -23,6 +23,7 @@ mount = nil
 mounts = nil
 mountCreature = nil
 currentMount = 1
+ignoreNextOutfitWindow = 0
 
 function init()
   connect(g_game, {
@@ -51,6 +52,9 @@ function updateMount()
 end
 
 function create(creatureOutfit, outfitList, creatureMount, mountList)
+  if ignoreNextOutfitWindow and g_clock.millis() < ignoreNextOutfitWindow + 1000 then
+    return
+  end
   if outfitWindow and not outfitWindow:isHidden() then
     return
   end
@@ -243,10 +247,12 @@ function onColorCheckChange(colorBox)
     colorBox:setChecked(true)
     colorBox.onCheckChange = onColorCheckChange
   else
-    currentColorBox.onCheckChange = nil
-    currentColorBox:setChecked(false)
-    currentColorBox.onCheckChange = onColorCheckChange
-
+    if currentColorBox then
+      currentColorBox.onCheckChange = nil
+      currentColorBox:setChecked(false)
+      currentColorBox.onCheckChange = onColorCheckChange
+    end
+    
     currentColorBox = colorBox
 
     if currentClotheButtonBox:getId() == 'head' then

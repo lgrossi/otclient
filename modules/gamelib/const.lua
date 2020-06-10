@@ -100,7 +100,7 @@ GameItemAnimationPhase = 15
 GameMagicEffectU16 = 16
 GamePlayerMarket = 17
 GameSpritesU32 = 18
-GameChargeableItems = 19
+GameTileAddThingWithStackpos = 19
 GameOfflineTrainingTime = 20
 GamePurseSlot = 21
 GameFormatCreatureName = 22
@@ -125,13 +125,16 @@ GameLooktypeU16 = 42
 GamePlayerStamina = 43
 GamePlayerAddons = 44
 GameMessageStatements = 45
-GameMesssageLevel = 46
+GameMessageLevel = 46
 GameNewFluids = 47
 GamePlayerStateU16 = 48
 GameNewOutfitProtocol = 49
 GamePVPMode = 50
 GameWritableDate = 51
 GameAdditionalVipInfo = 52
+GameBaseSkillU16 = 53
+GameCreatureIcons = 54
+GameHideNpcNames = 55
 GameSpritesAlphaChannel = 56
 GamePremiumExpiration = 57
 GameBrowseField = 58
@@ -153,7 +156,38 @@ GameIngameStore = 73
 GameIngameStoreHighlights = 74
 GameIngameStoreServiceType = 75
 GameAdditionalSkills = 76
+GameDistanceEffectU16 = 77
+GamePrey = 78
+GameDoubleMagicLevel = 79
 
+GameExtendedOpcode = 80
+GameMinimapLimitedToSingleFloor = 81
+
+GameDoubleLevel = 83
+GameDoubleSoul = 84
+GameDoublePlayerGoodsMoney = 85
+GameCreatureWalkthrough = 86 -- add Walkthrough for versions less than 854, unpass = msg->getU8(); in protocolgameparse.cpp
+GameDoubleTradeMoney = 87
+
+GameNewWalking = 90
+GameSlowerManualWalking = 91
+GameItemTooltip = 93
+
+GameBot = 95
+GameBiggerMapCache = 96
+GameForceLight = 97
+GameNoDebug = 98
+GameBotProtection = 99
+
+GameFasterAnimations = 101
+GameCenteredOutfits = 102
+GameSendIdentifiers = 103
+
+GamePacketSizeU32 = 110
+GamePacketCompression = 111
+
+LastGameFeature = 120
+        
 TextColors = {
   red       = '#f55e5e', --'#c83200'
   orange    = '#f36500', --'#c87832'

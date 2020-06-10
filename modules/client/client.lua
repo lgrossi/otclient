@@ -1,16 +1,20 @@
 local musicFilename = "/sounds/startup"
-local musicChannel = g_sounds.getChannel(1)
+local musicChannel = nil
 
 function setMusic(filename)
   musicFilename = filename
 
-  if not g_game.isOnline() then
+  if not g_game.isOnline() and musicChannel ~= nil then
     musicChannel:stop()
     musicChannel:enqueue(musicFilename, 3)
   end
 end
 
 function reloadScripts()
+  if g_game.getFeature(GameNoDebug) then
+    return
+  end
+  
   g_textures.clearCache()
   g_modules.reloadModules()
 
@@ -26,45 +30,46 @@ function reloadScripts()
 end
 
 function startup()
+  if g_sounds ~= nil then
+    musicChannel = g_sounds.getChannel(1)
+  end
+  
+  G.UUID = g_settings.getString('report-uuid')
+  if not G.UUID or #G.UUID ~= 36 then
+    G.UUID = g_crypt.genUUID()
+    g_settings.set('report-uuid', G.UUID)
+  end
+  
   -- Play startup music (The Silver Tree, by Mattias Westlund)
-  musicChannel:enqueue(musicFilename, 3)
-  connect(g_game, { onGameStart = function() musicChannel:stop(3) end })
+  --musicChannel:enqueue(musicFilename, 3)
+  connect(g_game, { onGameStart = function() if musicChannel ~= nil then musicChannel:stop(3) end end })
   connect(g_game, { onGameEnd = function()
-      g_sounds.stopAll()
-      musicChannel:enqueue(musicFilename, 3)
+      if g_sounds ~= nil then
+        g_sounds.stopAll()
+        --musicChannel:enqueue(musicFilename, 3)
+      end
   end })
-
-  -- Check for startup errors
-  local errtitle = nil
-  local errmsg = nil
-
-  if g_graphics.getRenderer():lower():match('gdi generic') then
-    errtitle = tr('Graphics card driver not detected')
-    errmsg = tr('No graphics card detected, everything will be drawn using the CPU,\nthus the performance will be really bad.\nPlease update your graphics driver to have a better performance.')
-  end
-
-  -- Show entergame
-  if errmsg or errtitle then
-    local msgbox = displayErrorBox(errtitle, errmsg)
-    msgbox.onOk = function() EnterGame.firstShow() end
-  else
-    EnterGame.firstShow()
-  end
 end
 
 function init()
   connect(g_app, { onRun = startup,
                    onExit = exit })
+  connect(g_game, { onGameStart = onGameStart,
+                    onGameEnd = onGameEnd })
 
-  g_window.setMinimumSize({ width = 600, height = 480 })
-  g_sounds.preload(musicFilename)
+  if g_sounds ~= nil then
+    --g_sounds.preload(musicFilename)
+  end
 
-  -- initialize in fullscreen mode on mobile devices
-  if g_window.getPlatformType() == "X11-EGL" then
-    g_window.setFullscreen(true)
-  else
+  if not Updater then
+    if g_resources.getLayout() == "mobile" then
+      g_window.setMinimumSize({ width = 640, height = 360 })
+    else
+      g_window.setMinimumSize({ width = 800, height = 640 })  
+    end
+
     -- window size
-    local size = { width = 800, height = 600 }
+    local size = { width = 1024, height = 600 }
     size = g_settings.getSize('window-size', size)
     g_window.resize(size)
 
@@ -85,9 +90,6 @@ function init()
   g_window.setTitle(g_app.getName())
   g_window.setIcon('/images/clienticon')
 
-  -- poll resize events
-  g_window.poll()
-
   g_keyboard.bindKeyDown('Ctrl+Shift+R', reloadScripts)
 
   -- generate machine uuid, this is a security measure for storing passwords
@@ -100,6 +102,8 @@ end
 function terminate()
   disconnect(g_app, { onRun = startup,
                       onExit = exit })
+  disconnect(g_game, { onGameStart = onGameStart,
+                       onGameEnd = onGameEnd })
   -- save window configs
   g_settings.set('window-size', g_window.getUnmaximizedSize())
   g_settings.set('window-pos', g_window.getUnmaximizedPos())
@@ -108,4 +112,14 @@ end
 
 function exit()
   g_logger.info("Exiting application..")
+end
+
+function onGameStart()
+  local player = g_game.getLocalPlayer()
+  if not player then return end
+  g_window.setTitle(g_app.getName() .. " - " .. player:getName())  
+end
+
+function onGameEnd()
+  g_window.setTitle(g_app.getName())
 end

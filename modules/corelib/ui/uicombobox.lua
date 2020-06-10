@@ -19,6 +19,14 @@ function UIComboBox:clearOptions()
   self:clearText()
 end
 
+function UIComboBox:clear()
+  return self:clearOptions()
+end
+
+function UIComboBox:getOptionsCount()
+  return #self.options
+end
+
 function UIComboBox:isOption(text)
   if not self.options then return false end
   for i,v in ipairs(self.options) do
@@ -47,6 +55,11 @@ function UIComboBox:setCurrentOption(text, dontSignal)
   end
 end
 
+function UIComboBox:updateCurrentOption(newText)
+  self.options[self.currentIndex].text = newText
+  self:setText(newText)
+end
+
 function UIComboBox:setCurrentOptionByData(data, dontSignal)
   if not self.options then return end
   for i,v in ipairs(self.options) do
@@ -61,12 +74,14 @@ function UIComboBox:setCurrentOptionByData(data, dontSignal)
   end
 end
 
-function UIComboBox:setCurrentIndex(index)
+function UIComboBox:setCurrentIndex(index, dontSignal)
   if index >= 1 and index <= #self.options then
     local v = self.options[index]
     self.currentIndex = index
     self:setText(v.text)
-    signalcall(self.onOptionChange, self, v.text, v.data)
+    if not dontSignal then
+      signalcall(self.onOptionChange, self, v.text, v.data)
+    end
   end
 end
 
@@ -120,7 +135,7 @@ function UIComboBox:onMousePress(mousePos, mouseButton)
 end
 
 function UIComboBox:onMouseWheel(mousePos, direction)
-  if not self.mouseScroll then
+  if not self.mouseScroll or self.disableScroll then
     return false
   end
   if direction == MouseWheelUp and self.currentIndex > 1 then

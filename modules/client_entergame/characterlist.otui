@@ -41,20 +41,18 @@ CharacterWidget < UIWidget
     $on:
       color: #ffffff
 
-MainWindow
+StaticMainWindow
   id: charactersWindow
   !text: tr('Character List')
   visible: false
+  size: 350 400
+  $mobile:
+    size: 350 280
   @onEnter: CharacterList.doLogin()
   @onEscape: CharacterList.hide(true)
   @onSetup: |
     g_keyboard.bindKeyPress('Up', function() self:getChildById('characters'):focusPreviousChild(KeyboardFocusReason) end, self)
-    g_keyboard.bindKeyPress('Down', function() self:getChildById('characters'):focusNextChild(KeyboardFocusReason) end, self)
-    if g_game.getFeature(GamePreviewState) then
-      self:setSize({width = 350, height = 400})
-    else
-      self:setSize({width = 250, height = 248})
-    end
+    g_keyboard.bindKeyPress('Down', function() self:getChildById('characters'):focusNextChild(KeyboardFocusReason) end, self)  
 
   TextList
     id: characters
@@ -82,14 +80,12 @@ MainWindow
     id: accountStatusCaption
     !text: tr('Account Status') .. ':'
     anchors.left: parent.left
-    anchors.right: parent.right
-    anchors.bottom: next.top
-    margin-bottom: 1
+    anchors.bottom: separator.top
+    margin-bottom: 5
 
   Label
     id: accountStatusLabel
     !text: tr('Free Account')
-    anchors.left: parent.left
     anchors.right: parent.right
     anchors.bottom: separator.top
     margin-bottom: 5
@@ -105,16 +101,16 @@ MainWindow
     anchors.bottom: next.top
     margin-bottom: 10
 
-  //CheckBox
-  //  id: charAutoLoginBox
-  //  !text: tr('Auto login')
-  //  !tooltip: tr('Auto login selected character on next charlist load')
-  //  anchors.left: parent.left
-  //  anchors.right: parent.right
-  //  anchors.bottom: next.top
-  //  margin-bottom: 6
-  //  margin-left: 18
-  //  margin-right: 18
+  Button
+    id: autoReconnect
+    !text: tr('Auto reconnect: On')
+    width: 140
+    anchors.left: parent.left
+    anchors.bottom: parent.bottom
+    image-color: green
+    $!on:
+      image-color: red    
+      !text: tr('Auto reconnect: Off')
 
   Button
     id: buttonOk

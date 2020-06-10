@@ -88,18 +88,18 @@ function g_tooltip.display(text)
   toolTipLabel:enable()
   g_effects.fadeIn(toolTipLabel, 100)
   moveToolTip(true)
-
+  
   connect(rootWidget, {
     onMouseMove = moveToolTip,
-  })
+  })  
 end
 
 function g_tooltip.hide()
   g_effects.fadeOut(toolTipLabel, 100)
-
+  
   disconnect(rootWidget, {
     onMouseMove = moveToolTip,
-  })
+  })  
 end
 
 

@@ -29,6 +29,9 @@ local function calcValues(self)
   end
 
   local px = math.max(proportion * pxrange, 6)
+  if g_app.isMobile() then
+    px = math.max(proportion * pxrange, 24)  
+  end
   px = px - px % 2 + 1
 
   local offset = 0
@@ -254,7 +257,7 @@ function UIScrollBar:onGeometryChange()
 end
 
 function UIScrollBar:onMouseWheel(mousePos, mouseWheel)
-  if not self.mouseScroll or not self:isOn() then
+  if not self.mouseScroll or not self:isOn() or self.disableScroll then
     return false
   end
   if mouseWheel == MouseWheelUp then

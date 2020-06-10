@@ -1,6 +1,4 @@
 function init()
-  g_ui.importStyle('container')
-
   connect(Container, { onOpen = onContainerOpen,
                        onClose = onContainerClose,
                        onSizeChange = onContainerChangeSize,
@@ -50,10 +48,18 @@ function refreshContainerItems(container)
   end
 end
 
-function toggleContainerPages(containerWindow, pages)
-  containerWindow:getChildById('miniwindowScrollBar'):setMarginTop(pages and 42 or 22)
-  containerWindow:getChildById('contentsPanel'):setMarginTop(pages and 42 or 22)
-  containerWindow:getChildById('pagePanel'):setVisible(pages)
+function toggleContainerPages(containerWindow, hasPages)
+  if hasPages == containerWindow.pagePanel:isOn() then
+    return
+  end
+  containerWindow.pagePanel:setOn(hasPages)
+  if hasPages then
+    containerWindow.miniwindowScrollBar:setMarginTop(containerWindow.miniwindowScrollBar:getMarginTop() + containerWindow.pagePanel:getHeight())
+    containerWindow.contentsPanel:setMarginTop(containerWindow.contentsPanel:getMarginTop() + containerWindow.pagePanel:getHeight())  
+  else  
+    containerWindow.miniwindowScrollBar:setMarginTop(containerWindow.miniwindowScrollBar:getMarginTop() - containerWindow.pagePanel:getHeight())
+    containerWindow.contentsPanel:setMarginTop(containerWindow.contentsPanel:getMarginTop() - containerWindow.pagePanel:getHeight())
+  end
 end
 
 function refreshContainerPages(container)
@@ -85,7 +91,7 @@ function onContainerOpen(container, previousContainer)
     previousContainer.window = nil
     previousContainer.itemsPanel = nil
   else
-    containerWindow = g_ui.createWidget('ContainerWindow', modules.game_interface.getRightPanel())
+    containerWindow = g_ui.createWidget('ContainerWindow', modules.game_interface.getContainerPanel())
   end
   containerWindow:setId('container' .. container:getId())
   local containerPanel = containerWindow:getChildById('contentsPanel')
@@ -93,6 +99,15 @@ function onContainerOpen(container, previousContainer)
   containerWindow.onClose = function()
     g_game.close(container)
     containerWindow:hide()
+  end
+  containerWindow.onDrop = function(container, widget, mousePos)
+    if containerPanel:getChildByPos(mousePos) then
+      return false
+    end
+    local child = containerPanel:getChildByIndex(-1)
+    if child then
+      child:onDrop(widget, mousePos, true)        
+    end
   end
 
   -- this disables scrollbar auto hiding
@@ -110,7 +125,6 @@ function onContainerOpen(container, previousContainer)
   containerWindow:setText(name)
 
   containerItemWidget:setItem(container:getContainerItem())
-  containerItemWidget:setPhantom(true)
 
   containerPanel:destroyChildren()
   for slot=0,container:getCapacity()-1 do
