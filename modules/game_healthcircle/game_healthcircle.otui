@@ -19,3 +19,35 @@ ManaCircleFront < UIProgressBar
   //image-color: #1423ff
   image-color: #0000FFFF
   phantom: true
+
+BossIcon < UIWidget
+  id: bossIcon
+  size: 50 50
+  image-size: 50 50
+  focusable: false
+  anchors.top: parent.top
+  anchors.bottom: parent.bottom
+  anchors.left: parent.left
+  phantom: true
+
+BossHealth < UIWidget
+  id: bossLife
+  size: 250 20
+  image-size: 250 20
+  focusable: false
+  margin-top: 15
+  opacity: 0.5
+  phantom: true
+
+BossHealthEmpty < UIWidget
+  id: bossLifeEmpty
+  size: 250 20
+  image-size: 250 20
+  focusable: false
+  margin-top: 15
+  phantom: true
+
+BossInfo < Panel
+  id: bossInfo
+  size: 250 50
+  phantom: true
