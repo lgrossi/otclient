@@ -646,7 +646,7 @@ void ProtocolGame::parseStoreTransactionHistory(const InputMessagePtr& msg)
 
     int entries = msg->getU8();
     for(int i = 0; i < entries; ++i) {
-        int time = msg->getU16();
+        int time = msg->getU32();
         int productType = msg->getU8();
         int coinChange = msg->getU32();
         msg->getU8(); // 0 = transferable tibia coin, 1 = normal tibia coin
